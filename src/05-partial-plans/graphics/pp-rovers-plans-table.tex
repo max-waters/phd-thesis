@@ -1,0 +1,59 @@
+\cut{
+\newcommand{\roverstab}[3]{
+\renewcommand\tabcolsep{1pt}
+\small
+\begin{tabular}{l l }
+$1.$ & $\navigate_1(#1, \wayp_1, \wayp_2)$ \\
+$2.$ & $\samplesoil(#1, \wayp_2)$ \\
+$3.$ & $\navigate_2(#2, #3, \wayp_3)$ \\
+$4.$ & $\samplerock(#2, \wayp_3)$ 
+\end{tabular}
+}
+}
+
+\begin{figure}
+\begin{subfigure}[b]{0.33\textwidth}
+\centering
+\roverstab{\rover_1}{\rover_1}{\wayp_2}
+\caption{Plan $P_1$.}
+\label{fig:pp-rovers-p1} 
+\end{subfigure}%
+%
+\begin{subfigure}[b]{0.66\textwidth}
+\centering
+\renewcommand\tabcolsep{1pt}
+\small
+\begin{tabular}{l}
+\\
+$\navigate_1(\rover_1, \wayp_1, \wayp_2) \prec \samplesoil(\rover_1, \wayp_2)$ \\
+$\navigate_2(\rover_2, \wayp_1, \wayp_3) \prec \samplerock(\rover_2, \wayp_3)$ \\
+\\
+\end{tabular}
+\caption{Partial-order plan $P_2$.}
+\label{fig:pp-rovers-p2} 
+\end{subfigure}
+
+\vspace{1cm}
+
+\begin{subfigure}[b]{\textwidth}
+\centering
+\renewcommand\tabcolsep{1pt}
+\small
+\begin{tabular}{l l l l l }
+Operators:                         &        & & Constraints: \\%\multicolumn{2}{l}{Constraints:} \\
+$\navigate_1(r_1, w_1, w_2)$      & $\quad$ & \myi & $\navigate_1 \prec \samplesoil$, $\navigate_2 \prec \samplerock$. \\
+$\samplesoil(r_2, w_3)$           &         & \myii & $r_1 = r_2$ and $r_3 = r_4$. \\
+$\navigate_2(r_3, w_4, w_5)$      &         & \myiii & $w_2 = w_3 = \wayp_2$, $w_5 = w_6 = \wayp_3$ \\
+$\samplerock(r_4, w_6) \hspace{1.5pt}$    & & \myv & If $r_1 \neq r_3$ then $w_1 = w_4 = \wayp_1$. \\
+                                    &   &  \myiv & If $r_1 = r_3$ then either: \\
+                                        & & & $\quad \samplesoil \prec \navigate_2$, $w_1 = \wayp_1$ and $w_4 = \wayp_2$, or  \\
+                                        & & & $\quad \samplerock \prec \navigate_1$, $w_1 = \wayp_3$ and $w_4 = \wayp_1$. \\
+                                        
+\end{tabular}
+\caption{Partial plan $P_3$.}
+\label{fig:pp-rovers-p3} 
+\end{subfigure}
+
+\caption[Partial plan relaxation example]{Three plans from the \ipcdomain{rovers} domain. Subscripts have been used to better distinguish between actions of the same type.}
+\label{fig:pp-rovers-plans} 
+\end{figure}

@@ -1,0 +1,76 @@
+\fmpage{Declaration}{
+    \noindent
+    I certify that except where due acknowledgement has been made, the work is that of the author alone; the work has not been submitted previously, in whole or in part, to qualify for any other academic award; the content of the thesis is the result of work which has been carried out since the official commencement date of the approved research program; any editorial work, paid or unpaid, carried out by a third party is acknowledged; and, ethics procedures and guidelines have been followed.
+
+    I acknowledge the support I have received for my research through the provision of an Australian Government Research Training Program Scholarship.
+    
+    \vspace{1cm}
+    
+    \noindent
+    Max Waters 
+
+    \noindent
+    April 27, 2021   
+}
+
+\fmpage{Acknowledgement \\ of Country}{
+    \noindent
+    I acknowledge the Wurundjeri people of the Kulin Nations as the traditional owners of the land on which this research was undertaken, and respectfully recognise Elders both past and present.
+}
+
+\fmpage{\phantom{M}}{
+    \begin{center}
+        \Large{For Erin.}
+    \end{center}
+}
+
+\fmpage{Acknowledgements}{
+Thanks to my supervisors, Lin Padgham and Sebastian Sardi\~{n}a, for their encouragement and guidance, for pointing out the good ideas amongst the bad, and for not gloating when I didn't take good advice.
+Thanks to Lin for helping me to always keep the reader and the big picture in mind, and thanks to Sebastian for his constant enthusiasm and help in separating sense from nonsense.
+
+Thanks to Bernhard Nebel for the discussions that helped me settle on the topic of this thesis.
+
+Thanks to my family for their endless support for everything that I do, and for their generosity with wine, without which this thesis would not~exist.
+
+Thanks to my friends for not getting angry at me for turning up to their birthday/child's birthday/wedding/etc., and staring into space and thinking about treewidth~\cite{Robertson1986-Treewidth} or something.
+
+Thanks to Erin for her endless patience in the face of what was a seemingly interminable task. 
+And thanks for getting me a cat when I needed~it.
+
+I'm sure that the irony of a PhD on intelligent planning taking twice as long as expected is not lost on any of you.
+}
+
+\clearpage
+{
+    \pagestyle{plain} 
+    \tableofcontents
+    \listoffigures
+    \listoftables
+}
+
+
+\fmpage{Abstract}{
+%The ability to achieve goals in complex, unpredictable environments is a cornerstone of intelligent behaviour.
+To achieve its goals, an agent typically has a \emph{plan}. 
+However, in real-world domains, the environment can be dynamic, partially observable or contain other agents, and actions can fail or have unexpected side effects. 
+Thus, this thesis introduces, theoretically analyses and empirically evaluates novel techniques for representing and generating \emph{flexible} plans that allow the agent to modify its behaviour in response to unexpected events. 
+
+While most approaches to plan flexibility are concerned with flexible \emph{action orderings}, often found by \emph{relaxing} a classical plan into an optimally flexible partial-order plan (\POP), the focus here is the flexibility that arises from allowing the agent to reason about the \emph{domain objects} used by a plan, that is, the actions' \emph{parameters}.
+This thesis shows that plans that allow for both domain objects and action orderings to be selected at execution time, and relaxation processes that optimise both domain object use and ordering, provide more execution-time flexibility than those that consider action orderings alone.
+
+To reason about domain objects at \emph{optimisation time}, the notions of \emph{reinstantiated deordering} and \emph{reinstantiated reordering} are introduced, relaxations of a plan under which both ordering constraints and action parameters can be changed.
+An empirical evaluation shows that these processes can find optimised \POP{}s that are more flexible than is possible when the parameters remain unchanged.
+
+To allow domain objects to be selected at \emph{execution time}, the notion of a \emph{partial plan} is introduced, a generalised plan comprising schematised actions and a \emph{constraint formula} that specifies the allowable combinations of action orderings and parameters.
+A parameterised complexity analysis shows that finding a classical plan that satisfies these constraints is \NP-hard, but polynomial for constraint formulae of bounded \emph{treewidth}.
+An empirical evaluation shows that \MKTR, a novel plan relaxation algorithm, can find partial plans of quadratic ``complexity'' that are significantly more flexible than \POP{}s found by order optimisation techniques.
+
+Symmetry breaking techniques are introduced to ameliorate the combinatorial explosion that results from optimising both action orderings and parameters.
+It is shown that a plan can have an exponential number of equally flexible alternatives with symmetrical \emph{causal structures}.
+As causal structure symmetries are of a form that occurs in many \CSP benchmark problems, but is too general for existing symmetry breaking approaches, \emph{\multilex} is introduced, a novel and compact symmetry breaking constraint that removes all but a constant factor of generalised symmetries.
+}
+
+%\pagebreak
+%\pagestyle{rmitheadings}
+
+

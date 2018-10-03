@@ -1,0 +1,109 @@
+\newcommand{\mcptable}[3]{   
+    \pgfplotstableread[col sep=comma]{05-partial-plans/tables/model-counts-by-planner.csv}\modelcounts 
+    \centering
+    \setlength{\tabcolsep}{5pt}
+    \pgfplotstabletypeset[
+        %%
+        font=\scriptsize,
+        %%
+        every even row/.style={
+            before row={\rowcolor[gray]{0.9}}
+            },
+        every head row/.style={%
+            before row={\toprule
+                & & & & \multicolumn{4}{c}{$\Delta_{\EOG}$} \\
+                \cmidrule(lr){5-8} 
+            },
+            after row=\midrule
+        },
+        #3%
+        %%
+        columns/planner/.style={string type, column name={Planner}, column type={l}, column type/.add={>{\itshape}}{}},
+        %%
+        columns/n-plans/.style={numeric type, column name=$n$, column type={c}, 
+            /pgf/number format/precision=0, /pgf/number format/sci zerofill, /pgf/number format/fixed,},
+        %%
+        columns/n-init/.style={numeric type, column name=$\#_P$, column type={c}},
+        %%
+        columns/n-eog/.style={numeric type, column name=$\#_{\EOG}$, column type={c}},
+        %%
+        columns/tw2-mt/.style={column name=$\MT$, numeric type, column type={c}, /pgf/number format/precision=1, 
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/tw2-mtml/.style={column name=$\MTSB$, numeric type, column type={c}, /pgf/number format/precision=1, 
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/tw2-rp/.style={column name=$\RP$, numeric type, column type={c}, /pgf/number format/precision=1, 
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/tw2-rpml/.style={column name=$\RPSB$, numeric type, column type={c}, /pgf/number format/precision=1, 
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/tw5-mt/.style={column name=$\MT$, numeric type, column type={c}, /pgf/number format/precision=1, 
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/tw5-mtml/.style={column name=$\MTSB$, numeric type, column type={c}, /pgf/number format/precision=1, 
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/tw5-rp/.style={column name=$\RP$, numeric type, column type={c}, /pgf/number format/precision=1, 
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/tw5-rpml/.style={column name=$\RPSB$, numeric type, column type={c}, /pgf/number format/precision=1, 
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        #1,
+        ]
+        {\modelcounts}%   
+        \caption{Maximum treewidth #2.}   
+}
+
+\begin{table}[t]
+    \centering
+    \begin{subtable}{\textwidth}
+        \mcptable{columns={planner,n-plans,n-init,n-eog,tw2-mt,tw2-mtml,tw2-rp,tw2-rpml}}{two}{%
+            every row 2 column 6/.style={
+            postproc cell content/.style={
+            @cell content/.add={}{$\%\bm{\ddagger}$}
+            }
+        },
+        }    
+        \label{tab:pp-model-counts-planner-tw2}
+    \end{subtable}
+
+    \vspace{1cm}
+
+    \begin{subtable}{\textwidth}
+        \mcptable{columns={planner,n-plans,n-init,n-eog,tw5-mt,tw5-mtml,tw5-rp,tw5-rpml}}{five}{%
+            every row 1 column 7/.style={
+            postproc cell content/.style={
+                @cell content/.add={}{$\%\bm{\dagger}$}
+            }
+        },
+        }
+        \label{tab:pp-model-counts-planner-tw5}
+    \end{subtable}
+    
+    \caption[Flexibility of \EOG and \MKTR, by planner]{Comparison of \MKTR and \EOG by planner.
+        For each planner, $\#_P$ is the number of linearisations of the \madagascar plans, $\#_\EOG$ is the mean number of instantiations of the \POP produced by \EOG, and $\Delta_\EOG$ is the mean $\%$ increase in instantiations found by \MKTR with each policy.
+        All $\Delta_\EOG$ values are computed from the $n$ plans for which instantiation counts are available for all five approaches, and are statistically significant with $p < 0.05$ as calculated from a single-tailed, paired t-test.}
+    \label{tab:pp-model-counts-planner}
+\end{table}
+
+
+    

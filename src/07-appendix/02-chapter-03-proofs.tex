@@ -1,0 +1,69 @@
+\chapter{Proofs of Theorems in Chapter~\ref{chap:symmetry-breaking}}\label{apx:symmetry-breaking}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Proof of Theorem~\ref{thrm:mlex}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\mlex*
+
+\newcommand{\matvec}{\vec{v}\xspace}
+\newcommand{\leftvec}{\vec{l}\xspace}
+\newcommand{\rightvec}{\vec{r}\xspace}
+
+\begin{proof} For ease of notation, let $\leftvec = \mat{M} \matfilter \tup{R_\perm, C_\perm}$ and $\rightvec = \perm(\mat{M}) \matfilter \tup{R_\perm, C_\perm}$ be the left and right sides of the \multilex constraint for $\perm$ as in Definition~\ref{def:multilex}, and let $\matvec = \mat{M}[1] \concat \cdots \concat \mat{M}[n]$ be the concatenation of all rows in $\mat{M}$.
+It suffices to prove that $\sub(\leftvec) \lexleq \sub(\rightvec)$.
+
+As $\sub$ is canonical, $\sub(\matvec) \lexleq \sub(\perm(\matvec))$ (Definition~\ref{def:can-matrix}).
+Thus, either $\sub(\matvec) \lexeq \sub(\perm(\matvec))$ or $\sub(\matvec) \lexless \sub(\perm(\matvec))$.
+The proof now continues by cases.
+
+\textbf{Case 1} Assume $\sub(\matvec) \lexeq \sub(\perm(\matvec))$. 
+Then, for $1 \leq i \leq n.m$, $\sub(\matvec[i]) = \sub(\perm(\matvec[i]))$, that is, $\perm$ leaves all elements unchanged.
+As all elements of $\leftvec$ are in $\matvec$, and $\perm(\leftvec) = \rightvec$, then for all $1 \leq i \leq \card{\leftvec}$, $\leftvec[i] = \rightvec[i]$.
+Therefore, $\sub(\leftvec) \lexeq \sub(\rightvec)$ as desired.
+
+\textbf{Case 2} Assume $\sub(\matvec) \lexless \sub(\perm(\matvec))$.
+Let $s$ be the earliest point of difference between $\sub(\matvec)$ and $\sub(\perm(\matvec))$, that is, the index \ST $\sub(\matvec[s]) < \sub(\perm(\matvec[s]))$, and for all $1 \leq i < s$, $\sub(\matvec[i]) = \sub(\perm(\matvec[i]))$ (Definition~\ref{def:lex-order}).
+Assume for now that $\matvec[s] \in \leftvec$, that is, there is some $t$ \ST $\matvec[s] = \leftvec[t]$.
+As $\leftvec$ is a \emph{sublist} of $\matvec$ (Definition~\ref{def:multilex}), that is, it may have fewer items, but they are in the same order, it follows that $\sub(\leftvec[t]) < \sub(\rightvec[t])$, and for all $1 \leq i < t$, $\sub(\leftvec[i]) = \sub(\rightvec[i])$, that is, $\sub(\leftvec) \lexless \sub(\rightvec)$. 
+Thus, it suffices to prove that $\matvec[s] \in \leftvec$. 
+
+Let $k$ be the index \ST $\matvec[k] = \perm(\matvec[s])$.
+As defined above, $\matvec[s]$ is the first point of difference between $\sub(\matvec)$ and $\sub(\perm(\matvec))$. 
+Therefore, $\sub(\matvec[s]) < \sub(\perm(\matvec[s]))$, and so $\sub(\matvec[s]) < \sub(\matvec[k])$. 
+Therefore, $s \neq k$.
+Further, as for all $1 \leq i < s$, $\sub(\matvec[i]) = \sub(\perm(\matvec[i]))$, it follows that $k \geq s$.
+And so $s < k$. 
+
+Let $p$ and $q$ be indexes \ST $\matvec[s] = \mat{M}[p][q]$ and let $r$ and $c$ be indexes \ST $\matvec[k] = \mat{M}[r][c]$, that is, $p$ and $q$ are the row and column indexes of $\matvec[s]$, and $r$ and $c$ are the row and column indexes of $\matvec[k]$.
+As $\matvec[s] \neq \matvec[k]$, it follows that $\matvec[s]$ is mapped by $\perm$ into either a different row, a different column, or both, that is, either $p \neq r$, $q \neq c$, or both.
+The proof will now continue by (sub-)cases. 
+
+\textbf{Case 2.1} Assume that $r \neq p$ (i.e, $\matvec[s]$ is mapped to a different row, but no assumptions are made as to whether it is mapped to a different column).
+If $r < p$, then $\matvec[s]$ would be in a lower row than $\matvec[i]$, and as $\matvec$ is the concatenation of rows, $k < s$ would hold.
+But, as established above, $s < k$. 
+Thus, $r > p$ must hold.
+Therefore, $\matvec[i]$ is in a row that is mapped to a higher row by $\perm$.
+As $\leftvec$ contains all variables mapped into a higher row or column by $\perm$ (Definition~\ref{def:multilex}), it follows that $\matvec[s] \in \leftvec$, as desired.
+
+\textbf{Case 2.2} Assume that $p = r$. 
+As either $p \neq r$ or $q \neq c$, it follows that $c \neq q$ (i.e, $\matvec[s]$ is mapped to the same row, and a different column).
+If $c < q$, then $\matvec[k]$ would be in the same row but a lower column than $\matvec[s]$, meaning that $k < s$.
+But, as $k > s$, $c > q$ must hold.
+Therefore, $\matvec[s]$ must be in a column that is mapped to a higher column by $\perm$, and so $\matvec[s] \in \leftvec$, as desired (Definition~\ref{def:multilex}).
+\end{proof}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Proof of Theorem~\ref{thrm:mlex-size-comp}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\mlexsize*
+
+\begin{proof}
+Let $\mat{M}$ be an $r \times c$ matrix, $\vec{r}_1,\ldots,\vec{r}_n$ be disjoint lists of rows of length $m_r$, $\vec{c}_1,\ldots,\vec{c}_n$ be disjoint lists of columns of length $m_c$, and $\group$ be a multi-row-column symmetry with generator $\generator$ produced from those lists as in Definition~\ref{def:multi-row-col-symm-grp}.
+
+From Definition~\ref{def:multi-row-col-symm-grp}, $\card{\generator} = n-1$ and so \multilex posts $n-1$ constraints.
+Each constraint compares $m_r$ rows and $m_c$ columns with their image under the permutation, and is thus of size $2.(m_rc + m_cr)$.
+However, as all $\vec{r}$ and $\vec{c}$ are disjoint, in the worst case $m_r = r/n$ and $m_c = c/n$, thus each constraint's size is bounded by $(4rc)/n$.
+As $n-1$ constraints are posted, the size of all constraints combined is bounded by $4rc$, i.e., $\bigo(rc)$.
+\end{proof}

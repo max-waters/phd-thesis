@@ -1,0 +1,36 @@
+\newcommand{\bidmatrix}[2]{
+\begin{tabular}{c *{4}{p{0.1cm}} }
+     & $t_1$ & $t_2$ & $t_3$ & $t_4$ \\
+$b_1$ & #1 \\
+$b_2$ & #2 \\
+$b_3$ & $0$ & $0$ & $0$ & $0$ \\
+\end{tabular}
+}
+
+\begin{figure}[t]
+    \begin{subfigure}[t]{0.33\textwidth}
+        \centering
+        \begin{tabular}{l}
+            \\
+            $b_1 = \tup{2, \set{t_1, t_2}}$ \\
+            $b_2 = \tup{2, \set{t_3, t_4}}$ \\
+            $b_3 = \tup{1, \set{t_1, t_3}}$ \\
+       \end{tabular}
+        \caption{Bids $b_1$--$b_3$.}
+        \label{fig:winner-example-bids}
+    \end{subfigure}%
+    \begin{subfigure}[t]{0.33\textwidth}
+        \centering
+        \bidmatrix{$1$ & $1$ & $0$ & $0$}{$0$ & $0$ & $0$ & $0$}
+        \caption{Solution $\mat{W}_1$.}
+        \label{fig:winner-example-sol1}
+    \end{subfigure}%
+    \begin{subfigure}[t]{0.33\textwidth}
+        \centering
+        \bidmatrix{$0$ & $0$ & $0$ & $0$}{$0$ & $0$ & $1$ & $1$}
+        \caption{Solution $\mat{W}_2$.}
+        \label{fig:winner-example-sol2}
+    \end{subfigure}% 
+\caption[\cspdomain{Winner Determination} example]{Two optimal solutions to a \cspdomain{Winner Determination} problem comprising three bids over four items.}
+\label{fig:winner-example}
+\end{figure}

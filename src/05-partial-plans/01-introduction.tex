@@ -1,0 +1,63 @@
+\section{Introduction}
+
+Under the \emph{least commitment} approach to planning, an agent maximises its flexibility by postponing decisions regarding actions' orderings and parameters for as long as possible.
+While seminal work (Section~\ref{sec:opt-defs-de-reorder}), and the previous chapter, studied the problem of minimising commitment to action ordering, the equally important problem of minimising commitment to a particular set of domain objects has received less attention.
+
+A common way to achieve least commitment is to relax a totally ordered plan into a minimally constrained partial-order plan (\POP) through the processes of \emph{deordering}, in which ordering constraints can be removed but not added, and \emph{reordering}, in which any modification can be made.
+These techniques have two notable limitations.
+Firstly, de/reordering only modifies actions' ordering not parameters, and since the original plan was likely not generated with flexibility in mind, remaining committed to the original choice parameters can unnecessarily restrict the ordering options.
+Secondly, the result of the optimisation process is a \POP, which offers flexibility regarding actions' orderings, but not their parameters.
+
+Chapter~\ref{chap:pop-maxsat} addressed the first limitation by introducing the processes of \emph{reinstantiated deordering} and \emph{reinstantiated reordering}, generalisations of standard de/reordering that simultaneously optimise both ordering and variable bindings, with the aim of finding the bindings that allow for the fewest ordering constraints.
+However, this approach cannot address the second limitation.
+While reinstantiated de/reordering allows the plan's actions' parameters to change at \emph{optimisation time}, the result is still a \POP with fixed parameters that cannot be varied at \emph{execution time}.
+
+Thus, this chapter studies the problem of relaxing a plan into one that \emph{allows both action ordering and domain objects to be selected at execution time}.
+The notion of a \emph{partial plan} is introduced: a generalised plan comprising a set of operator types to be executed, and a set of constraints defining the allowable combinations of orderings and variable bindings.
+Of particular interest is the problem of \emph{relaxing} a plan into a partial plan by ``lifting'' its ordering and variable binding constraints. 
+Interestingly, finding a \emph{minimum relaxation} of a plan, that is, a partial plan with constraints that are as relaxed as possible while remaining valid, is a polynomial time operation. 
+However, this encouraging result is undermined by the fact that the problem of \emph{instantiating} a partial plan, that is, finding a ground, totally ordered plan that satisfies its constraints, is intractable, clearly a serious drawback at execution time.
+
+Nevertheless, a parameterised complexity analysis reveals that islands of tractability exist within the space of partial plans, and
+an algorithm of bounded complexity is introduced that maximises a partial plan's flexibility while keeping its ``complexity'' (as measured by the treewidth of its primal graph) below an input parameter. 
+
+\subsection{Example}
+%
+\subimport*{graphics/}{pp-rovers-plans-table.tex}
+%
+Consider again the small planning problem from the (reduced version of the) \IPC \ipcdomain{rovers} domain described in Section~\ref{sec:pop-reins-example}.
+The domain objects comprise two rovers ($\rover_1$ and $\rover_2$) and three waypoints ($\wayp_1$--$\wayp_3$).
+Both rovers begin at $\wayp_1$, there are soil and rock samples at $\wayp_2$ and $\wayp_3$, respectively, and paths connect all waypoints.
+The goal is to gather both samples.
+
+Figure~\ref{fig:pp-rovers-plans} shows three solutions to this problem.
+Classical plan $P_1$ is an optimal solution in which $\rover_1$ navigates to $\wayp_2$ and collects the soil sample, then navigates to $\wayp_3$ and collects the rock sample.
+Partial-order plan $P_2$ is a \emph{reinstantiated deorder} (Definition~\ref{def:reins-re-deorder}) of $P_1$ in which $\rover_2$ collects the rock sample. 
+This change in domain objects allows the ordering to be relaxed: the actions can be executed in any order so long as the rovers are moved into place before collecting the samples.
+
+While more flexible than $P_1$, $P_2$ only allows variation in the order of actions, not to the domain objects used in the course of executing the plan. 
+As a result, $P_2$ does not permit the other ways in which domain objects can be utilised. 
+For example, $\rover_1$ could instead be used to collect the rock sample, and $\rover_2$ the soil sample, or a single rover could collect both samples, in which case they could be collected in any order.
+A generalised plan that \emph{allows domain objects to be selected at execution time} could encapsulate these variations. 
+This would provide the executing agent with more flexibility, increasing its capacity to recover from unexpected events (e.g., paths or rovers being unavailable) without resorting to replanning.
+
+The \emph{partial plan} depicted in Figure~\ref{fig:pp-rovers-p3} is a further generalisation of $P_1$ and $P_2$, and a compact representation of the above options. 
+On the left, the plan's operators are shown in their uninstantiated form, that is, constants have been replaced by variables, and on the right is a list of constraints that define the allowable combinations of operator orderings and variable bindings.
+Constraints \myi--\myiii enforce the requirement that a rover must be moved to the correct waypoint before collecting a sample. 
+The cases when the samples are collected by different rovers are covered by constraint \myiv. 
+If $\navigate_1$ and $\navigate_2$ move different rovers (i.e., $r_1 \neq r_2$), then they must move them from the starting location $\wayp_1$ to $\wayp_2$ and $\wayp_3$, respectively.
+Constraint \myv covers the cases when samples are collected by the same rover (i.e., $r_1 = r_2$). 
+If the soil sample is collected first, the constraints ensure that the rover first moves from $\wayp_1$ to $\wayp_2$, and then from $\wayp_2$ to $\wayp_3$, but not before collecting the sample at $\wayp_2$.
+Similar constraints are required for when the rock sample is collected first.
+
+Partial plan $P_3$ generalises both $P_1$ and $P_2$, in that $P_1$ satisfies $P_3$'s constraints, as does every plan that satisfies $P_2$'s ordering constraints.
+Indeed, $P_3$ is ``minimally constrained'' in that it encapsulates exactly those orderings and variable bindings of the four operators that result in a valid plan, and no others.
+
+\bigskip
+
+This chapter will continue as follows.
+Section~\ref{sec:partial-plans} formally defines partial plans, and provides a complexity analysis of the problems of instantiating and validating them.
+Section~\ref{sec:pp-optiality-criteria} introduces a number of criteria to compare the degree of flexibility provided by a partial plan, based on the relative strengths of their constraints and the computational cost of finding an instantiation.
+Section~\ref{sec:pp-cs-plans} introduces a restricted form of partial plans that represent constraints as a set of allowable causal links, and introduces a greedy fpt-algorithm, \MKTR, that searches for optimally relaxed plans of this form. 
+Section~\ref{sec:pp-evaluation} empirically compares \MKTR with the non-optimal but nevertheless effective \EOG plan deordering technique of \citeauthor{Kambhampati:2004:ExplBasedGeneralisation} (Section~\ref{sec:kk-ebg}).
+Results show that while some domains resist any kind of optimisation, \MKTR on average finds a quadratic-time instantiatable partial plan with $163.2\%$ more instantiations than \EOG, \emph{and in some domains can relax plans that cannot be improved by either \EOG or any de/ordering techniques studied in Chapter~\ref{chap:pop-maxsat}}.

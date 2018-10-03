@@ -1,0 +1,66 @@
+\newcommand{\blockexample}[4]{
+\begin{tikzpicture}[
+	op/.style={draw,minimum height=0.5cm,inner sep=1pt,text=black},
+	cond/.style={text=black,font=\bfseries,font=\scriptsize},
+	dummy/.style={}
+	]
+		
+	\node[op] (op1) []	{$\actn_1$};
+	\node[cond] (pre1) [left = 0.15cm of op1.west, anchor = center] {$p$};
+	\node[cond] (post11) [above right = 0.15cm and 0.25cm of op1.east, anchor = center] {$\neg p$};
+	\node[cond] (post12) [below right = 0.15cm and 0.25cm of op1.east, anchor = center] {$q$};
+
+	\node[op] (op2) [#1]	{$\actn_2$};
+	\node[cond] (pre1) [left = 0.15cm of op2.west, anchor = center] {$q$};
+	\node[cond] (post21) [above right = 0.15cm and 0.25cm of op2.east, anchor = center] {$p$};
+	\node[cond] (post22) [below right = 0.15cm and 0.25cm of op2.east, anchor = center] {$g_1$};
+	
+	\node[op] (op3) [#2]	{$\actn_3$}; 
+	\node[cond] (pre1) [left = 0.15cm of op3.west, anchor = center] {$p$};
+	\node[cond] (post31) [above right = 0.15cm and 0.25cm of op3.east, anchor = center] {$\neg p$};
+	\node[cond] (post32) [below right = 0.15cm and 0.25cm of op3.east, anchor = center] {$r$};
+	
+	\node[op] (op4) [#3]	{$\actn_4$}; 
+	\node[cond] (pre1) [left = 0.15cm of op4.west, anchor = center] {$r$};
+	\node[cond] (post41) [above right = 0.15cm and 0.25cm of op4.east, anchor = center] {$p$};
+	\node[cond] (post42) [below right = 0.15cm and 0.25cm of op4.east, anchor = center] {$g_2$};
+	
+	#4%
+\end{tikzpicture}%
+}
+
+\begin{figure}[t]
+% plan
+\begin{subfigure}[t]{\textwidth}
+\centering
+\blockexample{right = 1.5cm of op1.center, anchor = center}{right = 1.5cm of op2.center, anchor = center}{right = 1.5cm of op3.center, anchor = center}{}
+\caption{A plan that achieves the goal $s_g = \set{g_1, g_2}$. It cannot be deordered.}
+\label{fig:block-plan}
+\end{subfigure}
+
+\vspace{1cm}
+
+% KK result
+\begin{subfigure}[t]{\textwidth}
+\centering
+\blockexample{right = 1.5cm of op1.center, anchor = center}{below = 1.5cm of op1.center, anchor = center}{right = 1.5cm of op3.center, anchor = center}{
+	\node[dummy] (d1) [above left = 0.15cm and 0.2cm of op1] {};
+	\node[dummy] (d2) [above right = 0.15cm and 0.3cm of op2] {};
+	\node[dummy] (d3) [below right = 0.15cm and 0.3cm of op2] {};
+	\node[dummy] (d4) [below left = 0.15cm and 0.2cm of op1] {};
+	\draw[dashed] (d1.center) -- (d2.center) -- (d3.center) -- (d4.center) -- (d1.center);
+	
+	\node[dummy] (d5) [above left = 0.15cm and 0.2cm of op3] {};
+	\node[dummy] (d6) [above right = 0.15cm and 0.3cm of op4] {};
+	\node[dummy] (d7) [below right = 0.15cm and 0.3cm of op4] {};
+	\node[dummy] (d8) [below left = 0.15cm and 0.2cm of op3] {};	
+	\draw[dashed] (d5.center) -- (d6.center) -- (d7.center) -- (d8.center) -- (d5.center);
+}
+%
+\caption{A block decomposition of Figure~\ref{fig:block-plan}. The two blocks can be executed in any order.}
+\label{fig:block-deorder}
+\end{subfigure}%
+%
+\caption[Block deordering example]{Block deordering example.}
+\label{fig:block-example}
+\end{figure}

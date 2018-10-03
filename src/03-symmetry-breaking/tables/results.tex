@@ -1,0 +1,90 @@
+\newcommand{\symmtable}[4]{
+    \centering
+    \renewcommand\tabcolsep{1.5pt}
+    %\begin{adjustbox}{max width=\columnwidth}
+
+    \pgfplotstabletypeset[
+        col sep=comma,
+        font=\scriptsize,
+        %%
+        every even row/.style={
+            before row={\rowcolor[gray]{0.9}}
+            },
+        every head row/.style={%
+            before row={\toprule},
+            after row=\midrule
+        },
+            every last row/.style={
+            after row=\bottomrule,
+        },      
+        %%
+        columns/canonical/.style={numeric type, column name={Canonical}, column type={R{#3}}, 
+            /pgf/number format/precision=0, /pgf/number format/fixed},
+        columns/multilex/.style={numeric type, column name={Allowed}, column type={R{#4}}, 
+            /pgf/number format/precision=0, /pgf/number format/fixed},
+        columns/symm/.style={numeric type, column name={Sym.\,($\%$)}, column type={R{1.4cm}}, 
+            /pgf/number format/precision=2, fixed zerofill},
+        columns/eff/.style={numeric type, column name={Eff.\,($\%$)}, column type={R{1.2cm}}, 
+            /pgf/number format/precision=2, fixed zerofill},
+        %%
+        #2
+        ]
+        {#1}%
+    %\end{adjustbox}
+}
+
+\pgfplotstableread[col sep=comma]{03-symmetry-breaking/tables/mat-mrc.csv}\mrcdata
+\pgfplotstableread[col sep=comma]{03-symmetry-breaking/tables/mat-mrmc.csv}\mrmcdata
+\pgfplotstableread[col sep=comma]{03-symmetry-breaking/tables/simple.csv}\unddata
+\pgfplotstableread[col sep=comma]{03-symmetry-breaking/tables/dag.csv}\dagdata
+
+\newcommand{\abbrevs}{\emph{Solns} and \emph{Canonical} indicate the number of solutions and canonical solutions, resp. 
+\emph{Sym.}, \emph{Allowed} and \emph{Eff.} indicate the $\%$ of solutions that are not canonical, the number of solutions allowed by \multilex, and the $\%$ of non-canonical solutions removed by \multilex, resp.}
+
+\begin{table}[t]
+    \symmtable{\mrcdata}{%
+        columns/sols/.style={string type, column name={Solns}, column type={R{1.4cm}}},
+        columns/d/.style={string type, column name=$r \times c$, column type={C{0.8cm}}},
+        columns/n/.style={numeric type, column name=$n$, column type={C{1cm}}, /pgf/number format/precision=0},
+        columns={d,n,sols,canonical,symm,multilex,eff},
+    }{2.4cm}{3cm}
+    \caption[\multilex results for multi-row-column symmetries]{Test set A results: matrix models with multi-row-column symmetry. \abbrevs}
+    \label{tab:mat-mrc-results}
+\end{table}
+
+\begin{table}[t]
+    \symmtable{\mrmcdata}{%
+        columns/sols/.style={string type, column name={Solns}, column type={R{1.4cm}}},
+        columns/d/.style={string type, column name=$r \times c$, column type={C{0.8cm}}},
+        columns/nr/.style={numeric type, column name=$n_r$, column type={C{0.5cm}}, /pgf/number format/precision=0},
+        columns/nc/.style={numeric type, column name=$n_c$, column type={C{0.5cm}}, /pgf/number format/precision=0},
+        columns={d,nr,nc,sols,canonical,symm,multilex,eff},
+    }{2.4cm}{2.8cm}
+    \caption[\multilex results for multi-row and multi-column symmetries]{Test set B results: matrix models with multi-row and multi-column symmetry. \abbrevs}
+    \label{tab:mat-mrmc-results}
+\end{table}
+
+
+\begin{table}[t]
+    \symmtable{\unddata}{%
+        columns/sols/.style={string type, column name={Solns}, column type={R{0.8cm}}},
+        columns/v/.style={string type, column name=$v$, column type={C{0.4cm}}},
+        columns/n/.style={numeric type, column name=$n$, column type={C{0.4cm}}, /pgf/number format/precision=0},
+        columns={v,n,sols,canonical,symm,multilex,eff},
+    }{3.8cm}{3.8cm}
+    \caption[\multilex results for simple graph models]{Test set C results: simple graph models. \abbrevs}
+    \label{tab:graph-simple-results}
+\end{table}
+
+\begin{table}[t]
+    \symmtable{\dagdata}{%
+         columns/sols/.style={numeric type, column name={Solns}, column type={R{2.2cm}}, 
+            /pgf/number format/precision=0, /pgf/number format/fixed},
+        columns/v/.style={string type, column name=$v$, column type={C{0.4cm}}},
+        columns/n/.style={numeric type, column name=$n$, column type={C{0.4cm}}, /pgf/number format/precision=0},
+        columns={v,n,sols,canonical,symm,multilex,eff},
+    }{3.8cm}{2.4cm}
+    \caption[\multilex results for \DAG models]{Test set D results: \DAG models. \abbrevs}
+    \label{tab:graph-dag-results}
+\end{table}
+

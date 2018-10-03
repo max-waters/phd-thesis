@@ -1,0 +1,472 @@
+% fonts
+\newcommand{\propername}[1]{\textsf{\small #1}\xspace}
+\newcommand{\defterm}[1]{\emph{\textbf{#1}}\xspace}
+\newcommand{\csprob}[1]{\textsc{#1}\xspace}
+\newcommand{\alg}[1]{\textsc{#1}\xspace}
+\newcommand{\cclass}[1]{\ensuremath{\mathsf{#1}}\xspace}
+\newcommand{\textfunc}[1]{\ensuremath{\mathsf{#1}}\xspace}
+\mathchardef\mhyphen="2D
+
+% fixed-width aligned table columns
+\newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash }b{#1}}
+
+
+% omit text
+\newcommand{\cut}[1]{}
+
+% (i), (ii), etc.,
+\newcommand{\myi}{\emph{(i)}\xspace}
+\newcommand{\myii}{\emph{(ii)}\xspace}
+\newcommand{\myiii}{\emph{(iii)}\xspace}
+\newcommand{\myiv}{\emph{(iv)}\xspace}
+\newcommand{\myv}{\emph{(v)}\xspace}
+\newcommand{\myvi}{\emph{(vi)}\xspace}
+
+% abbreviations
+\newcommand{\IFF}{\emph{iff}\xspace}
+\newcommand{\WRT}{\emph{w.r.t.}\xspace}
+\newcommand{\ST}{\emph{s.t.}\xspace}
+
+
+% logic symbols etc
+\newcommand{\eqdef}{\overset{\mathrm{def}}{=}}
+\newcommand{\set}[1]{\{#1\}}
+\newcommand{\card}[1]{|#1|}
+\newcommand{\tup}[1]{\langle #1\rangle} 
+\newcommand{\sub}{\theta}
+\newcommand{\substo}{\backslash}
+
+\newcommand{\type}{\textfunc{type}}
+\newcommand{\vars}{\textfunc{vars}}
+\newcommand{\consts}{\textfunc{consts}}
+\newcommand{\domain}{\textfunc{domain}}
+
+\newcommand{\true}{\emph{true}\xspace}
+\newcommand{\false}{\emph{false}\xspace}
+\newcommand{\CNF}{CNF\xspace}
+\renewcommand{\emptyset}{\varnothing}
+
+\newcommand{\transclos}[1]{#1^+}
+\newcommand{\clapstack}[1]{\mathclap{\substack{#1}}}
+\newcommand{\concat}{\ensuremath{^{\frown}}}
+
+\newcommand{\mat}[1]{\mathbf{#1}}
+\newcommand{\cslgrph}{\mat{C}}
+
+\DeclareMathOperator{\odd}{odd}
+\DeclareMathOperator{\even}{even}
+
+%\DeclareMathOperator{\pp}{pp}
+\newcommand{\pp}{\textfunc{pp}}
+\newcommand{\mins}{\textfunc{m}}
+
+
+% symmetry breaking evaluation
+\newcommand{\eff}{\textfunc{eff}}
+\newcommand{\mlcount}{\textfunc{mlx}}
+\newcommand{\cancount}{\textfunc{can}}
+\newcommand{\solcount}{\textfunc{sol}}
+\newcommand{\symmrate}{\textfunc{sym}}
+
+
+% cs problems
+\newcommand{\SAT}{\csprob{SAT}}
+\newcommand{\THRSAT}{\csprob{3-SAT}}
+\newcommand{\UNSAT}{\csprob{UnSAT}}
+\newcommand{\SATUNSAT}{\csprob{SAT-UnSAT}}
+\newcommand{\MAXSAT}{\csprob{MaxSAT}}
+\newcommand{\VERTCOVER}{\csprob{Vertex Cover}}
+\newcommand{\TREEWIDTH}{\csprob{Treewidth}}
+\newcommand{\KCLIQUE}{\csprob{k-Clique}}
+\newcommand{\MINREINSREORDER}{\csprob{Minumum Reinstantiated Reordering}}
+\newcommand{\MINREINSDEORDER}{\csprob{Minumum Reinstantiated Deordering}}
+\newcommand{\MINREORDER}{\csprob{Minumum Reordering}}
+\newcommand{\MINDEORDER}{\csprob{Minumum Deordering}}
+
+
+% search algs/queues
+\newcommand{\FIFO}{FIFO\xspace}
+\newcommand{\LIFO}{LIFO\xspace}
+\newcommand{\ASTAR}{$A^*$\xspace}
+
+% treewidth
+\newcommand{\treewidth}{\textfunc{treewidth}}
+\newcommand{\width}{\textfunc{width}}
+\newcommand{\treedecomp}{\textfunc{tree\mhyphen decomposition}}
+
+% csps
+\newcommand{\csplib}{\propername{CSPLib}}
+\newcommand{\cspdomain}[1]{\emph{#1}}
+
+% sat and maxsat
+\DeclareMathOperator{\propvar}{p}
+\DeclareMathOperator{\litvar}{l}
+\DeclareMathOperator{\boolvar}{b}
+
+\newcommand{\deoprec}{\prec_A}
+
+\DeclareMathOperator{\satprop}{p}
+\newcommand{\maxsatcl}[2]{\overset{#2}{\mathstrut#1}}
+\newcommand{\precp}[2]{\ensuremath{\satprop_{#1 {\scriptscriptstyle \prec} #2}}}
+\newcommand{\eqp}[2]{\ensuremath{\satprop_{#1 {\scriptscriptstyle =} #2}}}
+\newcommand{\pclp}[4]{\ensuremath{\satprop_{#1, #2, #3, #4}}}
+\newcommand{\pclps}[2]{\ensuremath{\satprop_{#1, #2}}}
+\newcommand{\pclpg}[3]{\ensuremath{\satprop_{#1, #2, #3}}}
+\newcommand{\thrtp}[6]{\ensuremath{\satprop_{#1, #2, #3, #4,#5,#6}}}
+
+% sets of propositions
+\newcommand{\propset}{\mathcal{P}}
+\newcommand{\eqpset}{\ensuremath{\propset_\sub}}
+\newcommand{\precpset}{\ensuremath{\propset_\precrel}}
+\newcommand{\pclpset}{\ensuremath{\propset_\rightarrow}}
+
+
+% proper names
+\newcommand{\FastDownward}{\propername{FastDownward}}
+%\newcommand{\LAMA}{\propername{LAMA}}
+\newcommand{\Java}{\propername{Java}}
+\newcommand{\NAUTY}{\propername{NAUTY}}
+\newcommand{\MiniZinc}{\propername{MiniZinc}}
+\newcommand{\gecode}{\propername{gecode}}
+\newcommand{\treewidthexact}{\propername{treewidth-exact}}
+\newcommand{\libtw}{\propername{libtw}}
+\newcommand{\satforj}{\propername{Sat4j}}
+\newcommand{\MILP}{MILP\xspace}
+
+\newcommand{\loandra}{\propername{Loandra}}
+\newcommand{\maxpre}{\propername{MaxPre}}
+\newcommand{\relsat}{\propername{Relsat}}
+\newcommand{\ganak}{\propername{GANAK}}
+\newcommand{\maple}{\propername{MapleSAT}}
+
+
+\newcommand{\madagascar}{\propername{Madagascar}}
+\newcommand{\lama}{\propername{LAMA}}
+\newcommand{\dbfws}{\propername{Dual-BFWS}}
+
+\newcommand{\symmbreaker}[1]{#1\xspace}
+\newcommand{\dblex}{\symmbreaker{Double Lex}}
+\newcommand{\snakelex}{\symmbreaker{Snake Lex}}
+\newcommand{\multilex}{\symmbreaker{Multi Lex}}
+
+
+% planning macros
+\newcommand{\STRIPS}{STRIPS\xspace}
+\newcommand{\PDDL}{PDDL\xspace}
+\newcommand{\IPC}{IPC\xspace}
+\newcommand{\ipcdomain}[1]{\emph{#1}}
+
+\newcommand{\SASP}{SAS\textsuperscript{+}\xspace}
+\newcommand{\PlanTask}{\ensuremath{\Pi}\xspace}
+\newcommand{\PtOps}{\ensuremath{\mathcal{O}}\xspace}
+\newcommand{\PtPreds}{\ensuremath{\mathcal{P}}\xspace}
+\newcommand{\PtConsts}{\ensuremath{\mathcal{C}}\xspace}
+
+\newcommand{\optr}{\ensuremath{o}\xspace}
+\newcommand{\actn}{\ensuremath{a}\xspace}
+\newcommand{\state}{\ensuremath{s}\xspace}
+
+\newcommand{\name}{\textfunc{name}}
+\newcommand{\pre}{\textfunc{pre}}
+\newcommand{\post}{\textfunc{post}}
+
+
+\newcommand{\POP}{POP\xspace}
+\newcommand{\opset}{\ensuremath{O}\xspace}
+\newcommand{\precrel}{\ensuremath{\prec}\xspace}
+\newcommand{\acset}{\ensuremath{A}\xspace}
+
+\newcommand{\initoptr}{\ensuremath{\optr_I}\xspace}
+\newcommand{\goaloptr}{\ensuremath{\optr_G}\xspace}
+\newcommand{\initsub}{\ensuremath{\sub_I}\xspace}
+\newcommand{\goalsub}{\ensuremath{\sub_G}\xspace}
+\newcommand{\initactn}{\ensuremath{\actn_I}\xspace}
+\newcommand{\goalactn}{\ensuremath{\actn_G}\xspace}
+\newcommand{\initstate}{\ensuremath{\state_I}\xspace}
+\newcommand{\goalstate}{\ensuremath{\state_G}\xspace}
+
+\newcommand{\flex}{\emph{flex}\xspace}
+
+\DeclareMathOperator{\popfunc}{POP}
+
+% planning algorithms
+\newcommand{\graphplan}{\propername{Graphplan}}
+\newcommand{\POCL}{POCL\xspace}
+\newcommand{\SNLP}{\propername{SNLP}}
+\newcommand{\UCPOP}{\propername{UCPOP}}
+\newcommand{\VHPOP}{\propername{VHPOP}}
+\newcommand{\POPF}{\propername{POPF}}
+
+
+% planning graph type macros
+\newcommand{\SSS}{\textbf{3S}\xspace}
+\newcommand{\UB}{\textbf{UB}\xspace}
+\newcommand{\PUBS}{\textbf{PUBS}\xspace}
+
+
+% KK alg descriptions
+\newcommand{\POPI}{POPI\xspace}
+\newcommand{\bndgs}{\ensuremath{\Phi}\xspace}
+\newcommand{\EPG}{\alg{EPG}}
+\newcommand{\EOG}{\alg{EOG}}
+\newcommand{\EBG}{\alg{EBG}}
+
+\newcommand{\MCLCP}{MCLCP\xspace}
+
+
+% producer consumer threat
+\newcommand{\PCT}{PCT\xspace}
+\newcommand{\MTC}{MTC\xspace}
+\DeclareMathOperator{\MTCFUNC}{MTC\xspace}
+\DeclareMathOperator{\MTCCF}{\cform_{\cform}\xspace}
+
+
+\newcommand{\prd}[2]{\ensuremath{\tup{#1, #2}}}
+\newcommand{\cons}[2]{\ensuremath{\tup{#1, #2}}}
+\newcommand{\threat}[2]{\ensuremath{\tup{#1, #2}}}
+
+\newcommand{\prods}{\textfunc{prods}}
+\newcommand{\consms}{\textfunc{cons}}
+\newcommand{\thrts}{\textfunc{thrtns}}
+\newcommand{\supports}{\textfunc{supports}}
+
+
+\DeclareMathOperator{\popprods}{\textfunc{producers}}
+\DeclareMathOperator{\popcons}{\textfunc{consumers}}
+
+
+% numbered examples and definitions
+\newtheorem{question}{Question}
+\newtheorem{defn}{Definition}[chapter]
+\newtheorem{example}{Example}[chapter]
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{lemma}{Lemma}[chapter]
+\newtheorem{observation}{Observation}[chapter]
+\newenvironment{proofsketch}{%
+	\renewcommand{\proofname}{Proof sketch}\proof}{\endproof}
+
+
+% barman example
+\newcommand{\shot}{\mathsf{SH}}
+\newcommand{\shaker}{\mathsf{SHK}}
+\newcommand{\lhand}{\mathsf{LH}}
+\newcommand{\rhand}{\mathsf{RH}}
+\newcommand{\ing}{\mathsf{I}}
+\newcommand{\disp}{\mathsf{DSP}}
+\newcommand{\cockt}{\mathsf{CT}}
+
+\newcommand{\shotvar}{s}
+\newcommand{\shkvar}{k}
+\newcommand{\handvar}{h}
+\newcommand{\ingvar}{i}
+\newcommand{\dispvar}{d}
+\newcommand{\cocktvar}{c}
+
+\newcommand{\contains}{\mathit{contains}}
+\newcommand{\ontable}{\mathit{onTable}}
+\newcommand{\dispenses}{\mathit{disp}}
+\newcommand{\holding}{\mathit{holding}}
+\newcommand{\handempty}{\text{\emph{hand-empty}}}
+\newcommand{\shtempty}{\mathit{empty}}
+\newcommand{\clean}{\mathit{clean}}
+\newcommand{\ctailing}{\mathit{ingredient}}
+
+\newcommand{\grasp}{\mathit{grasp}}
+\newcommand{\drop}{\mathit{drop}}
+\newcommand{\fillshot}{\mathit{fill}}
+\newcommand{\pstcs}{\mathit{pourToCleanShaker}}
+\newcommand{\pstus}{\mathit{pourToUsedShaker}}
+\newcommand{\pstcsabb}{\mathit{prToClnShkr}}
+\newcommand{\pstusabb}{\mathit{prToUsedShkr}}
+
+\newcommand{\psts}{\mathit{pourShakerToShot}}
+\newcommand{\shake}{\mathit{shake}}
+\newcommand{\cleanshot}{\mathit{clean}}
+
+% path finding example
+\newcommand{\move}{\mathit{go}}
+\newcommand{\at}{\mathit{at}}
+\newcommand{\conn}{\mathit{path}}
+
+% rovers example
+\newcommand{\rover}{\mathsf{R}}
+\newcommand{\wayp}{\mathsf{W}}
+\newcommand{\navigate}{\mathit{navigate}}
+\newcommand{\samplesoil}{\mathit{sample\mhyphen soil}}
+\newcommand{\samplerock}{\mathit{sample\mhyphen rock}}
+\newcommand{\roverat}{\mathit{rover\mhyphen at}}
+\newcommand{\soilat}{\mathit{soil\mhyphen at}}
+\newcommand{\rockat}{\mathit{rock\mhyphen at}}
+\newcommand{\sampled}{\mathit{sampled}}
+
+% sensor example
+\newcommand{\SensorCSP}{\alg{SensorCSP}}
+
+% algorithm
+\DeclareMathOperator{\ptoc}{\clang}
+\newcommand{\CSP}{\csprob{CSP}}
+\DeclareMathOperator{\primal}{primal}
+
+% complexity macros
+\newcommand{\bigo}{\mathcal{O}}
+\newcommand{\FPT}{\cclass{FPT}}
+\newcommand{\W}[1]{\cclass{W[#1]}}
+\newcommand{\XP}{\cclass{XP}}
+\newcommand{\POLY}{\cclass{P}}
+\newcommand{\NP}{\cclass{NP}}
+\newcommand{\CONP}{\cclass{co\text{-}NP}}
+\newcommand{\DP}{\cclass{DP}}
+\newcommand{\PSPACE}{\cclass{PSPACE}}
+\newcommand{\DTIME}{\cclass{DTIME}}
+\newcommand{\EXPTIME}{\cclass{EXPTIME}}
+\newcommand{\NEXPTIME}{\cclass{NEXPTIME}}
+\newcommand{\EXPSPACE}{\cclass{EXPSPACE}}
+\newcommand{\HASHP}{\cclass{\#P}}
+\newcommand{\APX}{\cclass{APX}}
+
+
+% algorithm names
+\newcommand{\KK}{\alg{KK}}
+\newcommand{\PRF}{\alg{PRF}}
+\newcommand{\MKTR}{\alg{MkTR}}
+\newcommand{\APXCAN}{\alg{ApxC}}
+
+
+% maxsat encodings
+\newcommand{\MD}{\alg{MD}}
+\newcommand{\MR}{\alg{MR}}
+\newcommand{\MRN}{\alg{MR\textsubscript{N}}}
+\newcommand{\MRO}{\alg{MR\textsubscript{A}}}
+\newcommand{\MRD}{\alg{MRD}}
+\newcommand{\MRR}{\alg{MRR}}
+\newcommand{\MRRN}{\alg{MRR\textsubscript{N}}}
+\newcommand{\MRRO}{\alg{MRR\textsubscript{O}}}
+\newcommand{\MRRC}{\alg{MRR\textsubscript{C}}}
+
+
+
+% partial plans
+\newcommand{\cform}{\ensuremath{\phi}}
+\newcommand{\clang}{\ensuremath{\mathcal{L}_C}}
+\newcommand{\CLP}{CLP\xspace}
+\newcommand{\ppenc}{F\xspace}
+\newcommand{\ppenci}{G\xspace}
+
+
+% relaxation policies
+\newcommand{\RP}{\alg{RP}}
+\newcommand{\MT}{\alg{MT}}
+\newcommand{\RPSB}{\alg{RP\textsubscript{S}}}
+\newcommand{\MTSB}{\alg{MT\textsubscript{S}}}
+
+
+% symmetry breaking
+\newcommand{\MultiLex}{\alg{MultiLex}}
+\newcommand{\DoubleLex}{\alg{DoubleLex}}
+\newcommand{\SnakeLex}{\alg{SnakeLex}}
+
+\newcommand{\LowTriSb}{\alg{LowerTriangle}}
+\newcommand{\SB}{\alg{Sb}}
+\newcommand{\SBSTAR}{\alg{Sb\textsuperscript{*}}}
+
+\newcommand{\group}{\ensuremath{\Gamma}\xspace}
+\newcommand{\perm}{\ensuremath{\sigma}\xspace}
+\newcommand{\idperm}{\perm_{id}}
+\newcommand{\generator}{\ensuremath{\Sigma}\xspace}
+\newcommand{\permcomp}{\circ\xspace}
+
+\newcommand{\rowperm}[2]{\ensuremath{\perm_R^{#1,#2}}\xspace}
+\newcommand{\colperm}[2]{\ensuremath{\perm_C^{#1,#2}}\xspace}
+
+\newcommand{\tperm}{\ensuremath{\hat{\perm}\xspace}}
+\newcommand{\tgroup}{\ensuremath{\hat{\group}\xspace}}
+\newcommand{\tgenerator}{\ensuremath{\hat{\generator}}\xspace}
+
+\newcommand{\cperm}{\ensuremath{\bar{\perm}\xspace}}
+\newcommand{\cgroup}{\ensuremath{\bar{\group}\xspace}}
+\newcommand{\cgenerator}{\ensuremath{\bar{\generator}}\xspace}
+
+\newcommand{\auts}{\textfunc{Aut}\xspace}
+\newcommand{\symmetry}{\textfunc{symm}}
+\newcommand{\canonical}{\textfunc{can}}
+
+\newcommand{\vecfilter}{\upharpoonright}
+\newcommand{\matfilter}{\upharpoonleft}
+
+\ExplSyntaxOn
+\NewDocumentCommand{\cycle}{ O{\;} m }
+ {
+  (
+  \alec_cycle:nn { #1 } { #2 }
+  )
+ }
+
+\seq_new:N \l_alec_cycle_seq
+\cs_new_protected:Npn \alec_cycle:nn #1 #2
+ {
+  \seq_set_split:Nnn \l_alec_cycle_seq { , } { #2 }
+  \seq_use:Nn \l_alec_cycle_seq { #1 }
+ }
+\ExplSyntaxOff
+
+\newcommand{\PDG}{PDG\xspace}
+\newcommand{\pdg}{\ensuremath{G}\xspace}
+\newcommand{\vertset}{\ensuremath{V}}
+\newcommand{\edgeset}{\ensuremath{E}}
+\newcommand{\colfunc}{\ensuremath{C}}
+\newcommand{\gedge}[1]{(#1)}
+\DeclareMathOperator{\gvert}{v}
+\newcommand{\DAG}{DAG\xspace}
+
+\newcommand{\opvert}[1]{\gvert_{#1}}
+\newcommand{\opvertpre}[1]{\gvert_{#1}^{pre}}
+\newcommand{\opvertpost}[1]{\gvert_{#1}^{post}}
+
+\newcommand{\vvert}[1]{\gvert_{#1}}
+\newcommand{\cvert}[1]{\gvert_{#1}}
+\newcommand{\litvert}[2]{\gvert_{#1}^{#2}}
+
+\newcommand{\popvec}{\ensuremath{V}}
+
+\newcommand{\lex}{{L}}
+\newcommand{\lexleq}{\ensuremath{\preceq_{\text{\lex}}}}
+\newcommand{\lexeq}{\ensuremath{=_{\text{\lex}}}}
+\newcommand{\lexless}{\ensuremath{\prec_{\text{\lex}}}}
+
+\DeclareMathOperator{\auxp}{a}
+\newcommand{\auxprop}[2]{\auxp_{#1}^{#2}}
+
+% intro plan table
+\newcommand{\plantable}[3]{%
+\begin{figure}[h]%
+\small%
+\centering%
+\begin{tabular}{p{0.5mm} l}
+#3%
+\end{tabular}%
+\caption[#1]{#1.}%
+\label{#2}%
+\end{figure}%
+}
+
+% causal structures
+\newcommand{\cstruct}{L\xspace}
+\DeclareMathOperator{\cfl}{lin}
+\newcommand{\cformpl}{\hat{\cform}\xspace}
+
+%front matter
+\newcommand{\fmpage}[2]{
+    \clearpage
+    \thispagestyle{plain}
+    \begin{flushright}
+        \textbf{\huge{#1}}
+    \end{flushright}
+
+    \vspace{1cm}
+    
+    #2
+}
+
+% repo footnote
+\newcommand{\repofootnote}{\footnote{\url{https://bitbucket.org/max_waters/phd-plan-flexibility-tools}}\xspace}

@@ -1,0 +1,68 @@
+\newcommand{\tankgraph}{
+\begin{tikzpicture}[
+    sensor/.style={draw,circle,text=black,font=\small,inner sep=0pt,text width=4mm,align=center},
+    every label/.style={font=\scriptsize}
+]  
+    \node[sensor, label={left:$c_1$}] (s1) []	{$t_1$};
+    \node[sensor, label={right:$c_1$--$c_4$}] (s2) [right = 1cm of s1.center, anchor=center]	{$t_2$};  
+    \node[sensor, label={left:$c_2$}] (s3) [below = 1cm of s1.center, anchor=center]	{$t_3$};
+    \node[sensor, label={right:$c_1$--$c_4$}] (s4) [below = 1cm of s2.center, anchor=center]	{$t_4$};
+    \node[sensor, label={left:$c_3$}] (s5) [below = 1cm of s3.center, anchor=center]	{$t_5$};
+    \node[sensor, label={right:$c_1$--$c_4$}] (s6) [below = 1cm of s4.center, anchor=center]	{$t_6$};
+
+    \draw (s1) -- (s2);
+    \draw (s3) -- (s4);
+    \draw (s5) -- (s6);
+
+\end{tikzpicture}%
+}
+
+
+\newcommand{\tankmatrix}[6]{
+\begin{tabular}{l *{4}{p{0.1cm}} }
+      & $c_1$ & $c_2$ & $c_3$ & $c_4$ \\
+$t_1$ & #1 \\
+$t_2$ & #2 \\
+\rowcolor{lightgray}\cellcolor{white}$t_3$ & #3 \\
+\rowcolor{lightgray}\cellcolor{white}$t_4$ & #4 \\
+$t_5$ & #5 \\
+$t_6$ & #6 \\
+\end{tabular}
+}
+
+\begin{figure}[t]
+    \begin{subfigure}[b]{0.33\textwidth}
+        \vskip 0pt
+        \centering
+        \tankgraph
+        \vspace{0.35cm}
+        \caption{Tank configuration.}
+        \label{fig:tank-config}
+    \end{subfigure}%
+    \begin{subfigure}[b]{0.33\textwidth}
+        \centering
+        \tankmatrix{
+            $1$ & \cellcolor{lightgray}$0$ & $0$ & $0$ }{
+            $0$ & \cellcolor{lightgray}$0$ & $0$ & $0$ }{
+            $0$ & $1$ & $0$ & $0$ }{
+            $0$ & $0$ & $0$ & $0$ }{
+            $0$ & \cellcolor{lightgray}$0$ & $1$ & $0$ }{
+            $0$ & \cellcolor{lightgray}$0$ & $0$ & $1$ }
+        \caption{Solution $\mat{A}_1$.}
+        \label{fig:tank-sol1}
+    \end{subfigure}%
+    \begin{subfigure}[b]{0.33\textwidth}
+        \centering
+        \tankmatrix{
+            $1$ & \cellcolor{lightgray}$0$ & $0$ & $0$ }{
+            $0$ & \cellcolor{lightgray}$0$ & $0$ & $0$ }{
+            $0$ & $1$ & $0$ & $0$ }{
+            $0$ & $0$ & $0$ & $1$ }{
+            $0$ & \cellcolor{lightgray}$0$ & $1$ & $0$ }{
+            $0$ & \cellcolor{lightgray}$0$ & $0$ & $0$ }
+        \caption{Solution $\mat{A}_2$.}
+        \label{fig:tank-sol2}
+    \end{subfigure}% 
+\caption[\cspdomain{Tank Allocation} example]{Two optimal solutions to a \cspdomain{Tank Allocation} instance comprising six tanks and four chemicals.}
+\label{fig:tank-example}
+\end{figure}

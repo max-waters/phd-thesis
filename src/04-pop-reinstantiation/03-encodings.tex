@@ -1,0 +1,217 @@
+\section{\MAXSAT Encodings}\label{sec:reins-encodings}
+
+The problem of optimising a \POP{}'s ordering can be naturally expressed as an instance of the partial weighted \MAXSAT problem (Section \ref{sec:maxsat}).
+This approach was introduced by \citet{Muise2016-PopMaxSAT}, whose \MD and \MR encodings transform a \POP into \MAXSAT instances with optimal solutions corresponding to minimum \POCL-valid de/reorderings, resp.
+
+This section introduces \MRD and \MRR: generalised encodings that \emph{allow the \POP to be reinstantiated}.
+Their optimal solutions therefore correspond to minimum \POCL-valid reinstantiated de/reorderings, respectively.
+As allowing variable bindings to change exponentially expands the search space, \MRD and \MRR also optimise \MD and \MR by removing propositions and clauses that are not required to enforce plan validity.
+Later sections will introduce further optimisations that exploit symmetries between interchangeable operators and domain objects.
+
+Due to the difficulty of propositionalising Definition~\ref{def:pop-validity}, all four encodings instead preserve plan validity with the \POCL requirements in Definition~\ref{def:pocl-valid}.
+While easier to encode, this raises the possibility that the resulting optimised \POP{}s contain unnecessary ordering constraints. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{The \MD and \MR Encodings}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\citet{Muise2016-PopMaxSAT}'s encodings are reproduced here for ease of reference.
+\MD and \MR use two ``types'' of propositional variables.
+If $P = \tup{\opset, \precrel, \sub}$ is the input \POP, then for each pair of actions $\actn_1, \actn_2 \in \opset\sub$, a proposition $\precp{\actn_1}{\actn_2}$ is introduced to indicate that $\actn_1$ must precede $\actn_2$ in the resulting \POP.
+For all $\actn_c$, $\actn_p$ and $q$ such that $\actn_c$ consumes $q$ and $\actn_p$ produces $q$, a proposition $\pclpg{\actn_p}{q}{\actn_c}$ is introduced to encode the requirement that in the final \POP, $\actn_p$ be causally linked to $\actn_c$ with respect to $q$.
+
+\MD and \MR encode a \POP into a partially-weighted \MAXSAT instance with the clauses described below.
+The first three sets of hard clauses ensure that the output \POP is ``well-formed'', that is, acyclic and transitively closed with all actions ordered between the initial state and goal:
+%
+\begin{align}
+& \bigwedge_{\clapstack{\actn}} \neg \precp{\actn}{\actn}. \label{eq:mr-irr} \\
+	%
+& \bigwedge_{\clapstack{\actn_1, \actn_2, \actn_3}} \precp{\actn_1}{\actn_2} \land \precp{\actn_2}{\actn_3} \rightarrow 
+	\precp{\actn_1}{\actn_3}. \label{eq:mr-trans} \\
+	%
+& \bigwedge_{\clapstack{\actn \not\in \set{\initactn, \goalactn}}} \precp{\initactn}{\actn} \land \precp{\actn}{\goalactn}. \label{eq:mr-ig}
+\end{align}
+%
+The next two sets of hard clauses ensure that the solution represents a \POCL-valid \POP as in Definition~\ref{def:pocl-valid}:
+\begin{align}
+& \bigwedge_{\clapstack{\actn_p, \actn_c, q : \\ \consms(\actn_c, q), \\ \prods(\actn_p, q)}} \big( \pclpg{\actn_p}{q}{\actn_c} \rightarrow \bigwedge_{\clapstack{\actn_t : \actn_t \neq \actn_c, \\ \thrts(\actn_t, q)}} \precp{\actn_t}{\actn_p} \lor \precp{\actn_c}{\actn_t} \big). \label{eq:mr-thrt} \\
+%
+& \bigwedge_{\clapstack{\actn_c, q : \\ \consms(\actn_c, q)}} \qquad \quad \bigvee_{\clapstack{\actn_p : \prods(\actn_p, q) }} \precp{\actn_p}{\actn_c} \land \pclpg{\actn_p}{q}{\actn_c}. \label{eq:mr-pcl}
+\end{align}
+%
+Formula~\ref{eq:mr-soft-order} adds a soft unit clause with the \emph{negation} of each ordering proposition, meaning that higher weight (i.e., preferred) solutions will have fewer ordering constraints:	
+%
+\begin{align}
+	& \bigwedge_{\clapstack{\actn_1, \actn_2}} \maxsatcl{ \neg \precp{\actn_1}{\actn_2} }{1}. \label{eq:mr-soft-order}
+\end{align}%
+\begin{defn}\label{def:mr-encoding} The \MR encoding transforms a \POP into a partially weighted \MAXSAT instance through Formulae~\ref{eq:mr-irr}--\ref{eq:mr-soft-order}.
+\end{defn}
+%
+The \MD encoding extends \MR with clauses that disallow any ordering constraints that were not in the input plan, thus forcing the resulting \POP to be deordering of the input:
+%
+\begin{align}
+& \bigwedge_{\clapstack{(\actn_1,\actn_2) \not\in \precrel}} \neg \precp{\actn_1}{\actn_2}. \label{eq:mr-deorder}
+\end{align}
+%
+\begin{defn}\label{def:md-encoding} \MD encodes a \POP into a partial weighted \MAXSAT instance through Formulae~\ref{eq:mr-irr}--\ref{eq:mr-deorder}.
+\end{defn}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{The \MRD and \MRR Encodings}\label{sec:mrd-mrr-enc}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\MRD and \MRR allow the input \POP to be reinstantiated, and so use different variable ``types'' to express the allowable rebindings.
+Three types are used, as per the following sets:
+%
+\begin{itemize}
+\item $\precpset$ contains propositions of the form $\precp{\optr_1}{\optr_2}$, which indicate that $\optr_1 \prec \optr_2$ in the resulting \POP,
+%
+\item $\eqpset$ contains propositions of the form $\eqp{u}{s}$, which encode a requirement that in the final \POP $\sub(u) = \sub(s)$, and
+%
+\item $\pclpset$ contains propositions of the form $\pclp{\optr_p}{\vec{u}}{\optr_c}{\vec{s}}$, indicating that there must be some $q$ \ST causal link $\tup{\optr_p, q(\vec{u}), \optr_c, q(\vec{s})}$ is unthreatened in the final \POP. 
+(Abbreviated to $\pclps{\vec{u}}{\vec{s}}$ when clear from context).
+\end{itemize}
+%
+\citet{Muise2016-PopMaxSAT} observed that the cubic number of clauses generated by Formula~\ref{eq:mr-trans} make \MD and \MR infeasible for large plans: for plans with more than (approximately) $200$ steps, the implemented encoder simply runs out of memory before generating a \SAT formula.
+As this is exacerbated in \MRD and \MRR by the need to also close the variable equality relation, a number of optimisations are introduced that reduce the encoding size by removing redundant clauses and propositions.
+%
+\subimport*{graphics/}{synth-example.tex}
+%
+The first derives from the observation that any ordering or binding constraints (and propositions that encode them) that are not required to preserve validity can be removed.
+For example, consider plan $P_4$ in Figure~\ref{fig:synth-example-1} (ignoring the matrix below for now).
+Operator $A_1$ cannot be used to support any of $A_2$'s preconditions, and nor does it threaten any of its postconditions (nor \emph{vice-versa}).
+Because there is no possible causal connection between $A_1$ and $A_2$, no minimum de/reordering of $P_4$ will require that $A_1 \prec A_2$ or \emph{vice-versa}, or that $x_1$ and $x_2$ be (non-) codesignated. 
+An optimised encoding can therefore exclude the propositions $\precp{A_1}{A_2}$, $\precp{A_2}{A_1}$, $\eqp{x_1}{x_2}$ and $\eqp{x_2}{x_1}$, reducing the number of clauses required to enforce ordering and binding transitivity.
+%In constrast, $c$'s precondition $r(z_2)$ can be supported by either $a$ or $b$, and so the final \POP must either require that $a \prec c$ and $\sub(x) = \sub(z_2)$ or $b \prec c$ and $\sub(y) = \sub(z_2)$.
+%The propositions $\precp{a}{c}$, $\precp{b}{c}$, $\eqp{x}{z_2}$, $\eqp{y}{z_2}$ are thus needed to represent these constraints.
+
+The second optimisation prevents the encoding of possible causal links if the required ordering constraints are known to be unsatisfiable.
+For example, Formula~\ref{eq:mr-deorder} in \MD enforces deordering with negated unit clauses.
+Rather than include propositions which are \emph{a priori} false, the second optimisation instead removes them and limits possible supporting links to those where the producer preceded the consumer in the input plan.
+
+\cut{
+For example, consider plan $P_5$ in Figure~\ref{fig:synth-example-2}, in which
+operators $C$ and $E$ support $D$ and $F$, respectively, over predicate $q$. 
+As both $C$ and $E$ produce $q$, and both $D$ and $F$ consume $q$, both $C$ and $E$ have possible causal connections with both $D$ and $F$. % (i.e., $\tup{E(2),D(2),C(1),F(1)}$ is a valid reinstantiated reordering).
+Thus, propositions of the form $\precp{C}{D}$ and $\eqp{x_1}{x_2}$ are required for every pair of operators and variables.
+However, when deordering $P_5$ (rather than reordering) $E$ cannot be used to support $D$, which rules out the possible causal connection between the two operators. 
+Thus, an optimised deordering encoding could exclude the propositions $\precp{E}{D}$, $\eqp{x_2}{x_3}$ and $\eqp{x_3}{x_2}$.
+}
+
+The definition below formalises and generalises these ideas.
+If $\optr_1$ and $\optr_2$ are operators and $\deoprec$ is a set of ``allowable'' orderings, then $\optr_1$ and $\optr_2$ are \emph{causally related} \IFF $\optr_1 \deoprec \optr_2$ and there is a possible causal or threat relationship between them:
+%
+\begin{defn}\label{def:mrr-causal-rel}
+$\optr_1$, $\optr_2$, $q(\vec{u})$ and $q(\vec{s})$ are \defterm{causally related} \WRT $\deoprec$, \IFF $\optr_1 \deoprec \optr_2$ and either:
+\begin{itemize}
+	\item $\prods(\optr_1, q(\vec{u}))$ and $\consms(\optr_2, q(\vec{s}))$,
+	\item $\thrts(\optr_1, q(\vec{u}))$ and $\prods(\optr_2, q(\vec{s}))$, or 
+	\item $\consms(\optr_1, q(\vec{u}))$ and $\thrts(\optr_2, q(\vec{s}))$.
+\end{itemize}
+\end{defn}
+%
+This idea of ``allowable'' orderings and causally related operators is used to minimise the number of propositions that appear in the \MRD and \MRR encodings.
+The three sets of propositional variables can now be defined:
+%
+\begin{defn}\label{def:maxsat-props-sets} Let $P = \tup{\opset, \sub, \precrel}$ be a \POP and $\deoprec \subseteq \opset^2$ be a set of allowable orderings. % and $\varprec$ be a total order over $\vars(\opset)$. 
+Then $\precpset$, $\eqpset$, and $\pclpset$ are the smallest sets \ST:
+	\begin{itemize}
+		\item $\precp{\optr_1}{\optr_2} \in \precpset$ \IFF either 
+		\myi there exists a $q(\vec{u})$ and $q(\vec{s})$ \ST $\optr_1$, $\optr_2$, $q(\vec{u})$ and $q(\vec{s})$ are causally related \WRT $\deoprec$, or 
+		\myii there exists an $\optr_3$ \ST $\precp{\optr_1}{\optr_3},\precp{\optr_3}{\optr_2} \in \precpset$,
+		%
+		\item $\eqp{u}{s} \in \eqpset$ \IFF either \myi there exists a $\optr_1$, $\optr_2$, $q(\vec{u})$ and $q(\vec{s})$ that are causally related \WRT $\deoprec$ and some $i$ \ST $\vec{u}[i] = u$, $\vec{s}[i] = s$, or
+		\myii there exists a $t$ \ST $\eqp{u}{t}, \eqp{t}{s} \in \eqpset$,\footnote{Implemented code merges all $\eqp{u}{s}$ and $\eqp{s}{u}$ and updates Formulae~\ref{eq:mrr-eq-symm}~and~\ref{eq:mrr-eq-trans} accordingly.} and
+		%
+		\item $\pclp{\optr_p}{\vec{u}}{\optr_c}{\vec{s}} \in \pclpset$ \IFF there exists a $q$ \ST $\prods(\optr_p, q(\vec{u}))$, $\consms(\optr_c, q(\vec{s}))$ and $\optr_p \deoprec \optr_c$.
+	\end{itemize}
+\end{defn}
+
+\MRD and \MRR encode a \POP $P = \tup{\opset, \sub, \precrel}$ and a set of allowable orderings $\deoprec \subseteq \opset^2$ into a partially-weighted \MAXSAT instance through the formulae described below.
+Formulae~\ref{eq:mrr-asymm}--\ref{eq:mrr-ig} ensure that any solution represents a well-formed \POP, that is, one that is acyclic and transitively closed with all operators ordered between the initial state and goal.
+They derive from Formulae~\ref{eq:mr-irr}--\ref{eq:mr-ig} in \MR, but remove propositions and constraints not required to preserve validity:
+
+\begin{align}
+	% ordering
+	& \bigwedge_{\clapstack{\precp{\optr_1}{\optr_2}, \precp{\optr_2}{\optr_1} \in \precpset}} \neg \precp{\optr_1}{\optr_2} \lor \neg \precp{\optr_2}{\optr_1}. \label{eq:mrr-asymm} \\
+	%
+	& \bigwedge_{\clapstack{\precp{\optr_1}{\optr_2}, \precp{\optr_1}{\optr_3}, \\ \precp{\optr_2}{\optr_3} \in \precpset}} \precp{\optr_1}{\optr_2} \land \precp{\optr_2}{\optr_3} \rightarrow \precp{\optr_1}{\optr_3}. \label{eq:mrr-trans} \\
+	%
+	& \bigwedge_{\clapstack{\precp{\initoptr}{\optr}, \precp{\optr}{\goaloptr} \in \precpset}} \precp{\initoptr}{\optr} \land \precp{\optr}{\goaloptr}.\label{eq:mrr-ig}
+\end{align}%
+%
+Formulae~\ref{eq:mrr-eq-symm}~and~\ref{eq:mrr-eq-trans} ensure that the equality relation over variables and constants is symmetric and transitive, and Formula~\ref{eq:mrr-eq-domain} ensures that each variable is bound to exactly one object.
+They are extensions to \MD and \MR that ensure the consistency of the \POP's variable bindings:
+%
+\begin{align}
+	% bindings
+	& \bigwedge_{\clapstack{\eqp{u}{s} \in \eqpset}} \eqp{u}{s} \leftrightarrow \eqp{s}{u}. \label{eq:mrr-eq-symm} 
+	\\
+	& \bigwedge_{\clapstack{\eqp{s}{u}, \eqp{u}{v}, \\ \eqp{s}{v} \in \eqpset}} \eqp{s}{u} \land \eqp{u}{v} \rightarrow \eqp{s}{v}. \label{eq:mrr-eq-trans} 
+	\\
+	& \bigwedge_{\clapstack{x \in \vars(\opset)}} \qquad \; \big( \bigvee_{\clapstack{c \in \consts(\opset) : \\ \eqp{x}{c} \in \eqpset }} \eqp{x}{c} \quad \land \quad \bigwedge_{\clapstack{ c_1, c_2 \in \consts(\opset) : \\ \eqp{x}{c_1}, \eqp{x}{c_2} \in \eqpset, \\ c_1 \neq c_2}} \neg\eqp{x}{c_1} \lor \neg\eqp{x}{c_2} \big). \label{eq:mrr-eq-domain}
+\end{align}%
+%
+Formulae~\ref{eq:mrr-cl} and~\ref{eq:mrr-cl-holds} encode \POCL-validity.
+%%
+Formula~\ref{eq:mrr-cl} requires that each consumer be causally linked to at least one producer, and Formula~\ref{eq:mrr-cl-holds} defines the ordering, binding and threat protection constraints required for a causal link to hold.
+%%
+These derive from Formulae~\ref{eq:mr-thrt}~and~\ref{eq:mr-pcl} in \MD and \MR, but have been optimised to remove redundant propositions, and generalised to allow the \POP's variable bindings to change:
+%
+\begin{align}
+% validity
+& \bigwedge_{ \clapstack{\optr_c, q(\vec{s}) : \\ \consms(\optr_c, q(\vec{s})) } } \qquad \qquad \bigvee_{\clapstack{ \pclp{\optr_p}{\vec{u}}{\optr_c}{\vec{s}} \: \in \pclpset }} \pclp{\optr_p}{\vec{u}}{\optr_c}{\vec{s}}. \label{eq:mrr-cl} \\
+	% 
+&\begin{aligned} 
+& \bigwedge_{\clapstack{ \pclp{\optr_p}{\vec{u}}{\optr_c}{\vec{s}} \in \pclpset }} \pclp{\optr_p}{\vec{u}}{\optr_c}{\vec{s}} \; \rightarrow \; \big[ \bigwedge_{\mathclap{1 \leq i \leq \card{\vec{u}}}} \eqp{\vec{u}[i]}{\vec{s}[i]} \land \precp{\optr_p}{\optr_c} \; \land 
+	\\
+% threats
+& \qquad \bigwedge_{\clapstack{\optr_t, q(\vec{v}) : \optr_t \neq \optr_c, \\ \thrts(\optr_t, q(\vec{v})) }} \qquad \qquad
+	\big( \bigvee_{\clapstack{\satprop \in \precpset \cap 
+		\\ \set{\precp{\optr_t}{\optr_p}, \precp{\optr_c}{\optr_t}}  }}  \satprop \qquad \lor \qquad 
+		\bigvee_{\clapstack{\satprop \in \eqpset \cap 
+			\\ \set{\eqp{\vec{t}[i]}{\vec{s}[i]} : 1 \leq i \leq \card{\vec{t}}}}} \neg \satprop \big) \big] . 
+\end{aligned} \label{eq:mrr-cl-holds}
+\end{align}
+%
+Formula~\ref{eq:mrr-soft-order}, an optimised version of Formula~\ref{eq:mr-soft-order} in \MD and \MR, adds soft clauses that minimise the ordering constraints:
+%
+\begin{align}
+% soft clauses
+& \bigwedge_{\clapstack{\precp{\optr_1}{\optr_2} \in \precpset}} \maxsatcl{ \neg \precp{\optr_1}{\optr_2} }{1}. \label{eq:mrr-soft-order}
+\end{align}
+
+The \MRD and \MRR encodings can now be defined.
+The allowed orderings for \MRD are those from the input plan, forcing the resulting \POP to be a deordering of the input:
+%
+\begin{defn}\label{def:mrd}
+\MRD encodes a \POP $P = \tup{\opset, \sub, \precrel}$ into a partially weighted \MAXSAT instance through Formulae~\ref{eq:mrr-asymm}--\ref{eq:mrr-soft-order}, with the allowable orderings $\deoprec = \precrel$.
+\end{defn}
+%
+\noindent
+\MRR is more general, and allows all ordering constraints:
+%
+\begin{defn}\label{def:mrr}
+\MRR encodes a \POP $P = \tup{\opset, \sub, \precrel}$ into a partially weighted \MAXSAT instance through Formulae~\ref{eq:mrr-asymm}--\ref{eq:mrr-soft-order}, with the allowable orderings $\deoprec = \opset^2$.
+\end{defn}
+
+\noindent
+Solutions to the \MRD and \MRR encodings are defined as below:
+
+\begin{defn}\label{def:mrr-soln} If $P = \tup{\opset, \sub, \precrel}$ be a \POP.
+Then, function $S : \precpset \cup \eqpset \rightarrow \set{\true, \false}$ is a solution to the \MRD/\MRR \MAXSAT if it satisfies all hard clauses, and is an optimal solution if it also minimises the size of $\set{\satprop : \satprop \in \precpset, S(\satprop) = \true}$. 
+For any such function $S$, $\popfunc(S) = \tup{\opset, \sub', \precrel'}$ denotes its transformation into a \POP, where:
+\begin{itemize}
+	\item $\optr_1 \precrel' \optr_2$ \IFF $S(\precp{\optr_1}{\optr_2}) = \true$, and 
+	\item for all $x \vars(\opset)$ and $c \in \consts(\opset)$, $\sub'(x) = c$ \IFF $S(\eqp{x}{c}) = \true$, and
+	\item for all $x,y \in \vars(\opset)$, $\sub'(x) = \sub'(y)$ \IFF $S(\eqp{x}{y}) = \true$.
+\end{itemize}
+\end{defn}
+
+The following theorem establishes that an optimal solution to the \MRD/\MRR \MAXSAT encoding corresponds to a minimum \POCL-valid reinstantiated de/reorder, respectively:
+
+\begin{restatable}{theorem}{mrrenc}\label{thrm:mrr-encoding}\csprob{MRD/MRR Correctness}
+Let $P = \tup{\opset, \sub, \precrel}$ be a \POP and $S$ be an optimal solution to the \MRD/\MRR \MAXSAT encoding.
+Then, $\popfunc(S) = \tup{\opset, \sub', \precrel'}$ is a \POCL-valid reinstantiated de/reorder of $P$, and there is no $R = \tup{\opset, \sub'', \precrel''}$ that is a \POCL-valid reinstantiated de/reorder of $P$ where $\precrel'' \subset \precrel'$.
+\end{restatable}

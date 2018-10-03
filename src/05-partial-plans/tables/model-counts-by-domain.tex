@@ -1,0 +1,199 @@
+\newcommand{\mctable}[3]{   
+    \pgfplotstableread[col sep=comma]{05-partial-plans/tables/model-counts-by-domain.csv}\modelcounts 
+    \centering
+    \setlength{\tabcolsep}{5pt}
+    \pgfplotstabletypeset[
+        %%
+        font=\scriptsize,
+        %%
+        every even row/.style={
+            before row={\rowcolor[gray]{0.9}}
+            },
+        every head row/.style={%
+            before row={\toprule
+                & & & \multicolumn{4}{c}{$\Delta_{\EOG}$} \\
+                \cmidrule(lr){4-7} 
+            },
+            after row=\midrule
+        },
+        every row no 34/.style={
+            before row={
+                \rowcolor[gray]{0.9}\midrule
+            }
+        },
+        every last row/.style={
+            before row=\midrule, 
+            after row=\bottomrule,
+            font=\bfseries,
+        },
+        #3%
+        %%
+        columns/domain/.style={string type, column name={Domain}, column type={l}, column type/.add={>{\itshape}}{}},
+        %%
+        columns/n-plans/.style={numeric type, column name=$n$, column type={c}, 
+            /pgf/number format/precision=0, /pgf/number format/sci zerofill, /pgf/number format/fixed,},
+        %%
+        columns/n-eog/.style={numeric type, column name=$\#_{\EOG}$, column type={c}},
+        %%
+        columns/tw2-mt/.style={column name=$\MT$, numeric type, column type={c}, /pgf/number format/precision=1, 
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/tw2-mtml/.style={column name=$\MTSB$, numeric type, column type={c}, /pgf/number format/precision=1, 
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/tw2-rp/.style={column name=$\RP$, numeric type, column type={c}, /pgf/number format/precision=1, 
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/tw2-rpml/.style={column name=$\RPSB$, numeric type, column type={c}, /pgf/number format/precision=1, 
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/tw5-mt/.style={column name=$\MT$, numeric type, column type={c}, /pgf/number format/precision=1, 
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/tw5-mtml/.style={column name=$\MTSB$, numeric type, column type={c}, /pgf/number format/precision=1, 
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/tw5-rp/.style={column name=$\RP$, numeric type, column type={c}, /pgf/number format/precision=1, 
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/tw5-rpml/.style={column name=$\RPSB$, numeric type, column type={c}, /pgf/number format/precision=1, 
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        #1,
+        ]
+        {\modelcounts}%
+        \caption[Flexibility of \MKTR with treewidth #2 and \EOG, by domain]{Comparison of \MKTR with treewidth of #2 and \EOG.
+        For each domain, $\#_\EOG$ is the mean number of instantiations of the \POP produced by \EOG, and $\Delta_\EOG$ is the mean $\%$ increase in instantiations found by \MKTR with each policy.
+        All $\Delta_\EOG$ values are computed from the $n$ plans for which instantiation counts are available for all five approaches, and are statistically significant with $p < 0.05$ as calculated from a single-tailed, paired t-test. 
+        Empty cells indicate no data, or no significant difference.}
+}
+
+\begin{table}[t]
+    \mctable{columns={domain,n-plans,n-eog,tw2-mt,tw2-mtml,tw2-rp,tw2-rpml}}{two}{%
+        every row 8 column 5/.style={
+        postproc cell content/.style={
+          @cell content/.add={}{$\%\bm{\ddagger}$}
+        }
+      },
+      every row 13 column 5/.style={
+        postproc cell content/.style={
+          @cell content/.add={}{$\%\bm{\ddagger}$}
+        }
+      },
+      every row 16 column 5/.style={
+        postproc cell content/.style={
+          @cell content/.add={}{$\%\bm{\ddagger}$}
+        }
+      },
+      every row 24 column 5/.style={
+        postproc cell content/.style={
+          @cell content/.add={}{$\%\bm{\ddagger}$}
+        }
+      },
+      every row 31 column 5/.style={
+        postproc cell content/.style={
+          @cell content/.add={}{$\%\bm{\ddagger}$}
+        }
+      },
+      every row 32 column 5/.style={
+        postproc cell content/.style={
+          @cell content/.add={}{$\%\bm{\ddagger}$}
+        }
+      },
+      every row 33 column 5/.style={
+        postproc cell content/.style={
+          @cell content/.add={}{$\%\bm{\ddagger}$}
+        }
+      },
+      every row 36 column 5/.style={
+        postproc cell content/.style={
+          @cell content/.add={}{$\%\bm{\ddagger}$}
+        }
+      },   
+    }
+    \label{tab:pp-model-counts-domain-tw2}
+\end{table}
+
+\begin{table}[t]
+    \mctable{columns={domain,n-plans,n-eog,tw5-mt,tw5-mtml,tw5-rp,tw5-rpml}}{five}{%
+      every row 8 column 5/.style={
+        postproc cell content/.style={
+          @cell content/.add={}{$\%\bm{\ddagger}$}
+        }
+      },
+      every row 11 column 5/.style={
+        postproc cell content/.style={
+          @cell content/.add={}{$\%\bm{\ddagger}$}
+        }
+      },
+      every row 12 column 5/.style={
+        postproc cell content/.style={
+          @cell content/.add={}{$\%\bm{\ddagger}$}
+        }
+      },
+      every row 13 column 5/.style={
+        postproc cell content/.style={
+          @cell content/.add={}{$\%\bm{\ddagger}$}
+        }
+      },
+      every row 21 column 5/.style={
+        postproc cell content/.style={
+          @cell content/.add={}{$\%\bm{\ddagger}$}
+        }
+      },
+      every row 23 column 5/.style={
+        postproc cell content/.style={
+          @cell content/.add={}{$\%\bm{\ddagger}$}
+        }
+      },
+      every row 30 column 5/.style={
+        postproc cell content/.style={
+          @cell content/.add={}{$\%\bm{\ddagger}$}
+        }
+      },
+      every row 31 column 5/.style={
+        postproc cell content/.style={
+          @cell content/.add={}{$\%\bm{\ddagger}$}
+        }
+      },
+      every row 32 column 5/.style={
+        postproc cell content/.style={
+          @cell content/.add={}{$\%\bm{\ddagger}$}
+        }
+      },
+      %%%%%%%%%%%%%%
+      every row 4 column 6/.style={
+        postproc cell content/.style={
+          @cell content/.add={}{$\%\bm{\dagger}$}
+        }
+      },
+      every row 11 column 4/.style={
+        postproc cell content/.style={
+          @cell content/.add={}{$\%\bm{\dagger}$}
+        }
+      },
+      every row 36 column 6/.style={
+        postproc cell content/.style={
+          @cell content/.add={}{$\%\bm{\dagger}$}
+        }
+      },
+    }
+    \label{tab:pp-model-counts-domain-tw5}
+\end{table}
+    

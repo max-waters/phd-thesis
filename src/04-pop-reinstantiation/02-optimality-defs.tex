@@ -1,0 +1,63 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Optimality Criteria for Reinstantiated Partial-Order Plans}\label{sec:reins-pop-opt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The standard optimality criteria for \POP{}s\footnote{To more easily express changes in variable bindings, this chapter denotes a \POP as $P = \tup{\opset, \sub, \precrel}$, where $\opset$, $\sub$ and $\precrel$ denote the operators, bindings and orderings as in Definition~\ref{def:pop}.} (Definition~\ref{def:opt-de-reorder}) are based on a set-wise comparison of ordering constraints, and assume that the variable bindings in the \POP{}s remain static.
+This section will present generalised versions of these optimality criteria which lift this restriction.
+The aim of the new definitions remains the same, which is to compare the relative constrained-ness of two \POP{}s.
+However, these extended definitions make use of additional information contained in the \POP, the variable bindings, and so are capable of comparing \POP{}s that would not be comparable under standard definitions.
+
+First, the notions of deordering and reordering are extended to allow modifications to the \POP{}'s variable bindings.
+A \emph{reinstantiated deordering} of a \POP removes ordering constraints and allows the variable bindings to change, while a \emph{reinstantiated reordering} allows arbitrary changes to both orderings and variable bindings.\footnote{There is no notion of ``deinstantiation'' as a \POP $P = \tup{\opset\sub, \prec}$ is always ground, i.e., bindings $\sub$ are ground and complete \WRT the operators \opset.}
+In all cases, the resulting \POP must remain both ground (i.e., all variables are bound, as in Definition~\ref{def:pop}) and valid (i.e., all linearisations are executable, as in Definition~\ref{def:pop-validity}):\footnote{From Definition~\ref{def:pop}, these optimality criteria always compare the transitive closure of the \POP{}s' ordering constraints.}
+
+\begin{defn}\label{def:reins-re-deorder} Let $P = \tup{\opset, \sub, \precrel}$ and $Q = \tup{\opset, \sub', \precrel'}$ be two \POP{}s. Then: 
+\begin{itemize}
+  \item $Q$ is a \defterm{reinstantiated reordering} of $P$ \IFF both $P$ and $Q$ are valid,
+  \item $Q$ is a \defterm{reinstantiated deordering} of $P$ \IFF $Q$ is a reinstantiated reordering of $P$ and $\precrel' \subseteq \precrel$, and
+  \item $Q$ is a \defterm{reinstantiated strict deordering} of $P$ \IFF $Q$ is a reinstantiated deordering of $P$ and $\precrel' \subset \precrel$. 
+\end{itemize}
+\end{defn}
+
+For example, consider classical plans $P_1$ and $P_2$ and \POP $P_3$ in Figure~\ref{fig:rovers-plans}. 
+As the three plans contain different actions (more specifically, the same operator types but different variable bindings), their flexibility cannot be compared under standard optimality definitions.
+However, the generalised definitions above do allow a comparison: as all plans are valid and use the same operators, they are reinstantiated reorderings of each other, and $P_3$ is a reinstantiated (strict) deordering of both $P_1$ and $P_2$.
+
+The notion of a least-constrained \POP can now be generalised to allow for changes in variable bindings.
+A \emph{minimal reinstantiated deordering} of a \POP is a reinstantiated deordering that cannot be relaxed any further, that is, there is no modification to the \POP's variable bindings that will allow for the removal of any ordering constraints.
+A \emph{minimum reinstantiated deordering} of a \POP has the fewest ordering constraints of all of its reinstantiated deorderings.
+Out of all the ways that a \POP's ordering and binding constraints can be modified, a \emph{minimum reinstantiated reordering} contains the fewest ordering constraints:
+
+\begin{defn}\label{def:opt-reins-re-deorder} Let $P = \tup{\opset, \sub, \precrel}$ and $Q = \tup{\opset, \sub', \precrel'}$ be two \POP{}s. Then: 
+\begin{itemize}
+  \item $Q$ is a \defterm{minimal reinstantiated deordering} of $P$ \IFF it is a reinstantiated deordering of $P$ and there is no \POP $R$ such that $R$ is a reinstantiated strict deordering of $Q$,
+  \item $Q$ is a \defterm{minimum reinstantiated deordering} of $P$ \IFF it is a reinstantiated deordering of $P$ and there is no \POP $R = \tup{\opset, \sub'', \precrel''}$ such that $R$ is a reinstantiated deordering of $P$ and $\card{\precrel''} < \card{\precrel'}$, and 
+  \item $Q$ is a \defterm{minimum reinstantiated reordering} of $P$ \IFF it is a reinstantiated reordering of $P$ and there is no \POP $R = \tup{\opset, \sub'', \precrel''}$ such that $R$ is a reinstantiated reordering of $P$ and $\card{\precrel''} < \card{\precrel'}$.
+\end{itemize}
+\end{defn}
+
+For example, plan $P_3$ has two ordering constraints, and as there is no reinstantiation of $P_1$ which allows for fewer than this, $P_3$ is a minimum reinstantiated reordering of $P_1$.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Computing Optimal Reinstantiations}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Given that the size of a \POP's ordering relation can be measured directly, and that reinstantiated de/reordering is a generalisation of standard de/reordering, it is no surprise that deciding whether a \POP has a reinstantiated de/reordering with fewer than $k$ ordering constraints is \NP-complete:\footnote{Proofs for all theorems in this chapter are in Appendix~\ref{apx:pop-maxsat}.}
+
+\begin{restatable}{theorem}{mmrd}\label{thrm:mrd-mrr-npc}
+\csprob{Minimum Reinstantiated Reordering}
+Given a \POP $P = \tup{\opset, \sub, \precrel}$ and an integer $k > 0$, determining whether there exists a \POP $Q = \tup{\opset, \sub', \precrel'}$ \ST $Q$ is a reinstantiated reordering (or deordering) of $P$ and $\card{\precrel'} < k$ is \NP-complete.
+\end{restatable}
+
+Additionally, the optimisation problems of finding a minimum reinstantiated de/reordering are \NP-hard and cannot be approximated within a constant factor:
+
+\begin{restatable}{theorem}{mmrdopt}\label{thrm:mrd-mrr-opt}
+\csprob{Approximate Minimum Reinstantiated Reordering}
+The problem of finding a minimum reinstantiated deordering (or reordering) of a \POP is not in \APX unless $\NP \subseteq \DTIME(n^{\text{poly log n}}$).
+\end{restatable}
+%
+\paragraph{Optimality Under \POCL-validity} The results and definitions above use the standard definition of \POP validity, that requires that all of a \POP{}'s linearisations be executable (Definitions~\ref{def:pop-lin} and~\ref{def:pop-validity}).
+Under the additional requirement that the input and optimised \POP{}s be \POCL-valid, that is, that each operator precondition be supported by a postcondition of some previous operator (Definition~\ref{def:pocl-valid}), minimum de/reordering remain \NP-complete (a trivial corollary of Theorem $4.8$ in~\cite{Backstrom-CompAspects}). 
+However, due to the stronger requirements of \POCL-validity there exist minimum \POCL-valid de/reorderings that can be further optimised while remaining valid under Definition~\ref{def:pop-validity}~\cite{Kambhampati1996:ModalTruth}.
+These complexity and completeness results can be trivially extended to minimum reinstantiated \POCL-valid de/reordering.

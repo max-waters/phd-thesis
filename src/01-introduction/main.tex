@@ -1,0 +1,337 @@
+\chapter{Introduction}
+
+% achieve goals in dynamic environments
+% Succesful plans are all alike; every failed plan failed in its own way.
+Since the early days of artificial intelligence research, the ability to achieve goals in complex, unpredictable environments has been considered an essential element of intelligent behaviour.
+To achieve its goals, an agent typically has a \emph{plan}, that is, a strategy that guides its future actions.
+Unfortunately, real-world environments make plan execution particularly hard.
+Actions can fail or have unexpected, nondeterministic side effects, the environment can be dynamic, partially observable or contain other active agents, and it may not be feasible to consider all possibilities ahead of time or to perform complex planning at execution time.
+It is therefore preferable for a plan to be \emph{flexible}, that is, for it to allow the agent to modify its behaviour in response to unexpected events. 
+Thus, this thesis will introduce, theoretically analyse and empirically evaluate novel techniques for representing and generating plans that provide execution-time flexibility.
+
+% resources
+While most work on plan flexibility focuses on allowing the agent to decide the \emph{order} in which it executes actions, of particular interest here is the flexibility that arises when the agent is allowed to reason about the \emph{domain objects} that are used in the course of executing a plan.
+In the context of automated planning and scheduling~\cite{GeffnerBonet:ConciseIntroPlanning,GhallabNauTraverso:AutPlanTheoPrac}, a domain object is an element of the environment that is relevant to the processes of plan generation and execution.
+For example, in a factory domain this could include machines, engineers or purchase orders, or consumable items such as raw materials or energy.
+The central claim of this thesis is that plans and plan generation processes that allow for reasoning about both action orderings and domain object use provide more execution-time flexibility than those that reason about action orderings alone.
+
+% other approaches
+The simplest planning model, the well-studied \emph{classical planning}~\cite{GeffnerBonet:ConciseIntroPlanning,GhallabNauTraverso:AutPlanTheoPrac,Fikes1971:STRIPS}, is particularly unsuited to uncertain environments.
+Classical planners assume that the environment is static and fully observable, and that actions are deterministic, and thus produce \emph{classical plans}, that is, fixed sequences of actions.
+Nevertheless, there are techniques for generating flexible plans under these assumptions. 
+For example, a \emph{partial-order planner}~\cite{Weld94:LeastCommitment} instead synthesises \emph{partial-order plans} (\POP{}s), a more flexible form of plan that specifies which actions must be executed, but without completely specifying their order. 
+Other approaches repair plans or replan at execution time, or interleave planning, sensing and acting (e.g.,~\cite{Fox2006:ReplanningRepair,vanDerKrogt2005:PlanRepair,Brenner2009:ContPlanning}).
+More complex approaches drop the classical assumptions.
+If the agent can gather sensory data, then a \emph{contingent planner} (e.g.,~\cite{Muise2014:ContingentPlansFOND,Pryor1996:CassandraContingencyPlnr,Hoffmann2005:ContingentFF}) or \emph{strong cyclic planner} (e.g.,~\cite{Muise2012:ImprNonDetPlanning,Cimatti2003:WeakStrongCycPlanning,Gefner2018:FONDasSAT,Rodriguez2021:FlexibleFOND}) can generate a conditional or iterative plan, respectively, that selects actions based on the observed environmental state.
+If not, a \emph{conformant planner} (e.g.,~\cite{Smith1998:ConfGraphplan,Hoffmann2006:ConformantHeur,Cimatti2004:ConformantSymbolic}) can generate a linear plan that succeeds no matter the effect of nondeterministic actions, or the true state of the unknown aspects of the environment.
+Unfortunately, this increased flexibility comes at a far greater computational cost than classical planning~\cite{Littman1997:ProbPropPlan,Rintannen2004:ComplPlanPartObs,Haslum1999:ResultsComplPlan}.
+% POMDP planning, and interleaving planning and execution, BDI agents, etc.
+
+% post-processing
+Another commonly-used technique, which will be used in this thesis, is to \emph{relax} a classical plan, perhaps one produced by a classical planner, and thereby transform it into a more flexible form (e.g.,~\cite{Backstrom-CompAspects,Muise2016-PopMaxSAT,Kambham2002:TemporalFlex,Say2016:MathematicalPOP,SiddiquiHaslum2012-Block,Kambhampati:2004:ExplBasedGeneralisation}).
+There are two benefits to this optimisation approach. 
+Firstly, it can take advantage of recent developments in heuristic state-space planning, one of the most successful current approaches to plan synthesis\footnote{As evidenced by the International Planning Competition (\url{ipc2018.bitbucket.io/})}, and secondly, it separates the processes of plan generation and optimisation, and so allows for the optimisation of plans that do not originate from an automated planner, but instead from, for example, a human subject-matter expert.
+
+% plan representation
+To effectively optimise a plan's flexibility, a number of interrelated computational challenges must be met.
+Firstly, a \emph{plan representation} must be found that provides execution-time flexibility. 
+Flexibility is often achieved through the use of a \POP, a partially-specified plan comprising a set of actions and a set of required orderings. 
+While representing plans in this way provides ordering flexibility, the domain objects used by the actions, that is, the actions' \emph{parameters}, are fixed, which can limit the agent's execution-time options.
+For example, in a factory domain, a \POP can recover from a late arrival of raw materials by constructing items that do not require that material while awaiting the delivery.
+However, it cannot recover from the permanent failure of a machine even if a suitable alternative is available.
+
+It is thus preferable for a plan representation to \emph{allow for variation in both a plan's order and the domain objects it uses}. 
+As this requires a more expressive representation than a simple \POP, and the design of formal languages typically involves a trade-off between expressiveness and complexity, an important consideration for plan representations that provide this kind of flexibility is \emph{plan tractability}, that is, the computational cost of using the plan.
+For example, for a plan to be useful at execution time, the agent should be able to quickly determine which of its available actions are compatible with it, and determining a plan's validity, which will be typically be done offline before execution, must be a decidable problem.
+
+% optimality criteria and optimisation algorithms
+The second challenge is the development of a theoretical framework for formally analysing plans expressed in a particular representation.
+Since the goal of this research is to provide an agent with as flexible a plan as possible, the framework should provide \emph{optimality criteria} that define an ideally flexible plan, and allow for a complexity analysis of the problem of finding plans that satisfy those criteria. 
+From this, algorithms that \emph{generate} optimally flexible plans must be designed and implemented.
+
+Plan representations that allow domain objects to be selected at execution time will require specialised frameworks. 
+However, reasoning about domain objects can also improve existing approaches to optimising \POP flexibility.
+B\"{a}ckstr\"{o}m's~\cite{Backstrom-CompAspects} seminal work on \POP optimisation considers ways to maximise flexibility by minimising ordering constraints.
+%: \emph{deordering}, in which constraints can be removed but not added, and \emph{reordering}, in which any modification can be made.
+However, these optimisations only modify the actions' orderings, not their parameters, and as the original plan was likely not generated with flexibility in mind, but rather with the aim of minimising makespan or cost, this can limit the flexibility of the final optimised \POP.
+For example, consider a factory with two day-long production tasks that cannot be executed concurrently.
+A schedule that assigns one task to an engineer who is only available on Monday, and the other to an engineer who is only available on Tuesday, cannot have its order relaxed.
+However, an optimisation that reassigns both tasks to a third engineer who is available on both days allows a schedule with the same makespan, but with tasks that can now be executed in any order.
+
+It is thus preferable, even when the plan representation does not provide object flexibility, for \emph{optimality criteria to account for different orderings and domain objects, and for both of these to be modified by the optimisation process}.
+However, this will come at significant computational cost. 
+Finding an optimally flexible \POP is well-known to be intractable~\cite{Backstrom-CompAspects}, and considering all combinations of action parameters produces an exponentially larger search space.
+The final challenge is thus finding algorithms that effectively optimises plans despite this combinatorial explosion.
+
+The following example will illustrate how the intelligent use of domain objects can provide an agent with additional flexibility, informally introduce some of the concepts and terminology that will be used throughout this thesis, and show some computational challenges that arise when reasoning about flexibility.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Example}\label{sec:intro-example}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Consider a planning task from (an abbreviated version of) the well-known \IPC \ipcdomain{barman} domain\footnote{\url{http://www.plg.inf.uc3m.es/ipc2011-deterministic/DomainsSequential.html}}, in which a barman must use shot glasses and shakers to prepare cocktails out of various ingredients.
+In this task, the domain objects comprise two hands ($\lhand$ and $\rhand$), one shot glass ($\shot$), one shaker ($\shaker$), two ingredients ($\ing_1$ and $\ing_2$) and one cocktail ($\cockt$) that is created by adding the two ingredients to the shaker before shaking it.
+Initially, the shot glass and shaker are both clean, empty and on the table, and both hands are empty. 
+The goal is for the shot glass to contain the cocktail.
+
+Actions have preconditions: shot glasses must be clean before use and hands must be empty to pick up glasses or shakers.
+% and ingredients can only be poured from their respective dispensers.
+Additionally, most actions require two hands: to clean a glass, add an ingredient to a glass, or shake a shaker requires one hand to be holding the glass or shaker, while a second, empty, hand ``assists'' in cleaning, pouring or shaking, respectively.
+Plan $P_1$ below is an optimal solution to this problem:
+
+\pagebreak
+
+\plantable{Plan $P_1$}{fig:example-plan1}{
+1. & $\grasp(\rhand, \shot)$ \\
+2. & $\fillshot(\shot, \ing_1, \rhand, \lhand)$ \\
+3. & $\pstcs(\shot, \ing_1, \shaker, \rhand, \lhand)$ \\
+4. & $\cleanshot(\shot, \ing_1, \rhand, \lhand)$ \\
+5. & $\fillshot(\shot, \ing_2, \rhand, \lhand)$ \\
+6. & $\pstus(\shot, \ing_2, \shaker, \rhand, \lhand)$ \\
+7. & $\cleanshot(\shot, \ing_2, \rhand, \lhand)$ \\
+8. & $\drop(\rhand, \shot)$ \\
+9. & $\grasp(\rhand, \shaker)$ \\
+10. & $\shake(\cockt, \ing_1, \ing_2, \shot, \shaker, \rhand, \lhand)$ \\
+11. & $\psts(\cockt, \shot, \rhand, \shaker)$ \\
+}
+
+The barman first picks up the shot glass with its right hand. 
+Then, in steps $2$--$4$, $\ing_1$ is poured into the glass, and then from the glass into the shaker, and finally the glass is cleaned. 
+The same is done with ingredient $\ing_2$ over steps $5$--$7$.
+The barman then puts down the shot glass, picks up the shaker, and shakes it to create the cocktail. 
+Finally, the cocktail is poured back into the glass, achieving the goal.
+
+Beyond the problem of generating such a plan, there is the problem of executing it in a dynamic environment.
+Glasses can break, bottles can be picked up and used by other agents, and the barman could even sprain its robotic wrist.
+It is therefore desirable for the agent to have alternative ways of achieving its goal.
+
+% reinstantion can produce new valid plans
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{Reinstantiating plans} 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+A common technique for providing flexibility at execution time is to \emph{reorder} the plan.
+For example, relative to the domain, it does not matter whether ingredient $\ing_1$ or $\ing_2$ is poured first.
+Therefore, if $\ing_1$ is not available at execution time, the barman could pour $\ing_2$ first in the hope that $\ing_1$ will soon become available again. 
+Unfortunately, $P_1$ does not allow for any such reordering of actions.
+
+When reordering a plan, it is essential that the plan remains valid, that is, that it remain legally executable \WRT the actions' preconditions and achieves the goal.
+As indicated by the action name, step $6$ requires that the shaker not be empty, a condition that is only produced by step $3$. 
+Therefore, step $3$ \emph{must} be executed before step $6$, and as a result $\ing_1$ must be poured first.
+Indeed, the actions in $P_1$ are so tightly causally linked that $P_1$ \emph{cannot be reordered at all}.
+
+However, it is possible to pour $\ing_2$ first by instead modifying the parameters of some actions, that is, by \emph{reinstantiating} the plan.
+As with reordering, reinstantiation must preserve plan validity. 
+In this example, modifying the ingredient order while maintaining the plan's validity is a trivial matter of swapping occurrences of $\ing_1$ and $\ing_2$ in steps $2$--$7$, as has been done in plan $P_2$ below:
+
+\pagebreak
+
+\plantable{Plan $P_2$: a reinstantiation of $P_1$}{fig:example-plan2}{
+1. & $\grasp(\rhand, \shot)$ \\
+2. & $\fillshot(\shot, \boldsymbol{\ing_2}, \rhand, \lhand)$ \\
+3. & $\pstcs(\shot, \boldsymbol{\ing_2}, \shaker, \rhand, \lhand)$ \\
+4. & $\cleanshot(\shot, \boldsymbol{\ing_2}, \rhand, \lhand)$ \\
+5. & $\fillshot(\shot, \boldsymbol{\ing_1}, \rhand, \lhand)$ \\
+6. & $\pstus(\shot, \boldsymbol{\ing_1}, \shaker, \rhand, \lhand)$ \\
+7. & $\cleanshot(\shot, \boldsymbol{\ing_1}, \rhand, \lhand)$ \\
+8. & $\drop(\lhand, \shot)$ \\
+9. & $\grasp(\lhand, \shaker)$ \\
+10. & $\shake(\cockt, \ing_1, \ing_2, \shot, \shaker, \rhand, \lhand)$ \\
+11. & $\psts(\cockt, \shot, \rhand, \shaker)$ \\
+}%
+
+Plan $P_2$ is \emph{not} simply a reorder of $P_1$.
+It executes the action \emph{types} in the same order as they are executed $P_1$, but the parameters are different, meaning that it contains different actions.
+Thus, \emph{reinstantiation can produce valid alternative plans which cannot be found by reordering}. 
+
+% reinstantiated reordering
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{Reinstantiation allows new reorderings}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+In the example above, the original plan has been transformed into another \emph{ground}, \emph{totally ordered} plan, that is, one in which every action has been assigned a specific execution time and specific parameters. 
+As a single plan cannot provide additional flexibility, and it is not typically feasible to reason about alternative orderings and parameters at execution time, it is preferable for an agent to have a generalised plan that represents a number of different ways to achieve its goal.
+As \POP{}s represent a set of ground, totally ordered plans that all achieve the same goal by executing the same actions, but differ in their ordering, they are often used for precisely this purpose.
+
+Partial-order plans are often generated by removing unnecessary ordering constraints from a totally ordered plan. 
+While, as discussed above, plan $P_1$ cannot be generalised in this way, a simple examination of the causal links between $P_1$'s actions reveals a reinstantiation that allows the plan's ordering to be relaxed. 
+%In steps $1$--$8$, $\rhand$ holds the shot glass while $\lhand$ assists in pouring ingredients or cleaning the glass.
+%In steps $9$--$11$, $\rhand$ manipluates the shaker while $\lhand$ assists in shaking.
+A precondition of step $9$ is that $\rhand$ be empty, which is brought about by step $8$.
+However, at the point when step $9$ is executed, $\lhand$ is also empty, and has been since the initial state.
+Thus, swapping $\rhand$ and $\lhand$ over steps $9$--$11$ produces a valid reinstantiation, as shown in plan $P_3$ below:
+
+\plantable{Plan $P_3$: a reinstantiation of $P_1$ that can be reordered}{fig:example-plan3}{
+1. & $\grasp(\rhand, \shot)$ \\
+2. & $\fillshot(\shot, \ing_1, \rhand, \lhand)$ \\
+3. & $\pstcs(\shot, \ing_1, \shaker, \rhand, \lhand)$ \\
+4. & $\cleanshot(\shot, \ing_1, \rhand, \lhand)$ \\
+5. & $\fillshot(\shot, \ing_2, \rhand, \lhand)$ \\
+6. & $\pstus(\shot, \ing_2, \shaker, \rhand, \lhand)$ \\
+7. & $\cleanshot(\shot, \ing_2, \rhand, \lhand)$ \\
+8. & $\drop(\rhand, \shot)$ \\
+9. & $\grasp(\boldsymbol{\lhand}, \shaker)$ \\
+10. & $\shake(\cockt, \ing_1, \ing_2, \shot, \shaker, \boldsymbol{\lhand}, \boldsymbol{\rhand})$ \\
+11. & $\psts(\cockt, \shot, \boldsymbol{\lhand}, \shaker)$ \\
+}
+
+This change in parameters allows $P_3$ to admit a new reordering. 
+Since step $9$ no longer depends on step $8$, step $8$ need not precede $9$. 
+The two steps can be executed in any order so long as they are both executed between steps $7$ and $10$, and thus $P_3$ can be relaxed into a \POP that represents both of those options.
+This shows that \emph{an appropriate selection of domain objects can allow new ways of reordering a plan}, and can allow a plan that cannot otherwise be made more flexible to be relaxed into a \POP.
+
+% symmetrical bindings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{Combinations of equivalent objects} 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Providing an agent with the means to reason about, and modify, the domain objects it uses can provide it with more ways to achieve its goals, however, this can come at considerable computational cost.
+The problem of relaxing a plan into a \POP with as few ordering constraints as possible is already known to be intractable~\cite{Backstrom-CompAspects}, and reasoning about domain objects means considering an exponential number of possible action parameters.
+Plan $P_4$ below illustrates one way to reduce the effect of this combinatorial explosion.
+
+Plan $P_4$ is a transformation of $P_3$ in which $\lhand$ and $\rhand$ have been swapped.
+The validity of this transformation derives from the observation that the domain objects $\lhand$ and $\rhand$ are identical in all name: they both represent hands, and are both initially empty.
+This means that swapping all occurrences of $\lhand$ and $\rhand$ in all steps in $P_3$ will produce a valid plan:
+
+\plantable{Plan $P_4$: a symmetric variation of plan $P_3$}{fig:example-plan4}{
+1. & $\grasp(\boldsymbol{\lhand}, \shot)$ \\
+2. & $\fillshot(\shot, \ing_1, \boldsymbol{\lhand}, \boldsymbol{\rhand})$ \\
+3. & $\pstcs(\shot, \ing_1, \shaker, \boldsymbol{\lhand}, \boldsymbol{\rhand})$ \\
+4. & $\cleanshot(\shot, \ing_1, \boldsymbol{\lhand}, \boldsymbol{\rhand})$ \\
+5. & $\fillshot(\shot, \ing_2, \boldsymbol{\lhand}, \boldsymbol{\rhand})$ \\
+6. & $\pstus(\shot, \ing_2, \shaker, \boldsymbol{\lhand}, \boldsymbol{\rhand})$ \\
+7. & $\cleanshot(\shot, \ing_2, \boldsymbol{\lhand}, \boldsymbol{\rhand})$ \\
+8. & $\drop(\boldsymbol{\lhand}, \shot)$ \\
+9. & $\grasp(\boldsymbol{\rhand}, \shaker)$ \\
+10. & $\shake(\cockt, \ing_1, \ing_2, \shot, \shaker, \boldsymbol{\rhand}, \boldsymbol{\lhand})$ \\
+11. & $\psts(\cockt, \shot, \boldsymbol{\rhand}, \shaker)$ \\
+}
+
+This equivalence extends to the plans' flexibility. 
+As in $P_3$, steps $8$ and $9$ in $P_4$ can be executed in any order so long as they are both executed between steps $7$ and $10$. Thus, $P_4$ can also be relaxed into a \POP representing two possible ways of ordering the actions.
+As there can, in general, be multiple combinations of equivalent objects, any permutation of which is \emph{guaranteed} to yield an equally valid and flexible reinstantiation, a plan can have a possibly exponential number of variations that need not be considered by the relaxation process.
+Detecting and avoiding these equivalent set of objects, through the well-studied process of \emph{symmetry breaking}, can make the problem of finding optimally flexible plans exponentially easier.
+
+% partial plans
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{Relaxing action orderings and parameters}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Once the possibility of changing the domain objects used by a plan has been acknowledged, a natural next step is to provide further flexibility by \emph{allowing the agent to select domain objects at execution time}.
+Of course, a \POP cannot provide this type of flexibility.
+While it allows decisions regarding the order of actions to be made at execution time, the actions' parameters are fixed.
+
+However, plan $P_1$ can be relaxed into a form that provides this kind of flexibility by replacing its actions' parameters with variables, and supplying rules that describe the allowable combinations of variable bindings and orderings, that is, by transforming it into a \emph{partial plan}.
+In this way, \emph{a single partial plan can represent a set of ground plans that achieve the same goal, but do so by making use of different domain objects and action orderings}.
+
+For example, a partial plan can be defined which encapsulates all of the transformations described above.
+In plan $P_4$ below, the actions' parameters have been selectively replaced by variables. 
+The hands in steps $1$--$8$ and $9$--$11$ have been replaced by the variables $\handvar_1$ and $\handvar_2$, and $\handvar_3$ and $\handvar_4$, respectively, and all occurrences of $\ing_1$ and $\ing_2$ have been replaced by the variables $\ingvar_1$ and $\ingvar_2$, respectively:
+
+\plantable{Plan $P_5$: allows domain objects to be chosen at execution time}{fig:example-plan5}{
+    1. & $\grasp(\handvar_1, \shot)$ \\
+    2. & $\fillshot(\shot, \ingvar_1, \handvar_1, \handvar_2)$ \\
+    3. & $\pstcs(\shot, \ingvar_1, \shaker, \handvar_1, \handvar_2)$ \\
+    4. & $\cleanshot(\shot, \ingvar_1, \handvar_1, \handvar_2)$ \\
+    5. & $\fillshot(\shot, \ingvar_2, \handvar_1, \handvar_2)$ \\
+    6. & $\pstus(\shot, \ingvar_2, \shaker, \handvar_1, \handvar_2)$ \\
+    7. & $\cleanshot(\shot, \ingvar_2, \handvar_1, \handvar_2)$ \\
+    8. & $\drop(\handvar_1, \shot)$ \\
+    9. & $\grasp(\handvar_3, \shaker)$ \\
+    10. & $\shake(\cockt, \ing_1, \ing_2, \shot, \shaker, \handvar_3, \handvar_4)$ \\
+    11. & $\psts(\cockt, \shot, \handvar_3, \shaker)$ \\
+}
+
+\noindent
+The ordering and binding rules can be informally defined as follows:
+
+\begin{enumerate}
+    \item $\ingvar_1 = \ing_1$ and $\ingvar_2 = \ing_2$, or $\ingvar_1 = \ing_2$ and $\ingvar_2 = \ing_1$.
+    \item $\handvar_1 \neq \handvar_2$ and $\handvar_3 \neq \handvar_4$.
+    \item Steps $1$--$8$ and $10$--$11$ must be executed in order.
+    \item Steps $9$ and $10$ must be preceded by $8$ and must precede $11$.
+    \item If $\handvar_1 = \handvar_3$ then step $8$ must precede step $9$. 
+\end{enumerate}
+
+The first constraint ensures that the cocktail is mixed from the two required ingredients, but allows them to be poured in any order.
+The next constraint allows the barman to use any combination of different hands.
+The final three constraints specify the required orderings, and how the optional orderings are affected by the selected domain objects.
+
+Partial plans come with their own computational difficulties.
+Generalised plans, such as partial-order or partial plans, compactly represent a set of different ways of achieving the same goal, and so for such a plan to be useful at execution time, an agent must be able to quickly extract an element from this set. 
+For a \POP, this is a simple matter of finding a sequence of actions that satisfies its ordering constraints, well-known to be a linear-time problem. 
+However, one can imagine a partial plan with rules encoding a complex combinatorial problem that cannot be solved in a time that is suitable for real-time decision-making.
+The challenge with partial plans is finding a set of rules that provide as much flexibility as possible while being simple enough to be useful at execution time.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Research Questions and Contributions}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This thesis addresses the following questions regarding flexible plan representation, reasoning about action orderings and domain objects at both optimisation and execution time, and handling the resulting combinatorial~explosion:
+
+\begin{enumerate}
+    \item What form must a plan representation take in order to \myi provide execution-time flexibility by partially specifying action orderings and domain objects, and \myii allow a ground plan that satisfies that partial specification to be found in a time that is suitable for real-time decision-making?
+    %
+    \item How can a theoretical framework for the formal analysis of plans \myi define criteria for an optimally flexible plan that accounts for both action and domain object flexibility, and \myii allow a complexity analysis of the problem of finding a plan that satisfies those criteria?
+    %
+    \item To what degree does the tractability requirement of plans that partially specify action orderings and domain objects limit the flexibility they can provide?
+    %
+    \item What is the difference in flexibility between plans optimised by processes that modify both action orderings and domain objects, and those optimised by processes that modify orderings alone, given the same resource constraints?
+    %
+    \item How can a symmetry breaking constraint \myi detect both symmetrical action orderings and domain objects, and \myii efficiently and effectively remove non-canonical plans from the search space?
+\end{enumerate}
+
+\noindent
+The contributions of this thesis towards answering these questions can be summarised follows:
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{Chapter~\ref{chap:symmetry-breaking}: Breaking generalised symmetries in matrix and graph models}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+As the example above demonstrated, the plan optimisation problems studied in this thesis frequently display \emph{symmetry}, that is, they have exponential numbers of (non) solutions that are equivalent up to some irrelevant permutation of domain objects and/or action orderings.
+Thus, before these problems are addressed directly, Chapter~\ref{chap:symmetry-breaking} addresses the important problem of identifying symmetries and removing them from the search space.
+
+The plan optimisation techniques presented in Chapters~\ref{chap:pop-maxsat} and~\ref{chap:partial-plans} make a plan more flexible by modifying or relaxing its \emph{causal structure}, that is, a matrix that maps action effects to preconditions, determines the plan's validity and variable bindings, and partially determines its order.
+Existing techniques for breaking symmetries in matrices can handle the symmetries that occur when individual rows or individual columns are interchangeable. 
+However, \emph{symmetries over causal structures typically permute multiple rows and/or columns simultaneously}.
+
+Thus, Chapter~\ref{chap:symmetry-breaking} formally defines a hierarchy of generalised symmetries over matrices and graphs, and presents a series of examples to show that they can occur in many \CSP benchmark domains as well as the plan optimisation problems studied in later chapters.
+After a demonstration that these symmetries are too complex to be broken with standard techniques, \emph{\multilex} is introduced: a lexicographic constraint that can break generalised symmetries in matrices and arbitrary graphs, including directed graphs with self-loops. 
+An empirical evaluation shows \multilex to be a compact and efficient symmetry breaking constraint that removes all but a constant factor of symmetries from the search space.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{Chapter~\ref{chap:pop-maxsat}: Optimising partial-order plans by modifying orderings and variable bindings}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+One way to achieve execution-time flexibility is to post-process a ground, totally ordered plan into a minimally constrained \POP through the well-studied processes of \emph{plan deordering} and \emph{plan reordering}.
+A drawback of these techniques is that they optimise the actions' orderings without modifying their parameters, and since the original parameters were likely not selected with flexibility in mind, remaining committed to them can unnecessarily restrict the ordering options.
+
+Thus, Chapter~\ref{chap:pop-maxsat} introduces, and formally defines, the notions of \emph{reinstantiated deordering} and \emph{reinstantiated reordering}, transformations of a plan under which both ordering constraints and parameters can be changed.
+The aim is to find an optimised \POP with \emph{fewer ordering constraints than would be possible had the parameters remained unchanged}. 
+
+A technique is presented for encoding the problem of finding a minimum reinstantiated de/reorder of a \POP into an instance of the partial weighted \MAXSAT problem. 
+This encoding is an extension and optimisation of the approach introduced by \citet{Muise2016-PopMaxSAT}.
+
+Symmetry breaking techniques are used to counter the exponential increase in search space that results from allowing parameters to change.
+The notion of a \emph{causal structure symmetry} is introduced, a symmetry resulting from equivalent combinations of (potential) causal links between action preconditions and effects. 
+To detect these symmetries, the idea of a \emph{plan description graph} is defined, an undirected coloured graph with automorphisms that correspond to the \POP's symmetries.
+The symmetries are broken by extending the \MAXSAT encoding with the \multilex constraint as introduced in Chapter~\ref{chap:symmetry-breaking}.
+
+An empirical evaluation over all previous \IPC \STRIPS domains shows that reinstantiation finds \POP{}s that are significantly more flexible, and while symmetry breaking accelerates this search, the additional flexibility still comes at significant additional computational cost.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{Chapter~\ref{chap:partial-plans}: Finding tractable and flexible partial plans}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+While the techniques introduced in Chapter~\ref{chap:pop-maxsat} allow the plan's domain objects to be modified at \emph{optimisation time}, Chapter~\ref{chap:partial-plans} is concerned with relaxing plans into a form that allow domain objects to be selected at \emph{execution time}.
+It thus introduces, and formally defines, the notion of a \emph{partial plan}, a generalised plan that specifies which action \emph{types} must be executed and provides a \emph{constraint formula} that specifies the allowable combinations of orderings and action parameters.
+
+A complexity analysis shows that finding a classical plan that satisfies a constraint formula is \NP-hard. 
+However, further analysis from a parameterised complexity perspective shows that when limited to constraint formulae of bounded \emph{treewidth} (broadly, a measurement of the degree of cyclicity of the formula's underlying graph), the problem is polynomial.
+
+Key to providing execution-time flexibility is the idea of a \emph{minimal $k$-treewidth relaxation}, that is, a partial plan that cannot be made more flexible without its runtime cost exceeding some predetermined complexity. 
+Further parameterised complexity analysis shows that finding such a plan is fixed-parameter tractable when the search is limited to a particular class of partial plans that represent constraints as sets of allowable causal links.
+
+A practical technique is introduced for finding minimal $k$-treewidth relaxations within this class: \MKTR is a greedy, policy-driven fpt-algorithm that relaxes a partial plan by iteratively expanding the set of allowable causal links while ensuring its treewidth stays below $k$.
+To prevent \MKTR from exploring multiple symmetrical sets of causal links, policies are introduced that dynamically break causal structure symmetries using the \multilex constraint as introduced in Chapter~\ref{chap:symmetry-breaking}.
+An empirical evaluation over all previous \IPC \STRIPS domains shows that overall, \MKTR can find a partial plan of quadratic ``complexity'' that is significantly more flexible than \POP{}s found by standard deordering and reordering techniques.

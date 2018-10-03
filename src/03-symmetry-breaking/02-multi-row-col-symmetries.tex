@@ -1,0 +1,172 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Generalised Symmetries in Matrix and Graph Models}\label{sec:multi-row-col-symm}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%Broadly speaking, a symmetry is a solution-preserving automorphism of a problem description (Section~\ref{sec:symm-det-break}).
+In the context of \emph{matrix models} (i.e., \CSP{}s containing one or more matrices of variables), a \emph{variable symmetry} is a permutation of variables that leaves the model's constraints unchanged, and preserves the validity and optimality of its solutions (Section~\ref{sec:symm-det-break}).
+Arguably the most common forms of symmetry in matrix models are \emph{row symmetries} and \emph{column symmetries}, special cases of variable symmetry that result from individually interchangeable domain objects, and swap a pair of rows or columns of variables, respectively.
+%Standard approaches to symmetry breaking target individually interchangeable rows or columns, and cannot be applied to more general symmetries. 
+These can be generalised into \emph{multi-row symmetries} and \emph{multi-column symmetries}, in which multiple rows or columns are simultaneously swapped, and \emph{multi-row-column symmetries}, which, as shown in Section~\ref{sec:symm-intro-ex} above, swap multiple pairs of rows and columns.
+
+As \emph{graph models} (i.e., \CSP{}s that model the adjacency matrix of a graph) associate vertices with both a row and column of an adjacency matrix, vertices $\gvert_i$ and $\gvert_j$ being interchangeable results in a special case of multi-row-column symmetry that swaps rows $i$ and $j$, and columns $i$ and $j$.
+These symmetries, termed here \emph{vertex symmetries}, can be naturally generalised to \emph{multi-vertex symmetries}.
+This section will formally define this symmetry hierarchy, and for each type of symmetry, a corresponding category of symmetry group (Section~\ref{sec:permutations}).
+
+As these symmetries are not confined to plan optimisation problems--a brief survey of \csplib reveals that they can occur in many matrix and graph-based \CSP domains--illustrative examples will be taken from combinatorial and graph theoretic problems.
+In all examples, a matrix of variables exhibits symmetries in which combinations of rows and/or columns are interchangeable, but individual rows and columns are not.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Multi-Row Symmetries and Multi-Column Symmetries}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+All of the symmetry types outlined above swap entire rows and/or columns of variables.
+To make their formal definitions more concise, the notation $\rowperm{i}{j}$ and $\colperm{i}{j}$ is used to denote a permutation that exchanges the variables in a pair of rows or columns, respectively, and fixes all others: 
+%
+\begin{defn}\label{def:row-col-perm} Let $\mat{M}$ be an $r \times c$ matrix. Then:
+\begin{itemize}
+    \item for $1 \leq i, j \leq r$, $\rowperm{\mat{M},i}{j} = \cycle{\mat{M}[i][1], \; \mat{M}[j][1]}$ $\cdots$ $\cycle{\mat{M}[i][c], \; \mat{M}[j][c]}$, and
+    \item for $1 \leq i, j \leq c$, $\colperm{\mat{M},i}{j} = \cycle{\mat{M}[1][i], \; \mat{M}[1][j]}$ $\cdots$ $\cycle{\mat{M}[r][i], \; \mat{M}[r][j]}$.
+\end{itemize}
+\end{defn}
+%
+When clear from context, $\mat{M}$ is excluded from the notation.
+For example, if $\mat{M} = \tup{\tup{x_1,x_2,x_3},\tup{x_4,x_5,x_6},\tup{x_7,x_8,x_9}}$ is a $3^2$ matrix, then $\rowperm{1}{2} = \cycle{x_1,x_4}\cycle{x_2,x_5}\cycle{x_3,x_6}$ is a permutation that swaps each variable in the first row with the corresponding variable in the second.
+Note that in all cases, $\rowperm{i}{j} = \rowperm{j}{i}$ and $\colperm{i}{j} = \colperm{j}{i}$, and when $i = j$, $\rowperm{i}{j} = \colperm{i}{j} = \idperm$.
+
+\emph{Row symmetries} and \emph{column symmetries} are special cases of variable symmetry that swap pairs of rows or columns, respectively:
+%
+\begin{defn}\label{def:row-col-symm} Let $\mat{M}$ be a matrix with symmetry $\perm$. Then: 
+\begin{itemize}
+    \item $\perm$ is a \defterm{row symmetry} \IFF there exists an $i, j$ \ST $\perm = \rowperm{i}{j}$, and
+    \item $\perm$ is a \defterm{column symmetry} \IFF there exists an $i, j$ \ST $\perm = \colperm{i}{j}$.
+\end{itemize}
+\end{defn}
+%
+A \emph{multi-row symmetry} is a generalised row symmetry that swaps multiple pairs of rows simultaneously. 
+It is expressible as the composition of multiple row symmetries, with the condition that any given row is swapped at most once.
+%For example, if $\perm_1$ swaps rows $1$ and $2$, and $\perm_2$ swaps rows $3$ and $4$, then $\perm = \perm_1 \permcomp \perm_2$ is a row symmetry; however, if $\perm_2$ swaps rows $2$ and $3$, then it is not.
+Column symmetries can be similarly generalised into \emph{multi-column symmetries}:
+%
+\begin{defn}\label{def:multi-row-multi-col-symm} Let $\mat{M}$ be a matrix with symmetry $\perm$. Then:
+\begin{itemize}
+    \item $\perm$ is a \defterm{multi-row symmetry} \IFF there exist two disjoint sets of row indices $i_1,\ldots,i_n$ and $j_1,\ldots,j_n$ \ST $\perm = \rowperm{i_1}{j_1} \permcomp \cdots \permcomp \rowperm{i_n}{j_n}$, and
+    %
+    \item $\perm$ is a \defterm{multi-column symmetry} \IFF there exist two disjoint sets of column indices $i_1,\ldots,i_n$ and $j_1,\ldots,j_n$ \ST $\perm = \colperm{i_1}{j_1} \permcomp \cdots \permcomp \colperm{i_n}{j_n}$.
+\end{itemize}
+\end{defn}
+%
+\subimport*{graphics/}{vessel-example.tex}
+
+For example, the goal of the \cspdomain{Vessel Loading} problem (\csplib problem~$8$), is to find an arrangement of crates on a rectangular deck that satisfies distance constraints. 
+An instance can be modelled as a matrix $\mat{D}$ containing the crate type at each location. 
+Figure~\ref{fig:vessel-example} shows three symmetrical solutions to a simple example in which two crates of the same type must be placed in non-adjacent locations on a $2 \times 4$ deck.  
+As reflecting the deck about its horizontal or vertical axis will produce an equally valid solution, this instance has a row symmetry $\rowperm{1}{2}$ that swaps the rows, and a multi-column symmetry $\colperm{1}{4} \permcomp \colperm{2}{3}$ that simultaneously swaps columns one and two with columns four and three, respectively.
+%From Definition~\ref{def:multi-row-multi-col-symm}, $\perm_2$ is expressible as $\perm_{c_1} \permcomp \perm_{c_2}$, where $\perm_{c_1}$ swaps columns one and four, and $\perm_{c_2}$ swaps columns two and three.
+Solutions $\mat{D}_2$ and $\mat{D}_3$ are the result of applying these two symmetries, respectively, to $\mat{D}_1$.
+
+Other \CSP domains with multi-row and/or multi-column symmetry include \cspdomain{Balanced Academic Curriculum}, \cspdomain{Wagner-Whitin Distribution}, \cspdomain{N-Queens} (and its variations), \cspdomain{Travelling Tournament} and \cspdomain{Layout} (\csplib problems $30$, $40$, $54$, $68$ and $132$).
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Muli-Row-Column Symmetries}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+A \emph{multi-row-column symmetry} is a further generalisation that simultaneously swaps multiple rows and columns.
+These symmetries can be expressed as the composition of a multi-row symmetry and a multi-column symmetry:
+
+\begin{defn}\label{def:multi-row-col-symm} If $\mat{M}$ is a matrix with symmetry $\perm$, then $\perm$ is a \defterm{multi-row-column symmetry} \IFF it is expressible as the composition of a multi-row symmetry and a multi-column symmetry.
+\end{defn}
+%
+\subimport*{graphics/}{winner-example.tex}
+%
+For example, the \cspdomain{Winner Determination} problem (\csplib problem~$53$) simulates an auction in which numeric bids are placed for (possibly overlapping) sets of items, and the aim is to find a set of disjoint offers that maximises the sale price.
+An instance with $r$ bids over $c$ items can be modelled as an $r \times c$ matrix where $\mat{W}[i][j] = 1$ \IFF bid $b_i$ has been accepted for item $t_j$.
+Figure~\ref{fig:winner-example} depicts a small example comprising two bids over four items, and two optimal solutions.
+As swapping symbols $b_1$, $t_1$ and $t_2$ with $b_2$, $t_3$ and $t_4$, respectively, in Figure~\ref{fig:winner-example-bids} leaves the instance unchanged, this instance has a multi-row-column symmetry $\perm = \rowperm{1}{2} \permcomp \colperm{1}{3} \permcomp \colperm{2}{4}$.
+Applying $\perm$ to $\mat{W}_1$ produces the equally valid and optimal $\mat{W}_2$.
+
+Other matrix models with multi-row-column symmetry include \cspdomain{Warehouse Allocation}, \cspdomain{Tank Allocation}, \cspdomain{Interview Assignment}, \cspdomain{Balanced Nursing Workload} and \cspdomain{Target Tracking} (\csplib problems $34$, $51$, $62$, $69$ and $72$).
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Multi-Vertex Symmetries}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+As vertices in graph models are associated with both a row and column in the adjacency matrix, interchangeable vertices result in special cases of multi-row-column symmetry, termed here \emph{vertex symmetries}, in which rows $i$ and $j$ are swapped \IFF columns $i$ and $j$ are also:
+%
+\begin{defn}\label{def:vertex-symm} Let $\mat{M}$ be an $n$-vertex graph model with symmetry $\perm$. 
+Then, $\perm$ is a \defterm{vertex symmetry} \IFF there exists an $i,j$ \ST $\perm = \rowperm{i}{j} \permcomp \colperm{i}{j}$.
+\end{defn}
+%
+A \emph{multi-vertex symmetry} is a generalised vertex symmetry in which multiple pairs of vertices are simultaneously swapped:
+%They are expressible as the composition of vertex symmetries $\perm_1 \permcomp \cdots \permcomp \perm_n$, where a row or column is swapped by at most one symmetry:
+%
+\begin{defn}\label{def:multi-vertex-symm} Let $\mat{M}$ be an $n$-vertex graph model with symmetry $\perm$. 
+Then, $\perm$ is a \defterm{multi-vertex symmetry} \IFF there exist two disjoint sets of indices $i_1,\ldots,i_n$ and $j_1,\ldots,j_n$ \ST $\perm = \rowperm{i_1}{j_1} \permcomp \cdots \permcomp \rowperm{i_n}{j_n} \permcomp \colperm{i_1}{j_1} \permcomp \cdots \permcomp \colperm{i_n}{j_n}$.  
+\end{defn}
+%
+\subimport*{graphics/}{hamilton-example.tex}
+%
+For example, Figure~\ref{fig:span-example} depicts two solutions to an instance of the \cspdomain{Hamiltonian Path} problem, which asks whether a graph has a path that visits each vertex exactly once.
+As swapping $\gvert_1$ and $\gvert_2$ with $\gvert_3$ and $\gvert_4$, respectively, leaves $\mat{G}$ unchanged, this instance has a multi-vertex symmetry $\perm = \rowperm{1}{3} \permcomp \rowperm{2}{4} \permcomp \colperm{1}{3} \permcomp \colperm{2}{4}$ that swaps rows and columns one and two with rows and columns three and four. 
+Path $\mat{P}_2$ is the image of $\mat{P}_1$ under $\perm$.
+To make this transformation clearer, adjacency matrix $\mat{P}'$ in Figure~\ref{fig:span-example-adj-int} depicts an ``intermediate'' state, in which rows one and two have been swapped with rows three and four (as shaded).
+Swapping the columns in $\mat{P}'$ (as outlined) completes the transformation into $\mat{P}_2$.
+
+More complex graph models with multi-vertex symmetry include \cspdomain{Synchronous Optical Networking}, \cspdomain{Diameter and Degree Bounded Network Design Problem} and \cspdomain{Transshipment} (\csplib problems $56$, $71$ and $83$).
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Generalised Symmetry Groups}\label{sec:gen-symm-grps}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+In the examples above, multi-row-column symmetries occur when a matrix or graph model contains interchangeable combinations of domain objects.
+The resulting symmetries that swap the rows and/or columns associated with a pair of such combinations can be closed under composition (Definition~\ref{def:group}) to form the symmetric group (Definition~\ref{def:symmetric-grp}) over the combinations.
+If there are $n$ combinations, this group can (as with all symmetric groups) be generated by $n-1$ symmetries, where each $\perm_i$ swaps all rows and columns in combination $i$ with their counterparts in combination $i+1$.
+
+\subimport*{graphics/}{tank-example.tex}
+%
+For example, Figure~\ref{fig:tank-example} (ignoring highlighted cells for now) shows two symmetrical solutions to a simple instance of the \cspdomain{Tank Allocation} problem (\csplib problem~$51$), in which an assignment of chemicals to tanks must be found that satisfies adjacency and tolerance constraints.
+The instance comprises six tanks $t_1,\ldots,t_6$, and four chemicals $c_1,\ldots,c_4$.
+The tank configuration is in Figure~\ref{fig:tank-config}, with tanks annotated with their tolerances, and chemicals $c_1$--$c_3$ cannot be stored in adjacent tanks.
+
+This instance contains three combinations of interchangeable objects: $\tup{t_1, t_2, c_1}$, $\tup{t_3, t_4, c_2}$, and $\tup{t_5, t_6, c_3}$.
+Swapping the elements of any one with their counterparts in any other leaves Figure~\ref{fig:tank-example} unchanged.
+This instance's symmetry group $\group$ is thus, essentially, the symmetric group over the three combinations of objects, and can be generated from $\generator = \set{\perm_1, \perm_2}$, where $\perm_1 = \rowperm{1}{3} \permcomp \rowperm{2}{4} \permcomp \colperm{1}{2}$ swaps the first and second combinations, and $\perm_2 = \rowperm{3}{5} \permcomp \rowperm{4}{6} \permcomp \colperm{2}{3}$ swaps the second and third.
+%As $\group$ is generated by a set of multi-row-column symmetries, it is termed a \emph{multi-row-column symmetry group}.
+
+More formally, symmetry groups of this type are termed \emph{multi-row-column symmetry groups}, and occur when a subset of a matrix or graph model's rows and/or columns can be partitioned into equal-sized, interchangeable combinations:
+%
+\begin{defn}\label{def:multi-row-col-symm-grp} Let $\mat{M}$ be a matrix or graph model with symmetry group $\group$. 
+Then, $\group$ is a \defterm{multi-row-column symmetry group} over $\mat{M}$ \IFF there exist $n$ equal-length, disjoint lists of row indices $\vec{r}_1,\ldots,\vec{r}_n$, and $n$ equal-length, disjoint lists of column indices $\vec{c}_1,\ldots,\vec{c}_n$, and $\group$ has a generator $\generator = \set{\perm_1,\ldots,\perm_{n-1}}$ where for $1 \leq i < n$, $\perm_i$ is a multi-row-column symmetry as follows:
+\begin{align*}
+    \perm_i = 
+    & \permcomp \set{\rowperm{j}{k} : j = \vec{r}_i[n], k = \vec{r}_{i+1}[n], 1 \leq n \leq \card{\vec{r}_i}} \permcomp \\
+        & \permcomp \set{\colperm{j}{k} : j = \vec{c}_i[n], k = \vec{c}_{i+1}[n], 1 \leq n \leq \card{\vec{c}_i}}.
+\end{align*}
+\end{defn}
+%
+When the result of $n$ interchangeable combinations of rows and/or columns, multi-row-column symmetry groups are isomorphic to $S_n$ and are thus of size $n!$.
+
+Special cases arise when $\generator$ contains more specific symmetry types. 
+For example, when $\generator$ comprises multi-row symmetries (i.e., all $\card{\vec{c}_i} = 0$), $\group$ is termed a \emph{multi-row symmetry group}, and when $\mat{M}$ is a graph model and $\generator$ comprises multi-vertex symmetries (i.e., all $\vec{r}_i = \vec{c}_i$), $\group$ is a termed a \emph{multi-vertex symmetry group}, respectively.
+
+A natural addition to this taxonomy are \emph{multi-row-and-multi-column symmetry groups}, in which multiple rows and columns are swapped, but rows and columns need not be swapped simultaneously (as in the \cspdomain{Vessel Loading} example in Figure~\ref{fig:vessel-example}).
+Such groups are expressible as the direct product (Definition~\ref{def:direct-product}) $\group = \group_r \times \group_c$ of a multi-row symmetry group $\group_r$ and a multi-column symmetry group $\group_c$. 
+%
+% comparison to partitioned symmetries (ie codish et al) aka piecewise symmetries (Hentenryck -- Compositional Derivation of Symmetries for Constraint Satisfaction)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Symmetry Hierarchy}\label{sec:gen-symm-hierarchy}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\subimport*{graphics/}{symm-hierarchy.tex}
+%
+Figure~\ref{fig:symm-hierarchy} depicts the hierarchy of the symmetry groups presented above, with arrows leading from less to more general groups.
+Those shaded in grey have been previously studied (Sections~\ref{sec:symm-break-matrix} and~\ref{sec:symm-break-graph}), and the remainder are defined above.
+%Those shaded in grey have been well studied, and can be (partially) broken with existing approaches, such as \dblex or \snakelex for matrix models, or the approaches studied by \citet{Codish2013:SymmGraphReps} and \citet{Shlyakhter2007:SymmBreaking} for graph models.
+%In many cases, the difference between row and column symmetries and their more general forms is that latter permute many rows and/or columns simultaneously.
+Generalisations from single to multiple interchangeable rows, columns, or vertices are marked with dotted lines.
+
+The more general symmetry groups can be considered ``weaker'' in that they result in fewer symmetrical solutions.
+Intuitively, this is because more general symmetries are ``implied'' by less general ones: if all rows are interchangeable, then any equal-sized combinations will be also, but of course the opposite does not hold.
+
+Less intuitively, as generalised symmetries are the composition of row and/or column symmetries (Definitions~\ref{def:row-col-symm}~and~\ref{def:row-col-symm}), and groups are closed under composition, any symmetry group resulting from interchangeable combinations of rows and/or columns must be a subgroup (Definition~\ref{def:subgroup}) of the one created when those same rows and columns are individually interchangeable.
+Since two solutions are symmetrical \WRT to a symmetry group \IFF one is the image of the other under an element of the group, if $\group_1 \leq \group_2$, then $\group_1$ cannot introduce more symmetry than $\group_2$: any two solutions symmetrical under $\group_1$ must also be symmetrical under $\group_2$, but the opposite need not hold.

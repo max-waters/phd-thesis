@@ -1,0 +1,27 @@
+\newcommand{\deckmatrix}[2]{
+\begin{tabular}{*{4}{p{0.1cm}} }
+#1 \\
+#2 \\
+\end{tabular}
+}
+
+\begin{figure}[t]
+    \begin{subfigure}[t]{0.33\textwidth}
+        \centering
+        \deckmatrix{$0$ & $0$ & $0$ & $1$}{$0$ & $1$ & $0$ & $0$}
+        \caption{Deck $\mat{D}_1$.}
+    \end{subfigure}%
+    \begin{subfigure}[t]{0.33\textwidth}
+        \centering
+        \deckmatrix{$0$ & $1$ & $0$ & $0$}{$0$ & $0$ & $0$ & $1$}
+        \caption{Deck $\mat{D}_2$.}
+    \end{subfigure}%
+    \begin{subfigure}[t]{0.33\textwidth}
+        \centering
+        \deckmatrix{$1$ & $0$ & $0$ & $0$}{$0$ & $0$ & $1$ & $0$}
+        \caption{Deck $\mat{D}_3$.}
+    \end{subfigure}% 
+\caption[\cspdomain{Vessel Loading} example]{Three symmetrical solutions to a \cspdomain{Vessel Loading} example in which two crates must be placed in non-adjacent locations.}
+\label{fig:vessel-example}
+\end{figure}
+

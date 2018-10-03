@@ -1,0 +1,204 @@
+\pgfplotsset{
+    discard if not/.style 2 args={
+        x filter/.code={
+            \edef\tempa{\thisrow{#1}}
+            \edef\tempb{#2}
+            \ifx\tempa\tempb
+            \else
+                \def\pgfmathresult{inf}
+            \fi
+        }
+    },
+    discard if not both/.style n args={4}{
+        x filter/.code={
+            \edef\tempa{\thisrow{#1}\thisrow{#3}}
+            \edef\tempb{#2#4}
+            \edef\tempc{#4#2}
+            \ifx\tempa\tempb 
+            \else
+                \ifx\tempa\tempc
+                \else
+                    \def\pgfmathresult{inf}
+                \fi
+            \fi
+        }
+    },
+    x jitter/.style={%
+        x filter/.code={
+        \edef\temp{rnd}
+        \pgfmathparse{\pgfmathresult+\temp*\temp*#1}
+        }
+    },
+    y jitter/.style={%
+        y filter/.code={
+        \edef\temp{rnd}
+        \pgfmathparse{\pgfmathresult-\temp*\temp*#1}
+        }
+    }
+}
+
+\newcommand{\canplot}[2] {
+    \begin{tikzpicture}
+        \begin{axis}[
+            width=1.05\textwidth,
+            legend style={font=\tiny},
+            label style={font=\tiny},
+            xlabel={$\card{\mat{M}}$},
+            ylabel shift=-10pt,
+            ylabel={#2},
+            ylabel style={rotate=-90},
+            ticklabel style = {font=\tiny},
+            y tick label style={
+                /pgf/number format/.cd,
+                fixed,
+                fixed zerofill,
+                precision=2
+            },
+            cycle list name=black white
+        ]
+        #1 % plots,legend  
+        \end{axis}
+\end{tikzpicture}
+}
+
+\newcommand{\canmrmcplot} {
+    \begin{tikzpicture}
+        \begin{axis}[
+            width=1.05\textwidth,
+            legend style={font=\tiny},
+            label style={font=\tiny}, 
+            xlabel={$\card{\mat{M}}$},
+            ylabel shift=-10pt,
+            ylabel={$\Delta_c$},
+            ylabel style={rotate=-90},
+            ticklabel style = {font=\tiny},
+            y tick label style={
+                /pgf/number format/.cd,
+                fixed,
+                fixed zerofill,
+                precision=2
+            },
+            cycle list name=black white,
+            legend entries = {{$n_r \times n_c = 2 \times 2$}, {$n_r \times n_c = 2 \times 3$}, {$n_r \times n_c = 2 \times 4$}, {$n_r \times n_c = 3 \times 3$}, {$n_r \times n_c = 3 \times 4$}},
+        ]
+        \addplot+[yshift=-0.2mm,black, discard if not both={nr}{2}{nc}{2}, mark=square*, mark options={solid,scale=0.2,fill=black}] table [x=size, y=rc, col sep=comma] {03-symmetry-breaking/tables/mat-mrmc-plot.csv};
+        \addplot+[black, dashed, discard if not both={nr}{2}{nc}{3}, mark=square*, mark options={solid,scale=0.2,fill=black}] table [x=size, y=rc, col sep=comma] {03-symmetry-breaking/tables/mat-mrmc-plot.csv};
+        \addplot+[black, dotted, discard if not both={nr}{2}{nc}{4}, mark=square*, mark options={solid,scale=0.2,fill=black}] table [x=size, y=rc, col sep=comma] {03-symmetry-breaking/tables/mat-mrmc-plot.csv};
+        \addplot+[black, dash dot, discard if not both={nr}{3}{nc}{3}, mark=square*, mark options={solid,scale=0.2,fill=black}] table [x=size, y=rc, col sep=comma] {03-symmetry-breaking/tables/mat-mrmc-plot.csv};
+        \addplot+[black, dash dot dot, discard if not both={nr}{3}{nc}{4}, mark=square*, mark options={solid,scale=0.2,fill=black}] table [x=size, y=rc, col sep=comma] {03-symmetry-breaking/tables/mat-mrmc-plot.csv};
+        %
+        \end{axis}
+\end{tikzpicture}
+}
+
+\newcommand{\mlallplot} {
+    \begin{tikzpicture}
+        \begin{axis}[
+            width=1.05\textwidth,
+            legend style={font=\tiny},
+            label style={font=\tiny}, 
+            xlabel={$\mlcount/\solcount$},
+            ylabel shift=-20pt,
+            ylabel={$\frac{1}{2(n-1)!}$},
+            ylabel style={rotate=-90,yshift=15pt},
+            ymax=0.55,
+            ytick={0, 0.25, 0.5},
+            ticklabel style = {font=\tiny},
+            y tick label style={
+                /pgf/number format/.cd,
+                fixed,
+                fixed zerofill,
+                precision=2
+            },
+            legend pos=south east,
+        ]
+        \addplot+[x jitter=0.03,y jitter=0.03,only marks,mark=o,mark options={color=black,scale=0.5}] table [x=mlr, y=expmlr, col sep=comma] {03-symmetry-breaking/tables/simple-plot.csv};
+        \addplot+[x jitter=0.03,y jitter=0.03,only marks,mark=x,mark options={color=black,scale=0.5}] table [x=mlr, y=expmlr, col sep=comma] {03-symmetry-breaking/tables/dag-plot.csv};
+        \addplot+[x jitter=0.03,y jitter=0.03,only marks,mark=square,mark options={color=black,scale=0.5}] table [x=mlr, y=expmlr, col sep=comma] {03-symmetry-breaking/tables/mat-mrc-plot.csv};
+        \addplot[domain=0:0.6, dashed] {x};
+        \legend{Simple graphs,\DAG{}s,Matrices,$\mlcount/\solcount = 1/n!$}
+        %
+        \end{axis}
+\end{tikzpicture}
+}
+
+\newcommand{\sgplots}[1]{
+    \addplot+[yshift=-0.2mm,black, discard if not={n}{2}, mark=square*, mark options={solid,scale=0.2,fill=black}] table [x=size, y=#1, col sep=comma] {03-symmetry-breaking/tables/simple-plot.csv};
+    \addplot+[dotted, discard if not={n}{3}, mark=square*, mark options={solid,scale=0.2,fill=black}] table [x=size, y=#1, col sep=comma] {03-symmetry-breaking/tables/simple-plot.csv};
+    \addplot+[yshift=0.2mm, dashed, discard if not={n}{4}, mark=square*, mark options={solid,scale=0.2,fill=black}] table [x=size, y=#1, col sep=comma] {03-symmetry-breaking/tables/simple-plot.csv};
+    \addplot+[yshift=0.4mm, dash dot, discard if not={n}{5}, mark=square*, mark options={solid,scale=0.2,fill=black}] table [x=size, y=#1, col sep=comma] {03-symmetry-breaking/tables/simple-plot.csv};
+    \legend{$n=2$,$n=3$,$n=4$,$n=5$}
+}
+
+\newcommand{\dagplots}[1]{
+    \addplot+[yshift=-0.2mm,black, discard if not={n}{2}, mark=square*, mark options={solid,scale=0.2,fill=black}] table [x=size, y=#1, col sep=comma] {03-symmetry-breaking/tables/dag-plot.csv};
+    \addplot+[dotted, discard if not={n}{3}, mark=square*, mark options={solid,scale=0.2,fill=black}] table [x=size, y=#1, col sep=comma] {03-symmetry-breaking/tables/dag-plot.csv};
+    \addplot+[yshift=0.2mm, dashed, discard if not={n}{4}, mark=square*, mark options={solid,scale=0.2,fill=black}] table [x=size, y=#1, col sep=comma] {03-symmetry-breaking/tables/dag-plot.csv};
+    \legend{$n=2$,$n=3$,$n=4$}
+}
+
+\newcommand{\mrcplots}[1]{
+    \addplot+[yshift=-0.2mm,black, discard if not={n}{2}, mark=square*, mark options={solid,scale=0.2,fill=black}] table [x=size, y=#1, col sep=comma] {03-symmetry-breaking/tables/mat-mrc-plot.csv};
+    \addplot+[dotted, discard if not={n}{3}, mark=square*, mark options={solid,scale=0.2,fill=black}] table [x=size, y=#1, col sep=comma] {03-symmetry-breaking/tables/mat-mrc-plot.csv};
+    \legend{$n=2$,$n=3$}
+}
+
+\begin{figure}
+\centering
+\begin{subfigure}[t]{0.47\textwidth}
+    \canplot{\sgplots{rc}}{$\Delta_c$}
+    \caption{Simple graphs models.}
+    \label{fig:can-simple-graph-plot}
+\end{subfigure}\quad%
+\begin{subfigure}[t]{0.47\textwidth}
+    \canplot{\dagplots{rc}}{$\Delta_c$}
+    \caption{\DAG{} models.}
+    \label{fig:can-dag-plot}
+\end{subfigure}
+
+\vspace{0.5cm}
+
+\begin{subfigure}[t]{0.47\textwidth}  
+    \canplot{\mrcplots{rc}}{$\Delta_c$}
+    \caption{Matrix models with multi-row-column symmetry.}
+    \label{fig:can-mat-mrc-plot}
+\end{subfigure}\quad%
+\begin{subfigure}[t]{0.47\textwidth}
+    \canmrmcplot
+    \caption{Matrix models with multi-row and multi-column symmetry.}
+    \label{fig:can-mat-mrmc-plot}
+\end{subfigure}%
+\caption[Asymptotic limit of canonical matrices w/generalised symmetry]{Asymptotic limit for canonical solutions under generalised symmetries. 
+Model size $\card{\mat{M}}$ is plotted against $\Delta_c = (\cancount/\solcount) - (1/\card{\group})$ for selected values of $n$, and $n_r$ and $n_c$.}
+\label{fig:can-rate-plot}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[t]{0.47\textwidth}
+        \canplot{\sgplots{rm}}{$\Delta_m$}%
+        \caption{Simple graph models.}%
+        \label{fig:ml-simple-graph-plot}%
+    \end{subfigure}\quad%
+    \begin{subfigure}[t]{0.47\textwidth}
+        \canplot{\dagplots{rm}}{$\Delta_m$}
+        \caption{\DAG{} models.}
+        \label{fig:ml-dag-plot}
+    \end{subfigure}
+    
+    \vspace{0.5cm}
+    
+    \begin{subfigure}[t]{0.47\textwidth}
+        \canplot{\mrcplots{rm}}{$\Delta_m$}
+        \caption{Matrix models with multi-row-column symmetry.}
+        \label{fig:ml-mat-mrc-plot}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.47\textwidth}
+        \mlallplot
+        \caption{$\mlcount/\solcount$ \emph{vs} $1/2(n-1)!$ for all simple graph models, \DAG models, and matrix models with multi-row-column symmetry.}
+        \label{fig:ml-all-plot}
+    \end{subfigure}
+    \caption[Asymptotic limit of \multilex efficiency]{The asymptotic limit of \multilex efficiency in simple graph models, \DAG models, and matrix models with multi-row-column symmetry.
+    Figures~\ref{fig:ml-simple-graph-plot}--\ref{fig:ml-mat-mrc-plot} plot model size $\card{\mat{M}}$ against $\Delta_m = (\mlcount/\solcount) - (1/2(n-1)!)$ for selected values of $n$, and Figure~\ref{fig:ml-all-plot} plots $\mlcount/\solcount$ against $1/2(n-1)!$ for all values of $n$.}
+    \label{fig:ml-rate-plot}
+\end{figure}

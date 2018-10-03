@@ -1,0 +1,58 @@
+\pgfplotstableread[col sep=comma]{04-pop-reinstantiation/tables/runtime-by-domain.csv}\runtimedata
+
+\begin{table}[t]
+    \centering
+    \pgfplotstabletypeset[
+        %%
+        /pgf/number format/sci zerofill, 
+        /pgf/number format/fixed,
+        /pgf/number format/precision=2,
+        font=\scriptsize,
+        every even row/.style={
+            before row={\rowcolor[gray]{0.9}}
+            },
+        every last row/.style={
+            before row=\midrule, 
+            after row=\bottomrule,
+            font=\bfseries,
+            },
+        every head row/.style={%
+            before row=\toprule,
+            after row=\midrule
+        },
+        %%
+        columns/domain/.style={string type, column name={Domain}, column type={l}, column type/.add={>{\itshape}}{}},
+        %%
+        %%columns/nPlans/.style={numeric type, column name=$n$, column type={c}, 
+        %%    /pgf/number format/precision=0, /pgf/number format/sci zerofill, /pgf/number format/fixed},
+        columns/EOG-t/.style={numeric type, column name=$\EOG$, column type={c}, },
+        %%
+        columns/MR-t/.style={numeric type, column name=$\MR$, column type={c}, },
+        %%
+        columns/MR_OPSB-t/.style={numeric type, column name=$\MRO$, column type={c}, },
+        %%
+        columns/MRD-t/.style={numeric type, column name=$\MRD$, column type={c}, },
+        %%
+        columns/MRR-t/.style={numeric type, column name=$\MRR$, column type={c}, },
+        %%
+        columns/MRR_OPSB-t/.style={numeric type, column name=$\MRRO$, column type={c}, },
+        %%
+        columns/MRR_CSSB-t/.style={numeric type, column name=$\MRRC$, column type={c}, },
+        columns={domain,%nPlans,
+                EOG-t,
+                MR-t,
+                MR_OPSB-t,
+                MRD-t,
+                MRR-t,
+                MRR_OPSB-t,
+                MRR_CSSB-t
+                },
+        ]
+        {\runtimedata}%
+   % \end{adjustbox}
+    %  
+    \caption[Run time of \EOG, \MR, \MRD and \MRR, by domain]{Run time.
+        For each domain and encoder, the average run time in minutes, limited to plans that were successfully encoded by all encoders.}
+    \label{tab:runtime}
+\end{table}
+    

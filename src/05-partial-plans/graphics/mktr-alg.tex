@@ -1,0 +1,20 @@
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Result:}}
+\begin{figure}[t]
+\begin{algorithmic}[1]
+	\REQUIRE Valid \CLP $P = \tup{\opset, \cstruct}$, integer $k > 0$.
+	\ENSURE A minimal $k$-treewidth CL relaxation of $P$.
+	\IF{$\treewidth(P) > k$}
+		\RETURN $\bot$
+	\ENDIF
+	\STATE $A \gets \set{\tup{\optr_p, q(\vec{u}), \optr_c, q(\vec{s})} : \optr_p, \optr_c \in \opset} \! \setminus \! \cstruct$.
+	\FORALL{$l \in A$}
+		\IF{$\treewidth(\tup{\opset, \cstruct \! \cup \! \set{l}}) \leq k$}
+			\STATE $\cstruct \gets \cstruct \! \cup \! \set{l}$
+		\ENDIF
+	\ENDFOR
+	\RETURN $P$
+\end{algorithmic}
+\caption[\MKTR algorithm]{\MKTR: minimal $k$-treewidth CL relaxation}
+\label{alg:MKTR}
+\end{figure}

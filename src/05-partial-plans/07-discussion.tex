@@ -1,0 +1,164 @@
+\section{Discussion}\label{sec:partial-plans-discussion}
+%
+The main contributions of this chapter were as follows:
+%
+\begin{itemize}
+    \item This chapter introduced, and formally defined, the notion of a \emph{partial plan}, a generalised plan that specifies which action \emph{types} must be executed, but rather than completely specify their orderings and variable bindings, provides a \emph{constraint formula} that specifies the allowable combinations of orderings and bindings.
+    %
+    \item Complexity analysis shows that finding an \emph{instantiation} of a partial plan, that is, a classical plan that satisfies its constraints, is \NP-complete. 
+    While this suggests that partial plans cannot provide execution-time flexibility, a parameterised complexity analysis shows the problem to be polynomial when parameterised with the \emph{treewidth} of the constraint formula.
+    %
+    \item A number of optimality criteria were introduced that compare the flexibility of partial plans based on the relative strengths of their constraint formulae.
+    Key to providing execution-time flexibility is the idea of a \emph{minimal $k$-treewidth relaxation}, that is, a partial plan that cannot be made more flexible without its treewidth exceeding $k$ (i.e., without its runtime cost exceeding some predetermined complexity). 
+    %
+    \item While finding a minimal $k$-treewidth relaxation is an intractable problem, further analysis shows it to be in \FPT when the search is limited to a particular class of plans in which constraints are represented as allowable causal links.
+    A practical technique was introduced for finding minimal $k$-treewidth relaxations within this class: \MKTR is a greedy, policy-driven \FPT algorithm that relaxes a partial plan by iteratively expanding the set of allowable causal links while ensuring its treewidth stays below $k$.
+    %
+    \item An empirical evaluation over all previous \IPC \STRIPS domains compared \MKTR with the polynomial, non-optimal but effective \EOG technique.
+    Results show that overall, \MKTR can find a quadratic-time instantiatable partial plan with $163.2\%$ more instantiations than \EOG, and setting a maximum treewidth of five increases this to $302.3\%$ with little change in instantiation time.
+    Interestingly, there are three domains in which \MKTR can relax plans that cannot be improved by either \EOG or any of the de/reordering techniques studied in Chapter~\ref{chap:pop-maxsat}.
+    Extending \MKTR with the \multilex symmetry breaking technique (introduced in Chapter~\ref{chap:symmetry-breaking}) in order to avoid symmetrically equivalent partial plans results in little change in flexibility or execution time.
+\end{itemize}
+%
+This chapter studied, from both a theoretical and practical perspective, the problem of ``relaxing'' a plan into a flexible partial plan, a generalised plan that allows decisions regarding both ordering and domain objects to be postponed until execution time.
+Despite their worst-case intractability, an empirical evaluation shows that the \MKTR algorithm can find a tractable partial plan with, on average, $163.2\%$ more instantiations than the \POP{}s found by the \EOG baseline.
+While this comes at significant computational cost, \MKTR cannot by definition produce a less flexible plan than the polynomial \EOG, and indeed there are domains in which \MKTR can relax plans that \EOG cannot deorder at all.
+Thus, whether \MKTR is preferable to \EOG simply depends on whether off-line preprocessing time is available.
+
+The remainder of this chapter will compare partial plan relaxation with some other approaches to achieving least commitment, in particular the \emph{explanation-based generalisation} approach of \citet{Kambhampati:2004:ExplBasedGeneralisation}, and then present some possible areas of future work.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Comparison with Explanation Based Generalisation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+As discussed in Section~\ref{sec:kk-ebg}, \citet{Kambhampati:2004:ExplBasedGeneralisation} also study the problem of relaxing a plan into a form that allows for execution-time domain object selection. 
+The notion of \emph{partially ordered, partially instantiated plans} (\POPI) is introduced, and a technique for relaxing their variable binding and ordering constraints, \emph{explanation based generalisation} (\EBG), is presented.
+A theoretical comparison of \EBG and \MKTR shows that while it is by far the more complex of the two, \emph{\MKTR can, unlike \EBG, guarantee both the optimality of the partial plans it produces, and the tractability of the constraints they contain}.
+
+For convenience, the definitions will be repeated here, albeit in a slightly modified form.
+A \POPI is a tuple $P = \tup{\opset, \precrel, \bndgs}$ where $\opset$ is a set of operators, $\precrel$ is a strict partial order over $\opset$, and $\bndgs = \bndgs_1 \land \cdots \land \bndgs_n$ is a constraint formula where each $\bndgs_i$ is of the form $\vec{t_1} = \vec{t_2}$ or $\vec{t_1} \neq \vec{t_2}$.
+A classical plan is an instantiation\footnote{While \citet{Kambhampati:2004:ExplBasedGeneralisation} use the term \emph{completions}, the term \emph{instantiations} is used here for consistency} of a \POPI if it satisfies its ordering and binding constraints.
+
+Two techniques are presented, \emph{explanation-based order generalisation} (\EOG) and \emph{explanation-based precondition generalisation} (\EPG), that relax a \POPI{}'s ordering and variable binding constraints, respectively.
+Both algorithms use a \emph{validation structure} -- a set of causal links that ``explain'' the plan's validity -- as a guide for this relaxation.
+A validation structure links every consumer in a \POPI with the unthreatened supporting producer that appears \emph{first} in an arbitrary linearisation:
+
+\pagebreak
+
+\begin{defn}\label{def:valid-struct} Let $P = \tup{\opset, \precrel, \bndgs}$ be a \POPI and total order $\prec'$ be an arbitrary linearisation of $\precrel$. 
+Then, a \defterm{validation structure} $V_P$ is a set of causal links \ST $\tup{\optr_p, q(\vec{u}), \optr_c, q(\vec{s})} \in V_P$ \IFF: 
+\begin{enumerate}
+  \item $\optr_p \prec \optr_c$,
+  \item $\bndgs \models \vec{u} = \vec{s}$, and
+  \item for all $\optr_t$ and $\vec{v}$ \ST $\thrts(\optr_t, q(\vec{v}))$, either $\optr_t \prec \optr_p$, $\optr_c \prec \optr_t$ or $\bndgs \models \vec{s} \neq \vec{v}$, and
+  \item for all $\tup{\optr_p', q(\vec{u})', \optr_c, q(\vec{s})}$ \ST conditions $1$--$3$ hold, $\optr_p \prec \optr_p'$.
+\end{enumerate}  
+\end{defn}
+%
+The \EOG algorithm removes all ordering constraints that are not required to protect the causal links in $V_P$:
+%
+\begin{defn}
+If $P = \tup{\opset, \precrel, \bndgs}$ is a \POPI with validation structure $V_P$, then the \defterm{explanation-based order generalisation} of $P$ is the \POPI $\EOG(P) = \tup{\opset, \transclos{\precrel'}, \bndgs}$ where $\optr_1 \precrel' \optr_2$ \IFF there exists a $q(\vec{u})$, $q(\vec{s})$ \ST either:
+\begin{itemize}
+    \item $\tup{\optr_1, q(\vec{u}), \optr_2, q(\vec{s})} \in V_P$,
+    \item there exists an $\optr_3$ and $q(\vec{v})$ \ST $\tup{\optr_2, q(\vec{s}), \optr_3, q(\vec{v})} \in V_P$, $\optr_1 \prec \optr_2$, $\thrts(\optr_1, q(\vec{u}))$, and $\bndgs \not\models \vec{u} \neq \vec{s}$, or
+    \item there exists an $\optr_3$ and $q(\vec{v})$ \ST $\tup{\optr_3, q(\vec{v}), \optr_1, q(\vec{u})} \in V_P$, $\optr_1 \prec \optr_2$, $\thrts(\optr_2, q(\vec{s}))$ and $\bndgs \not\models \vec{u} \neq \vec{s}$.
+\end{itemize}
+\end{defn}
+%
+Similarly, \EPG removes all binding constraints except those required by the validation structure, that is, a consumer must remain codesignated with its supporting producer, and must remain non-codesignated with any threat that can be ordered between them:
+%
+\begin{defn}
+If $P = \tup{\opset, \precrel, \bndgs} $ is a \POPI with validation structure $V_P$, then the \defterm{explanation-based precondition generalisation} of $P$ is the \POPI $\EPG(P) = \tup{\opset, \precrel, \bndgs'}$ \ST:
+\begin{align*}
+  \bndgs = \quad \bigwedge_{\clapstack{\tup{\optr_p, q(\vec{u}), \optr_c, q(\vec{s})} \in V_P}} \quad \big( \vec{u} = \vec{s} \land
+  \bigwedge_{\clapstack{ \optr_t, q(\vec{v}) : \\ \thrts(\optr_t, q(\vec{v})), \\ \optr_t \not\precrel \optr_p, \optr_c \not \precrel \optr_t}} \vec{v} \neq \vec{s} \big).
+\end{align*}
+\end{defn}
+%
+The process of \emph{explanation based generalisation} relaxes both ordering and binding constraints by simply applying the two processes above in sequence: $\EBG(P) = \EPG(\EOG(P))$.
+%
+\subimport*{graphics/}{ebg-example.tex}
+%
+While \MKTR finds a minimal \CLP, there is no guarantee that \EBG will produce an optimally relaxed \POPI.
+\citet{Backstrom-CompAspects} demonstrated that when applied to \POP{}s (special cases of \POPI{}s), \EOG does not guarantee even a \emph{minimal deordering} (Definition~\ref{def:opt-de-reorder}) of its input, and a similar example can be used to demonstrate that \EBG does not optimally relax its input.
+Figure~\ref{fig:kk-plan} depicts the ground, totally ordered plan $P_1$ that achieves the goal $\set{g_1, g_2}$ from the initial state $\emptyset$, and Figure~\ref{fig:kk-nonopt} shows the \POPI, $P_2,$ and validation structure that result from applying \EBG to $P_1$.
+As a validation structure links each consumer to its earliest producer, $P_2$ is not a minimum relaxation of $P_1$.
+Plan $P_3$ in Figure~\ref{fig:kk-opt} uses a different validation structure, and is a more general relaxation of $P_1$: both its ordering and variable binding constraints are weaker than $P_2$'s. 
+As $P_3$ does not require that $x_2$ and $x_3$ be codesignated or that $A \prec C$, it allows for alternative instantiations such as $B(1), C(1), A(2)$ which would be disallowed by $P_2$.
+
+While \MKTR guarantees the tractability of the partial plans that it produces, \EBG does not.
+The authors show that instantiating a \POPI is a polynomial time operation under the assumption that variables have infinite domains, however, it is not unreasonable to expect to encounter domains where this assumption does not hold. 
+If a domain involves ``real'' objects then they are likely to be finite, and indeed, the challenge of many \IPC domains, such as \ipcdomain{barman} and \ipcdomain{parking} is the careful manipulation of limited resources.
+In such cases, despite the limited syntax for \POPI variable binding constraints, determining the satisfiability of a finite-domained \POPI is \NP-complete:
+
+\enlargethispage*{2\baselineskip}
+
+\begin{restatable}{theorem}{popisat}
+\csprob{Finite Domain POPI Satisfiability}.
+\label{thrm:popi-sat} Let $P = \tup{\opset, \precrel, \bndgs}$ be a \POPI such that $\vars(\opset) = \set{x_1,\ldots,x_n}$ and let $D_{x_1}, \ldots, D_{x_n}$ be sets of constants representing variable domains.
+Deciding the existence of a classical plan $\vec{\optr}\sub$ such that \myi $\vec{\optr}\sub$ is an instantiation of $P$, and \myii for all $x \in \domain(\sub)$, $\sub(x) \in D_x$ is \NP-complete.
+\end{restatable}
+%
+This result has implications for \EBG's runtime complexity.
+To construct a validation structure it must be determined whether the \POPI's variable binding constraints entail a literal (e.g., whether $\bndgs \models \vec{t} = \vec{u}$), and \EOG must determine whether they do not (e.g., whether $\bndgs \not\models \vec{t} \neq \vec{u}$), and these are \NP and \CONP-complete problems.
+However, in the special case when the input plan is ground (i.e., a \POP or classical plan), \EBG runs in polynomial time.
+
+Despite the above criticisms, it is not clear that \MKTR is always preferable to \EBG.
+If, for example, plan sizes are small enough, then the intractability results above may not be a problem in practice.
+However, an experimental comparison of \MKTR and \EBG (based on model counts, treewidths and instantiation time) is left for future work.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Comparison with Other Least Commitment Approaches} 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+Much of the literature on plan post-processing for flexibility (with the notable exception of explanation based generalisation, above) is on plan de/reordering with the aim of finding \emph{minimum orderings} (Section~\ref{sec:opt-defs-de-reorder}).
+It thus differs from this work in a number of ways.
+While de/reordering aims to increase ordering flexibility, this chapter is concerned with \emph{relaxing both action orderings and variable bindings}.
+Other differences stem from the ways in which \POP{}s and partial plans represent constraints.
+\POP{}s define a partial order over a set of ground actions, while a partial plan's constraints are expressed in $\clang$ (Definition~\ref{def:conslang}), a fragment of first-order logic. 
+This results in significant differences in the theoretical properties of the two approaches.
+
+The optimality definitions in Section~\ref{sec:pp-min-cons-pps} differ from those in the \POP de/reordering literature.
+\POP{}s represent ordering constraints as a binary relation (i.e., a set), resulting a distinction between, for example, a \emph{minimal deorder} (i.e., removing a constraint will render the \POP invalid) and \emph{minimum deorder} (the smallest of all deorders). 
+However, there is no equivalent minimal/minimum distinction for partial plans.
+It follows from Theorems~\ref{thrm:pp-snd-mtc} and~\ref{thrm:pp-lcr-mtc} that if $P = \tup{\opset, \cform}$ and $Q = \tup{\opset, \cform'}$ are valid partial plans and $P$ is a minimum relaxation, then $P$ is a relaxation of $Q$ (i.e., $\cform' \models \cform$). 
+Thus, if a partial plan is a ``minimal relaxation'', in the sense that it has no strict relaxations, then it must also be a minimum relaxation.
+
+The complexity results in Sections~\ref{sec:partial-plans} and~\ref{sec:pp-optiality-criteria} are quite different to those found in the \POP de/reordering literature. 
+For example, while the problem of finding a minimum de/reordering of a \POP is \NP-hard~\cite{Backstrom-CompAspects}, the equivalent problem in the context of partial plans is trivial: a minimum relaxation of a partial plan can be directly defined in  $\mathcal{L}_C$ (Theorem \ref{thrm:pp-lcr-mtc}).
+However, this expressivity comes with a computational cost. 
+Validating or instantiating (i.e., finding a linearisation of) a \POP takes polynomial time, but the equivalent problems for partial plans are \DP-complete and \NP-complete, respectively (Theorems~\ref{thrm:pp-sat} and~\ref{thrm:pp-val}).
+Thus, in \POP de/reordering the challenge is to find effective techniques for the intractable relaxation problem, but in the context of partial plans, the challenge is to \emph{identify the special cases in which instantiation is tractable} (Section~\ref{sec:pp-param-comp}), and to \emph{develop techniques to find minimal but tractable partial plans} (Section~\ref{sec:pp-cs-plans}).
+
+Section~\ref{sec:pp-cs-plans} introduced the idea of a \emph{causal link plan}, a generalised plan that represents constraints as a \emph{disjunctive causal structure}.
+Such structures have previously been used in the context of partial-order planning (Section~\ref{sec:po-planners}). 
+\citet{Kambhampati:1994:MultiContribCS} provides a definition of \POPI validity \WRT to disjunctive causal structures that requires each consumer to be supported by an unthreatened causal link from the structure (i.e., \POCL-validity as in Definition~\ref{def:pocl-valid} applied to \POPI{}s).
+A partial-order planner is introduced, which, unlike most partial-order planners, maintains \emph{multiple} possible supporting links for each consumer. 
+This prevents the planner from prematurely committing to a single supporter for a consumer, and allows it to find less committed plans.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Future Work} 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\cut{
+  While the empirical evaluation in the previous section shows it to be an effective plan relaxation technique, it is still little more than a prototype.
+
+  The aim of the optimisation is to preserve the formula's models while reducing its treewidth.
+  As treewidth is a syntactic, not a semantic measure, equivalent formulae (i.e, with the models) may have different treewidths.
+  While the optimisation technique is effective, a more principled approach would be welcome.
+  
+  While the results in Section~\ref{sec:pp-results} show that the success of \MKTR is highly dependent on the choice of \emph{relaxation policy}, the two policies tested here were designed in an \emph{ad hoc} way, based on the intuition that fewer threats means lower treewidths (\MT), and relaxing producers' variable bindings results in more instantiations (\RP).
+}
+
+\citet{Riddle2016:BaggedSymm} break symmetries in classical planning instances by reformulating the \PDDL into a ``bagged'' representation, where sets of interchangeable objects are replaced with resources, that is, counter variables (Section~\ref{sec:symm-break-planning}). 
+This approach reduces solve times by eliminating irrelevant permutations of objects, but can also provide flexibility, as any such permutation can be selected at execution time.
+However, the approach only works when individual objects are interchangeable, and cannot account for interchangeable \emph{collections} of objects (as studied extensively in Chapter~\ref{chap:symmetry-breaking}), provide flexibility for domain objects that are not interchangeable, or provide ordering flexibility.
+Nevertheless, this raises the question of what proportion of the instantiations found by \MKTR are simply symmetrical variations of the original plan.
+This analysis is left for future work.
+
+While this chapter generalises plan de/reordering, techniques for optimising other aspects of plans have been studied (Section~\ref{sec:least-commitment-planning}).
+Of particular note is the work of \citet{Muise2016-PopMaxSAT}, which studies the minimisation of both ordering constraints \emph{and plan size}.
+\citeauthor{Backstrom-CompAspects}'s \POP optimality definitions are extended to account for differences in \POP size, and a \MAXSAT-based approach to finding such optima is introduced.
+Future work could apply this to partial plans.
+An expanded constraint language $clang$ that can express whether an operator must appear in a plan would allow a partial plan's instantiations to differ not just in ordering and variable bindings, but also in plan size.

@@ -1,0 +1,51 @@
+\newcommand{\twgraph}{
+\begin{tikzpicture}[
+    vert/.style={draw,circle,text=black,font=\small,inner sep=0pt,text width=7mm,align=center},
+]
+% 0.86
+    \node[vert] (A) []	{$0$};
+    \node[vert] (B) [right = 1.5cm of A.center, anchor=center]	{$1$};
+    \node[vert] (C) [below left = 1.3cm and 0.75cm of A.center, anchor=center]	{$2$};
+    \node[vert] (D) [right = 1.5cm of C.center, anchor=center]	{$3$};
+    \node[vert] (E) [right = 1.5cm of D.center, anchor=center]	{$4$};
+
+    \draw[] (A) -- (C) -- (D) -- (A) -- (B) -- (E) -- (D);
+
+\end{tikzpicture}%
+}
+
+\newcommand{\twdecomp}{
+\begin{tikzpicture}[
+    vert/.style={draw,circle,text=black,font=\small,inner sep=0pt,text width=7mm,align=center},
+    label/.style={text=black,font=\scriptsize,inner sep=3pt},
+]
+
+    \node[vert] (A) []	{$A$};
+    \node[label] (XA) [right=1.1cm of A.center, anchor=center]	{$\set{0,1,3}$};
+    \node[vert] (B) [below left = 1.3cm and 0.75cm of A.center, anchor=center] {$B$};
+    \node[label] (XB) [left=1.1cm of B.center, anchor=center]	{$\set{1,3,4}$};
+    \node[vert] (C) [right = 1.5cm of B.center, anchor=center]	{$C$};
+    \node[label] (XC) [right=1.1cm of C.center, anchor=center]	{$\set{0,2,3}$};
+
+    \draw[] (B) -- (A) -- (C);
+
+\end{tikzpicture}%
+}
+
+\begin{figure}[t]
+    \begin{subfigure}[t]{0.5\textwidth}
+    \centering
+    \twgraph
+    \caption{A graph $G$ with treewidth of two.}
+    \label{fig:tw-graph}
+    \end{subfigure}%
+    %
+    \begin{subfigure}[t]{0.5\textwidth}
+    \centering
+    \twdecomp
+    \caption{A tree decomposition $D$ of graph $G$ in Figure~\ref{fig:tw-graph}.}
+    \label{fig:tw-decomp}
+    \end{subfigure}%
+    \caption[Treewidth example]{Treewidth example.}
+    \label{fig:tw-example}
+\end{figure}

@@ -1,0 +1,331 @@
+This chapter will first introduce the background concepts and notation that will be used throughout the rest of the thesis, and then present an overview of the existing literature in least-commitment planning, plan deordering and reordering, and symmetry breaking in matrix models, graph models and plan synthesis.
+%
+\section{Background}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Logical Preliminaries}\label{sec:notation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+The logical structures in this thesis are expressed in a standard first-order language $\mathcal{L}$ with finitely many variable, predicate and function symbols, and the usual logical connectives, including equality and precedence~\cite[Chapter~2]{BrachmanLeveque2004:KRR}.
+This section will not give a full description of the syntax and semantics of first-order logic, but will give a brief reminder of some common notational conventions.
+The letters $x$, $y$ and $z$ will indicate variables, $c$, $d$ and $e$ will indicate constants and $t$ terms (all possibly with annotations).
+For any logical structure $\eta$, the notation $\vars(\eta)$ and $\consts(\eta)$ denote the variables and constants, respectively, appearing in $\eta$.
+
+\paragraph{Lists and matrices} The notation $\vec{t}$ is used to denote ordered lists of possibly non-unique terms, with $\vec{t}[i]$ indicating the $i$-th element of the list.
+The notation $\vec{t_1} = \vec{t_2}$ is used as shorthand for $\card{\vec{t_1}} = \card{\vec{t_2}} \land \vec{t_1}[1] = \vec{t_2}[1] \land \cdots \land \vec{t_1}[\card{\vec{t_1}}] = \vec{t_2}[\card{\vec{t_2}}]$.
+Similarly, $\vec{t_1} \neq \vec{t_2}$ is shorthand for $\card{\vec{t_1}} \neq \card{\vec{t_2}} \lor \vec{t_1}[1] \neq \vec{t_2}[1] \lor \cdots \lor \vec{t_1}[\card{\vec{t_1}}] \neq \vec{t_2}[\card{\vec{t_2}}]$.
+The list resulting from the concatenation of two lists $\vec{t_1}$ and $\vec{t_2}$ is denoted $\vec{t_1} \concat \vec{t_2}$.
+%For any list $\vec{t}$ and integers $0 < x_1, \ldots, x_n \leq \card{\vec{t}}$, the notation $\vec{t}[x_1,\ldots,x_n]$ is shorthand for the list $\tup{\vec{t}[x_1],\ldots,\vec{t}[x_n]}$.
+
+The notation $\mat{M}$ indicates a matrix, i.e., rectangular array of possibly non-unique terms.
+The notation $\mat{M}[i]$, $\mat{M}[][j]$ and $\mat{M}[i][j]$ indicates the $i$th row, the $j$th column, and the $j$th element of the $i$th row of matrix $\mat{M}$, respectively.
+
+\paragraph{Substitutions} The concept of a \emph{substitution} -- a mapping from variables to terms -- will be used throughout.
+The notation $\sub = \set{x_1 \substo t_1, \ldots, x_n \substo t_n}$ describes a substitution mapping each variable $x_i$ to term $t_i$, for $1 \leq i \leq n$, and every other variable to itself.
+The set of variables explicitly mapped by substitution $\theta$ is denoted $\domain(\sub)$.
+The notation $\sub(x)$ is used to denote the term corresponding to variable $x$ under substitution $\sub$, and $\sub(\vec{x})$ is its generalisation to lists of variables.
+The result of applying a substitution $\sub$ to a formula $\phi$ is written $\phi\sub$, and means to simultaneously replace every variable $x$ in $\phi$ with $\sub(x)$.
+A substitution $\sub$ is \emph{ground} if every variable in its domain is mapped to a ground term, and is \emph{complete} \WRT formula $\phi$ if $\vars(\phi) \subseteq \domain(\sub)$.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Classical Planning Formalism}\label{sec:planning}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Classical planning is the problem of synthesising a sequence of actions that achieves a desired goal from a given initial state.
+All classical planning tasks will be expressed in a standard first-order \STRIPS formalism~\cite{Lifschitz1987:STRIPS}.
+
+\subsubsection{Classical Planning Tasks}
+%%
+A \emph{classical planning task} is a tuple $\PlanTask = \tup{\PtConsts, \PtOps, \initstate, \goalstate}$, where $\PtConsts$ is a set of constants, $\PtOps$ is a set of operators, and $\initstate$ and $\goalstate$ are sets of ground literals describing the initial state and goal, respectively.
+An \emph{operator} is a tuple $\optr = \tup{\name(\optr), \vars(\optr), \pre(\optr), \post(\optr)}$, where $\name(\optr)$ is the name, or \emph{type} of the operator, $\vars(\optr)$ is a list of variables and $\pre(\optr)$ and $\post(\optr)$ are finite sets of (ground or non-ground) literals with variables taken from $\vars(\optr)$. 
+It will be assumed that for all operators, $\name(\optr) = \optr$, and so operators will be referred to by name.
+When distinguishing between different operators of the same name, the notation $\optr(\vec{x})$ is used, where $\vars(\optr) = \vec{x}$.
+It is also required that operators with the same name be structurally equivalent, that is, if $\name(\optr) = \name(\optr')$, then there exists some substitution $\sub$ such that $\sub(\optr) = \sub(\optr')$.
+An \emph{action} is a ground operator $\actn = \tup{\pre(\actn), \post(\actn)}$, where $\pre(\actn)$ and $\post(\actn)$ are finite sets of ground literals. 
+If $\optr$ is an operator and substitution $\sub$ is ground and complete \WRT $\vars(\optr)$, then $\tup{\pre(\optr)\sub, \post(\optr)\sub}$ is the action resulting from \emph{instantiating} $\optr$ with $\sub$. 
+
+
+\subsubsection{Classical and Partial-Order Plans}\label{sec:class-po-plans}
+%%
+A \emph{classical plan} $\vec{\actn}$ is a finite sequence of actions.
+With the above definitions of actions and operators in mind, and assuming that no variable appears in more than one operator, a plan can also be represented as $\vec{\optr}\sub$, where $\vec{\optr}$ is a list of operators and $\sub$ is a ground substitution that is complete \WRT every operator in $\vec{\optr}$.
+Representing a plan in this way separates the abstract definition of the plan's operators from the variable bindings used to create a particular instantiation.
+
+As plans are typically discussed with reference to some planning task, it will be assumed every classical plan is book-ended by the distinguished actions $\initactn$, which has no parameters, no preconditions and postconditions that are the plan's initial state, and $\goalactn$, which has no parameters, no postconditions and preconditions that are the plan's goal. 
+%In this way a planning task can be ``embedded'' into a plan.
+In this form, a classical plan is valid \IFF it is \emph{executable} (i.e., the actions can be applied in sequence without violating any precondition requirements).
+
+A \emph{partial-order plan} (\POP) is a generalisation of a classical plan that defines which actions must be executed without (completely) defining their order.
+Instead, a set of ordering constraints is supplied in the form of a strict (i.e., irreflexive) partial order over the actions.
+Typically, a \POP is defined as a tuple $P = \tup{\acset, \precrel}$, where $\acset$ is a set of actions and $\precrel$ is a strict partial order over $\acset$.
+However, with the above definitions of actions, operators and substitutions in mind, and with the assumption that no variable appears in more than one operator, a \POP can be equivalently represented as follows:
+
+\begin{defn}\label{def:pop} A \defterm{partial-order plan} (\POP) is a tuple $P = \tup{\opset, \sub, \precrel}$ where $\opset$ is a set of operators, $\sub$ is a ground substitution that is complete \WRT to $\opset$, and $\precrel$ is a strict, transitively closed partial order over $\opset$.
+\end{defn}
+%
+The advantage of this representation is that it separates the operator types from the bindings that create any particular instantiation, and allows for reasoning about the structure and validity of the \POP to explicitly refer to a \POP's variable bindings.
+%
+As with classical plans, a planning task is ``embedded'' into a \POP via the distinguished parameter-free operators $\initoptr$ (which yields the initial state) and $\goaloptr$ (which checks the goals).
+
+While the actions in a classical plan must be executed in sequence, unordered actions in a \POP can be executed in any order.
+A \POP is therefore a compact representation of a set of classical plans, known as its \emph{linearisations}:
+%
+\begin{defn}\label{def:pop-lin} A classical plan $\vec{\actn} = \tup{\actn_1,\actn_2,\ldots,\actn_n}$ is a \defterm{linearisation} of \POP $P = \tup{\acset, \precrel}$ \IFF $\acset = \set{\actn_1,\actn_2,\ldots,\actn_n}$ and $\precrel \subseteq \set{\actn_i \prec \actn_j : 1 \leq i < j \leq n }$.
+\end{defn}
+\noindent
+A \POP{} is \emph{valid} \IFF all of its linearisations are valid:
+%
+\begin{defn}\label{def:pop-validity} A \POP is \defterm{valid} \IFF all of its linearisations are executable.
+\end{defn}
+%
+Classical plans are special cases of \POP{}s, and any classical plan $\vec{a} = \tup{\optr_1,\ldots,\optr_n}\sub$ can be expressed as an equivalent partial-order plan $\tup{\set{\optr_1,\ldots,\optr_n}$, $\sub$, $\set{\optr_i \prec \optr_j : 1 \leq i < j \leq n}}$. 
+
+\subsubsection{The Producer-Consumer-Threat Formalism}\label{sec:pct}
+%%
+The \emph{producer-consumer-threat formalism} (\PCT)~\cite{Backstrom-CompAspects} is typically used to describe a \POP{}'s causal structure by identifying which actions produce, consume or threaten which ground literals. 
+Here, it describes how operators produce, consume or threaten (possibly non-ground) literals:
+%
+%The following definition states when an operator $\optr$ \emph{produces}, \emph{consumes}, or \emph{threatens} a non-ground literal $q(\vec{t})$.
+%
+\begin{defn}\label{def:pct} Let $\optr$ be an operator and $q(\vec{s})$ a literal. Then:
+\begin{align*}
+\prods(\optr, q(\vec{s})) & \eqdef q(\vec{s}) \in \post(\optr). \\
+\consms(\optr, q(\vec{s})) & \eqdef q(\vec{s}) \in \pre(\optr). \\
+\thrts(\optr, q(\vec{s})) & \eqdef \neg q(\vec{s}) \in \post(\optr).
+\end{align*}    
+\end{defn}
+%
+In the field of \emph{partial-order causal link planning} (\POCL), a \PCT-based notion of \POP validity is used that derives from the implied causal dependencies between a \POP{}'s operators~\cite{Weld94:LeastCommitment}, not the validity of its linearisations.
+A \emph{causal link} associates a consumer, (i.e., an operator precondition), with a producer (i.e., an operator postcondition):
+%
+\begin{restatable}{defn}{clink} A \defterm{causal link} is a $4$-tuple $\tup{\optr_p, q(\vec{u}), \optr_c, q(\vec{s})}$ such that $\prods(\optr_p, q(\vec{u}))$ and $\consms(\optr_c, q(\vec{s}))$.
+\end{restatable}
+%
+The consumer is \emph{supported} by the causal link \IFF it is preceded by, and codesignated with, the producer (i.e., $\sub(\vec{s}) = \sub(\vec{u})$). 
+The causal link is \emph{threatened} \IFF a codesignated threat (i.e., some $\optr_t, q(\vec{v})$ \ST $\thrts(\optr_t, q(\vec{v}))$ and $\sub(\vec{v}) = \sub(\vec{s})$) can be ordered between the producer and consumer. 
+A \POP{} $P$'s \emph{causal structure} is denoted $\cstruct_P$, and is a set of implicit unthreatened causal links defined as follows:
+%
+\begin{restatable}{defn}{causstruct}\label{def:pop-clinks} The \defterm{causal structure} of a \POP $P = \tup{\opset, \sub, \precrel}$ is the set of unthreatened causal links $\cstruct_P$ \ST $\tup{\optr_p, q(\vec{u}), \optr_c, q(\vec{s})} \in \cstruct_P$ \IFF:
+\begin{itemize}
+    \item $\optr_p \prec \optr_c$,
+    \item $\sub(\vec{s}) = \sub(\vec{u})$, and
+    \item for all $\optr_t$, $q(\vec{v})$ \ST $\thrts(\optr_t, q(\vec{v}))$, either $\sub(\vec{v}) \neq \sub(\vec{s})$, $\optr_t \prec \optr_p$ or $\optr_c \prec \optr_t$.
+\end{itemize} 
+\end{restatable}
+%
+A \POP $P$ is \emph{\POCL-valid} \IFF every consumer is supported by an unthreatened causal link:
+%
+\begin{restatable}{defn}{poclvalid}\label{def:pocl-valid} A \POP $P = \tup{\opset, \sub, \precrel}$ is \defterm{POCL-valid} \IFF for all $\optr_c \in \opset$ and $q(\vec{s})$ \ST $\consms(\optr_c, q(\vec{s}))$, there is an $\optr_p, q(\vec{u})$ \ST $\tup{\optr_p, q(\vec{u}), \optr_c, q(\vec{s})} \in \cstruct_P$.
+\end{restatable}
+%
+This notion of validity is stronger than that in Definition~\ref{def:pop-validity}, meaning that a \POP might not be \POCL-valid despite its linearisations all being executable~\cite{Kambhampati1996:ModalTruth}.
+However, any such \POP can always be made \POCL-valid by adding ordering constraints~\cite{Bercher2020:POPvsPOCL}.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Parameterised Complexity}\label{sec:param-compl}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+Rather than measuring a problem's time complexity solely as a function of the size of the input instance, the \emph{parameterised complexity}~\cite{DowneyFellows2012:PC} approach measures time complexity in terms of both the instance size and one or more additional parameters.
+The parameter typically measures some structural property of a problem instance.
+Parameterised complexity can thus provide a more fine-grained analysis than classical complexity analysis, and can better identify the structural properties of problem instances which are responsible for a problem's complexity.
+
+The development of the field was motivated by the existence of problems that are intractable (assuming that $\POLY \neq \NP$) when their complexity is measured only in terms of the instance size, but are computable in a time which grows polynomially \WRT the instance size and exponentially \WRT a small parameter.
+For example, given a graph $G = \tup{V, E}$ and an integer $k$, the \VERTCOVER problem asks whether there exists a $V'$ such that $\card{V'} \leq k$ and if $(u, v) \in E $ then either $u \in V' $ or $v \in V'$.
+While \VERTCOVER is \NP-complete~\cite{Karp72:Reducibility}, it is also solvable in time $\bigo(1.2738^k + (k \times \card{G}))$~\cite{Chen2010:VertexCover}, meaning that even large problem instances can be solved efficiently when $k$ is fixed to some small value.
+
+An algorithm is an \emph{fpt-algorithm} if it has time complexity of $\bigo(f(k)\times n^{\bigo(1)})$, where $n$ is the size of the input and $f$ is a computable function depending solely on parameter $k$.
+Similarly, a decision problem is in complexity class \FPT \IFF it can be solved by an fpt-algorithm.
+When $f$ is exponential, exponential time is required. 
+However, if $k$ is \emph{fixed}, then the time required scales polynomially with $n$, meaning that problems in \FPT remain feasible so long as $k$ stays small.
+
+The complexity of parameterised problems can be compared by way of \emph{fpt-reduction}, an fpt-algorithm that reduces one parameterised problem to another while preserving the solution set, instances sizes and parameters:
+
+\begin{defn}\label{def:fpt-reduction} If $Q$ and $Q'$ are parameterised decision problems, then $Q$ is \defterm{fpt-reducible} to $Q'$ \IFF every instance $(I, k)$ of $Q$ can be transformed, in fpt-time with parameter $k$, into an instance $(I', k')$ of $Q'$ such that $k' \leq f(k)$, where $f$ is a computable function, and $(I, k) \in Q$ \IFF $(I', k') \in Q'$.
+\end{defn}
+
+Complexity class \FPT is the first level of the parameterised hierarchy, which comprises the classes $\FPT \subseteq \W{1} \subseteq \W{2} \subseteq \cdots \subseteq \W{P} \subseteq \XP$.
+A parameterised problem with parameter $k$ is in class \W{1} \IFF it can be fpt-reduced to the problem of determining whether a 3-\CNF Boolean formula has a satisfying assignment with weight at most $k$ (i.e., that sets at most $k$ variables to \true). 
+Problems in class \W{t} for $t > 1$ can be fpt-reduced to the problem of determining whether a Boolean formula with a nesting depth of at most $t$ has a satisfying assignment with weight at most $k$~\cite{Buss2006:SimplWeft}.
+%A parameterised problem with parameter $k$ is in class \W{t} \IFF it can be reduced, in \FPT-time, to the problem of determining the complexity of a Boolean circuit.\footnote{More specifically, whether a Boolean circuit of weft $t$ and depth $t + h$ (for some $h > 0$) accepts an input with a Hamming weight of exactly $k$ }
+Complexity class $\W{P}$ contains all problems solvable by a non-deterministic Turing machine in $f(k).n^c$ steps, of which at most $h(k).\log(n)$ are non-deterministic (where $f$ and $h$ are computable functions, $c$ is a constant and $k$ is the parameter).
+Class \XP contains all parameterised problems that can be solved in a running time of $\bigo(n^{f(k)})$.
+As with \FPT, if $k$ is fixed, then \XP problems scale polynomially with the size of the input.
+However, as $k$ is in the exponent, large problems may become infeasible.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Treewidth}\label{sec:treewidth}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+It has been observed that many computationally hard graph problems are tractable when parameterised with the \emph{treewidth}~\cite{Robertson1986-Treewidth} of the graph.
+Consequently, a common approach in parameterised complexity analysis is to demonstrate that an otherwise intractable problem is solvable in polynomial time when limited to instances with an underlying structure that can be described as a graph with bounded treewidth.
+
+A graph's treewidth is a positive integer that, intuitively, measures its ``cyclicity'': a tree has a treewidth of $1$, indicating no cycles, and a complete graph (or clique) of $n$ vertices has a treewidth of $n-1$, indicating the presence of every possible cycle.
+More formally, treewidth is defined with reference to \emph{tree decompositions}:
+
+\enlargethispage*{2\baselineskip}
+\begin{defn}\label{def:treedecomp} Let $G = \tup{V, E}$ be a graph, $T = \tup{W, F}$ be a tree and $X : W \to 2^V$ be a function which maps every node in $W$ to a subset of $V$.
+Then, $D = \tup{T, X}$ is a \defterm{tree decomposition} of graph $G$, denoted $\treedecomp(G, D)$, \IFF: 
+\begin{itemize}
+  \item for every $v \in V$ there is a $w \in W$ such that $v \in X(w)$,
+  \item for every $(v, v') \in E$ there is a $w \in W$ such that $v, v', \in X(w)$, and 
+  \item if $v \in X(w)$, $v \in X(w')$ and $w''$ is on a path from $w$ to $w'$, then $v \in X(w'')$.
+\end{itemize}
+\end{defn}
+%
+\subimport*{graphics/}{treewidth-example.tex}
+%
+For example, the tree $D$ in Figure~\ref{fig:tw-decomp} is a tree decomposition of graph $G$ in Figure~\ref{fig:tw-graph}.
+The nodes in $D$ are annotated with their associated vertices in $G$. 
+The decomposition $D$ satisfies Definition~\ref{def:treedecomp}, that is, \myi every vertex in $G$ is associated with some node in $D$, \myii for every pair of connected vertices in $G$, there is a node in $D$ associated with them both, and \myii if a vertex in $G$ is associated with two nodes in $D$, it is also associated with all nodes on any path between them: in this case vertex $3$ is associated with nodes $B$ and $C$, and so is also associated with $A$.
+
+The \emph{width} of a tree decomposition is one less than the largest number of vertices associated with any node, and the \emph{treewidth} of a graph is equal to the smallest width of all of its tree decompositions.
+\cut{
+% 
+\begin{defn}\label{def:treewidth} The \defterm{treewidth} of a graph $G$ is defined as follows:
+  \begin{align*}
+  & \treewidth(G) \eqdef \min(\set{\width(D) : \treedecomp(G, D)}) \text{, where} \\
+  & \width(D) \eqdef \max(\set{\card{X(w)} : w \in W(D) }) - 1.
+  \end{align*}
+  \end{defn}
+  %
+}
+%
+The decomposition in Figure~\ref{fig:tw-decomp} has a width of two, and as it is a minimal decomposition of graph $G$, it follows that $G$ has a treewidth of two.
+The problem of deciding whether a graph's treewidth is bounded by $k > 0$ is \NP-complete~\cite{Arnborg1987:Treewidth} and in \FPT when parameterised with $k$~\cite{Bodlaender1996-LinearTreewidth}.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Partial Weighted \MAXSAT}\label{sec:maxsat}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The \emph{propositional satisfiability} problem (\SAT)~\cite{Biere2009:SatHandbook} asks whether there exists an interpretation of a given propositional formula (i.e., an assignment of truth values to its propositional variables) such that the formula evaluates to \true.
+Typically, the formulae are expressed in conjunctive normal form (\CNF), that is, as a conjunction of clauses where each clause is a disjunction of literals.
+An interpretation will satisfy a \CNF formula \IFF it satisfies each of the formula's clauses.
+
+The problem of \emph{partial weighted maximum satisfiability} (partial weighted \MAXSAT) is a generalised optimisation variant of \SAT that distinguishes between \emph{soft} clauses, which are assigned a numeric weight, and \emph{hard} clauses, which are unweighted.
+The aim of the partial weighted \MAXSAT problem is to find an interpretation that satisfies all hard clauses and maximises the total weight of the satisfied soft clauses.
+Here, the syntax $\maxsatcl{\phi}{k}$ is used to indicate that clause $\phi$ has weight $k$, and no weight marking indicates a hard clause.
+For example, the formula below is trivially unsatisfiable:
+%
+\begin{align*}
+\maxsatcl{(\satprop_1 \lor \satprop_2)}{3} \land \maxsatcl{\neg\satprop_1}{2} \land \neg\satprop_2.
+\end{align*}
+%
+However, the interpretation $\set{\satprop_1 \substo \top, \satprop_2 \substo \bot}$ maximises the soft clause weights (3) while satisfying the hard clause, and is thus an optimal solution to the partial weighted \MAXSAT problem.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Constraint Satisfaction Problems}\label{sec:csp}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+A \emph{constraint satisfaction problem} (\CSP)~\cite{Tsang1993:FoundationsCsp} asks whether a set of variables can be assigned values that satisfy a given set of constraints.
+A \CSP typically comprises a set of variables, their domains, and a set of constraints that specify the allowable combinations of variable bindings:
+
+\begin{defn}\label{def:csp} A \defterm{Constraint Satisfaction Problem} (\CSP) $S = \tup{X, D, C}$ where:
+\begin{itemize}
+  \item $X = \set{x_1,\ldots,x_n}$ is a set of variables,
+  \item $D = \set{D_1,\ldots,D_n}$ is the domains for the variables in $X$, and
+  \item $C = \set{C_1,\ldots,C_m}$ is the constraints \ST for $1 \leq i \leq m$, $C_i = \tup{t_i, R_i}$ where $t_i = \tup{x_1^i,\ldots, x_k^i}$ is the constraint scope, and $R_i : D_{x_1^i} \times \cdots \times D_{x_k^i}$ is a $k$-ary relation over the corresponding domains.
+\end{itemize}
+A solution is a ground substitution $\sub$ that is complete \WRT $X$ \ST:
+\begin{itemize}
+  \item for all $x \in X$, $\sub(x) \in D_x$, and
+  \item for all $\tup{\tup{x_1^i,\ldots, x_k^i}, R_i} \in C$, $\tup{\sub(x_1^i),\ldots,\sub(x_k^i)} \in R_i$.
+\end{itemize}
+\end{defn}
+
+While Definition~\ref{def:csp} represents constraints \emph{extensionally}, that is, as sets of allowable combinations of bindings, they are frequently expressed \emph{intentionally}, that is, as a compact formula.
+For example, if $X = \set{x_1,x_2}$ and $D_{x_1} = D_{x_2} = \set{0, 1}$, then the extensional constraint $\tup{\tup{x_1, x_2}, \set{\tup{0, 0}, \tup{1, 1}}}$ could be represented intentionally as $x_1 = x_2$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Groups, Permutations and Automorphisms}\label{sec:grp-perm-auts}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+Much of the later work on symmetry breaking will be presented in the context of groups, permutations and automorphisms~\cite{Holt2005:HandbookCompGroup}.
+The purpose of this section is not to give a full description of the field, but rather provide the background concepts that will be relied upon later.
+%
+\subsubsection{Groups}\label{sec:grp-theory}
+%
+A \emph{group} is an algebraic structure comprising a set and a binary operator that satisfy four conditions:
+%
+\begin{defn}\label{def:group}
+A \defterm{group} $G = \tup{S, \cdot}$ is a set of items $S$ and a binary operator $\cdot : S \times S$ \ST:
+\begin{itemize}
+  \item if $s_1, s_2 \in S$, then $s_1 \cdot s_2 \in S$ (closure),
+  \item $s_1 \cdot (s_2 \cdot s_3) = (s_1 \cdot s_2) \cdot s_3$  (associativity),
+  \item there exists an $s_{id}$ \ST $s_{id} \cdot s = s \cdot s_{id} = s$ for all $s$ (identity), and
+  \item if $s \in S$ there is an $s^{-1}$ \ST $s \cdot s^{-1} = s^{-1} \cdot s = s_{id}$ (invertibility).
+\end{itemize}
+\end{defn}
+
+For example, the set of integers $\mathbb{Z}$ and the addition function $+$ satisfy the above requirements: the sum of two integers is an integer (closure), $x + (y + z) = (x + y) + z$ (associativity), there is an identity element, $0$, as $x + 0 = x$ (identity), and each integer $x$ has an inverse, ${-x}$, as $x + {-x} = 0$ (invertibility).
+Thus, $\tup{\mathbb{Z}, +}$ is group.
+
+A \emph{generating set} is a compact representation of a group.
+If $G = \tup{S, \cdot}$ is a group, then $\generator \subseteq S$ is a generating set of $G$ \IFF $S$ is equal to the closure of $\generator$ under $\cdot$: 
+
+\begin{defn}\label{def:generator} A \defterm{generating set} $\generator$ of a group $G = \tup{S, \cdot}$ is a subset of $S$ such that $s \in S$ \IFF there exists an $s_1,s_2, \ldots, s_n$ such that $s = s_1 \cdot s_2 \cdot,\cdots,\cdot s_n$ and for $1 \leq i \leq n$ either $s_i \in \generator$ or $s_i^{-1} \in \generator$.
+\end{defn}
+
+Continuing the example above, $\generator = \set{1}$ is a generating set for $G = \tup{\mathbb{Z}, +}$, as every integer is expressible as a sequence of additions of $1$ or ${-1}$.  
+
+The group-theoretic analogue of the Cartesian product of sets is known as the \emph{direct product}, and is defined as follows:
+
+\begin{defn}\label{def:direct-product} If $G = \tup{S, \cdot}$ and $H = \tup{T, \star}$ are groups then the \defterm{direct product} $G \times H$ is the group $\tup{U, \triangle}$, where
+\begin{itemize}
+  \item $U = S \times T$, i.e., $U$ contains all $(s, t)$ \ST $s \in S$ and $t \in T$, and
+  \item $\triangle$ is a binary operation over $U$ \ST $(s_1, t_1) \triangle (s_2, t_2) = (s_1 \cdot s_2, t_1 \star t_2)$
+\end{itemize}
+\end{defn}
+
+\noindent
+A \emph{subgroup} of a group is a subset that is itself a group:
+%
+\begin{defn}\label{def:subgroup} If $G = \tup{S, \cdot}$ and $H = \tup{T, \star}$ are groups then $G$ is a \defterm{subgroup} of $H$, denoted $G \leq H$, \IFF $\cdot = \star$ and $S \subseteq T$.
+\end{defn}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Permutations and Symmetry Groups}\label{sec:permutations}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+A \emph{permutation} is a bijective function from a set to itself.
+A permutation can be concisely defined in \emph{cyclic notation}, which represents a permutation as a series of circular transformations of groups of elements.
+For example, the notation $\perm = \cycle{c_1,c_2,c_3}\cycle{c_4,c_5}$ describes a permutation with two such cycles.
+The first cycle maps $c_1$ to $c_2$, $c_2$ to $c_3$ and $c_3$ back to $c_1$, and the second cycle swaps $c_4$ and $c_5$. 
+All remaining elements from $\domain(\perm)$ not explicitly contained in a cycle are fixed.
+
+The set mapped by permutation $\perm$ is denoted $\domain(\perm)$, and $\perm(t)$ denotes the item that $t$ is mapped to under permutation $\perm$.
+If $\eta$ is a logical structure, then, when clear from context, the notation $\perm(\eta)$ is used to denote the result of simultaneously replacing every term $t$ in $\eta$ with $\perm(t)$, while preserving the structure (or type) of $\eta$.
+For example, if $\vec{t} = \tup{t_1,\ldots,t_n}$ is a list, then $\perm(\vec{t})$ denotes the list $\tup{\perm(t_1), \ldots, \perm(t_n)}$, if $R : S \times S$ is a relation then $\perm(R)$ is the relation such that $(t, t') \in R$ \IFF $(\perm(t), \perm(t')) \in \perm(R)$, and if $\sub = \set{x_1 \substo t_1, \ldots, x_n \substo t_n}$ is a substitution, then $\perm(\sub)$ denotes the substitution $\set{\perm(x_1) \substo \perm(t_1),\ldots,\perm(x_1) \substo \perm(t_n)}$.
+
+The \emph{identity permutation} $\idperm$ maps every item to itself, and $\perm^{-1}$ is the \emph{inverse} of $\perm$ such that $\perm^{-1}(s) = s'$ \IFF $\perm(s') = s$.
+The \emph{composition} of two permutations is denoted $\perm_1 \permcomp \perm_2$, and results in a permutation that maps every item $s$ to $\perm_1(\perm_2(s))$.
+A set of permutations along with their inversions and the identity permutation, all closed under composition, and the composition operator form a group, known as a \emph{symmetry group}.
+
+A useful class of symmetry groups are the \emph{symmetric groups}, which define all possible permutations over a set:
+
+\begin{defn}\label{def:symmetric-grp} The \defterm{symmetric group} over a set $X$ is the group $S_X = \tup{P, \permcomp}$ where $P$ contains all permutations over $X$ and $\permcomp$ is the composition operator. 
+The symmetric group over $\set{1,2,\ldots,n}$ is denoted $S_n$.
+\end{defn}
+
+A symmetric group over a set of size $n$ contains $n!$ permutations.
+For example, $S_3$ contains the permutations $\cycle{1,2},\cycle{2,3},\cycle{3,1},\cycle{1,2,3},\cycle{1,3,2}$ and the identity permutation.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Automorphisms}\label{sec:automorphisms}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+Broadly speaking, an \emph{automorphism} of a logical structure $\eta$ is a permutation $\perm$ such that $\perm(\eta) = \eta$.
+For example, if $R : S \times S$ is a relation then $\perm$ is an automorphism of $R$ \IFF $R(s, s')$ implies $R(\perm(s), \perm(s'))$ and \emph{vice versa}.
+The problem of finding the automorphisms of a logical structure is typically reduced to the problem of finding of the automorphisms of a coloured graph representation of that structure.
+This particular type of automorphism is formally defined as permutation over the coloured graph's vertices which preserves its edge set and colours:
+
+\begin{defn}\label{def:automorphism} Let $G = \tup{\vertset, \edgeset, \colfunc}$ be a coloured graph where $\vertset$ is a set of vertices, $\edgeset : \vertset \times \vertset$ is a set of edges and $\colfunc : \vertset \to \mathbb{N}$ maps every vertex to a colour, represented here as a positive integer.
+An \defterm{automorphism} of $G$ is a permutation $\perm$ such that $(v_1, v_2) \in \edgeset$ \IFF $(\perm(v_1), \perm(v_2)) \in \edgeset$, and for all $v \in \vertset$, $\colfunc(v) = \colfunc(\perm(v))$.
+All automorphisms of graph, along with the composition operator, form a group, denoted $\auts(G)$.
+\end{defn}
+
+The problem of determining whether a graph has a non-identity automorphism is in \NP, but has no known polynomial time algorithms~\cite{Luks1993:PermCompl}.
+Nevertheless, in practice there exist algorithms that can efficiently find a generating set for the automorphisms of a graph of hundreds of thousands of vertices~\cite{McKay2104:PracGraphIso}.

@@ -1,0 +1,56 @@
+\section{Introduction}\label{sec:reins-intro}
+
+The least commitment approach to planning~\cite{Weld94:LeastCommitment} aims to provide a scheduler or executing agent with additional flexibility at execution time. 
+One way to achieve this is to post-process a ground, totally ordered plan into a minimally constrained partial-order plan (\POP). 
+This approach, known as \emph{plan deordering} or \emph{plan reordering} depending on the type of post-processing applied, has been extensively studied from both a technical~\cite{Backstrom-CompAspects,Aghighi2015:TractablePlanningPolytree} and practical~\cite{Kambhampati:2004:ExplBasedGeneralisation,Muise2016-PopMaxSAT,SiddiquiHaslum2012-Block,Say2016:MathematicalPOP} perspective (Section~\ref{sec:pop-opt-related-work}).
+
+An aspect of least commitment which has received less attention is the optimisation of an agent's commitment to the domain objects that are used in the course of executing a plan.
+By their nature, deordering and reordering processes can only remove or modify the agent's commitment to the \emph{timing} of actions: the resulting optimised plan will contain the same actions, and therefore make use of the same domain objects, as the original.
+This over-commitment to a particular set of objects can have a number of detrimental effects on the agent's execution-time options, including an over-commitment to a particular action ordering.
+
+As discussed in Section~\ref{sec:planning}, an action can be defined as a combination of an operator (a schematised action type) and a set of bindings for the operator's variables, that is, an action is an \emph{instantiation} of an operator.
+A \emph{reinstantiation} of an action is therefore a modification of its variable bindings, that is, a modification of the domain objects used by the agent in the course of executing the action.
+This chapter will introduce the notions of \emph{reinstantiated deorderings} and \emph{reinstantiated reorderings}: transformations of a plan under which ordering constraints can be removed or arbitrarily modified, respectively, \emph{and the plan's actions' variable bindings can be changed}.
+The motivation behind these transformations is the possibility of finding a new set of variable bindings that allows for greater minimisation of the plan's ordering constraints--resulting in less commitment and more flexibility--than would be possible had the bindings remained unchanged.
+
+Allowing a plan optimisation process to change variable bindings results in an exponentially larger search space. 
+However, this space is often highly \emph{symmetrical}, meaning that a plan has many transformations that are identical, and equally optimal, up to an irrelevant permutation of, for example, operators of the same type, or interchangeable domain objects.
+As an optimisation algorithm need only visit one element from each set of symmetrical plans, search times can be greatly reduced through the addition of symmetry breaking constraints.
+Thus, this chapter will introduce a number of symmetry breaking techniques to aid in the reinstantiation task.
+In particular, the notion of a \emph{causal structure symmetry} is introduced, a symmetry that results from interchangeable (potential) causal links between operator preconditions and postconditions.
+
+\subsection{Example}\label{sec:pop-reins-example}
+
+\subimport*{graphics/}{rovers-plans-table.tex}
+
+Consider a small planning task from (a reduced version of) the \IPC \ipcdomain{rovers} domain, in which a fleet of rovers must navigate the surface of a planet, collecting soil and rock samples.
+% and take photos, and then transmit the data back to Earth.
+The domain objects comprise two rovers ($\rover_1$ and $\rover_2$) and three connected waypoints ($\wayp_1$--$\wayp_3$).
+Both rovers begin at $\wayp_1$, there are soil and rock samples at $\wayp_2$ and $\wayp_3$, respectively, and paths connect all waypoints.
+The goal is to gather both samples.
+
+Classical plan $P_1$ in Figure~\ref{fig:rovers-p1}\footnote{Actions representing the initial state and goal have been omitted for space, and subscripts have been used to better distinguish between actions of the same type.} is an optimal solution to this problem: $\rover_1$ navigates to $\wayp_2$ and collects the soil sample, then navigates to $\wayp_3$ and collects the rock sample.
+%The causal structure of $P_1$ can be described in the context of the \emph{producer-consumer-threat} formalism (\PCT, Section~\ref{sec:pct}).
+An examination of the causal structure of $P_1$ shows that its ordering constraints cannot be modified without invalidating the plan.
+The preconditions of both $\samplesoil$ and $\navigate_2$ require that $\rover_1$ be at $\wayp_2$, a condition which is brought about only by $\navigate_1$. 
+Thus, for $P_1$ to remain valid, $\navigate_1$ must precede both $\samplesoil$ and $\navigate_2$, and for similar reasons $\navigate_2$ must precede $\samplerock$. 
+Additionally, $\navigate_2$ moves $\rover_1$ away from $\wayp_2$; it therefore \emph{threatens} the causal link between $\navigate_1$ and $\samplesoil$ and cannot be ordered between them.
+%As $\navigate_2$ cannot precede $\navigate_1$, it follows that $\samplesoil$ must precede $\navigate_2$.
+Thus, validity-preserving ordering constraints exist between all actions in $P_1$.
+As a result, standard de/reordering techniques cannot provide any additional flexibility, as any relaxation or modification of $P_1$'s ordering will render the plan invalid.
+
+However, if $P_1$'s variable bindings are allowed to change, then a more relaxed ordering can be found.
+Classical plan $P_2$ in Figure~\ref{fig:rovers-p2} is a modification of $P_1$ that, while still using the same operator \emph{types}, instead uses rover $\rover_2$ to collect the rock sample.
+%%
+This modification allows its ordering constraints to be relaxed: the actions can be executed in any order so long as $\navigate_1$ precedes $\samplesoil$, and $\navigate_2$ precedes $\samplerock$. 
+The \POP in Figure~\ref{fig:rovers-p3} is such a relaxation.
+
+\bigskip
+
+The rest of this chapter will continue as follows.
+Section~\ref{sec:reins-pop-opt} defines new optimality criteria for \POP{}s which take all possible sets of variable bindings into consideration.
+Section~\ref{sec:reins-encodings} introduces a technique for computing optimally reinstantiated \POP{}s by encoding the problem into a \MAXSAT instance, and Section~\ref{sec:reins-sb} introduces two symmetry-breaking techniques to improve this encoding.
+Section~\ref{sec:reins-eval} experimentally assesses the benefits provided by reinstantiated reordering through a comparison with the de/reordering encodings of \citet{Muise2016-PopMaxSAT} and the non-optimal but effective \EOG technique of \citet{Kambhampati:2004:ExplBasedGeneralisation} (Section~\ref{sec:pop-opt-related-work}).
+
+Results show that optimising both bindings and orderings incurs a much greater computational cost than optimising orderings alone. 
+However, when (even non-optimal) reinstantiated de/reorderings are found, they are significantly more flexible than plans optimised with standard methods.

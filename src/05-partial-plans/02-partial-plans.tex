@@ -1,0 +1,151 @@
+\section{Partial Plans}\label{sec:partial-plans}
+
+A \emph{partial plan} is a generalised plan that specifies which operators must be executed, without fully specifying their order or object values for their parameters.
+Instead, it provides a \emph{constraint formula} that defines the allowable combinations of orderings and variable bindings.
+Thus, unlike a \POP, which compactly represents a set of plans with different orderings, a partial plan represents a set of plans that can differ both in their orderings and domain objects.
+
+More formally, a constraint formula is an unquantified Boolean formula in which each atom is either a codesignation constraint between free variables or between a free variable and a constant, or an ordering constraint over two operators:
+%
+\newcommand{\langsep}{\; | \;}%
+\begin{defn}\label{def:conslang} Let $\mathcal{L} = \tup{V, C, P}$ be a first-order language where $V$, $C$, and $P$ are finite sets of variable, constant, and predicate symbols, respectively, and let $\mathcal{O}$ be a set of operators constructed in $\mathcal{L}$.
+The \defterm{constraint language} $\clang$ is generated using the following context-free grammar, where $x, y \in V$, $c \in C$ and $\optr_1, \optr_2 \in \mathcal{O}$: 
+%
+\begin{equation*}
+	\cform ::= \top \langsep \bot \langsep x = y \langsep x = c \langsep \optr_1 \preceq \optr_2 \langsep (\neg\cform) \langsep (\cform \land \cform) \langsep (\cform \lor \cform) \langsep (\cform \rightarrow \cform).
+\end{equation*}
+\end{defn}
+%
+As is standard, the ordering relation $\preceq$ is transitive and reflexive, and $\optr_1 \prec \optr_2$ is shorthand for $(\optr_1 \preceq \optr_2 \land \optr_2 \not\preceq \optr_1)$. 
+Codesignation constraints restrict the allowable variable bindings. 
+For all $x, y \in V$, $x = y$ requires that $x$ and $y$ be bound to the same constant, and for all $x \in V$ and $c \in C$, $x = c$ requires that $x$ be bound to $c$.
+These semantics can be defined formally:
+%
+\begin{defn}\label{def:cons-semantics} For any classical plan $\vec{\actn}$, terms $t_1, t_2 \in V \cup C$, operators $\optr_i, \optr_j \in \mathcal{O}$ and constraint formulae $\cform_1, \cform_2 \in \clang$, the $\models$ and $\equiv$ operators are defined as follows:
+\begin{align*}
+& \vec{\actn} \models t_1 = t_2 \text{ \IFF }\: \vec{\actn} = \tup{\optr_1,\dots,\optr_n}\sub \text{ and }\: \sub(t_1) = t_2. \\
+& \vec{\actn} \models \optr_i \prec \optr_j \text{ \IFF }\: \vec{\actn} = \tup{\optr_1,\dots,\optr_n}\sub \text{ and }\: 1 \leq i < j \leq n. \\
+& \vec{\actn} \models \cform_1 \land \cform_2 \text{ \IFF }\: \vec{\actn} \models \cform_1 \text{ and } \vec{\actn} \models \cform_2. \\
+& \vec{\actn} \models \cform_1 \lor \cform_2 \text{ \IFF }\: \vec{\actn} \models \cform_1 \text{ or } \vec{\actn} \models \cform_2. \\
+& \cform_1 \models \cform_2 \text{ \IFF for all } \vec{\actn}, \text{ if } \vec{a} \models \cform_1 \text{ then } \vec{a} \models \cform_2. \\
+& \cform_1 \equiv \cform_2 \text{ \IFF } \; \cform_1 \models \cform_2 \text{ and } \cform_2 \models \cform_1. 
+\end{align*}
+\end{defn}
+%
+\noindent
+A \emph{partial plan} comprises a set of operators and a constraint formula:
+%
+\begin{defn}\label{def:partial-plan} 
+A \defterm{partial plan} is a tuple $P = \tup{\opset, \cform}$, where $\opset$ is a finite set of operators and $\cform$ is a constraint formula.
+\end{defn}
+%
+As with classical and partial-order plans (Section~\ref{sec:class-po-plans}), it is assumed that a partial plan has a planning task ``embedded'' within it through the operators $\initoptr$ and $\goaloptr$, which simulate the initial state and goal condition, respectively.
+Additionally, it is assumed that no variable appears in more than one operator.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Validating and Instantiating Partial Plans}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+A partial plan is a compact representation of the set of classical plans that satisfy its constraints, that is, of its \emph{ground instantiations}:
+%
+\begin{defn}\label{def:pp-instantiation} Classical plan $\vec{\actn} = \tup{\optr_1,\ldots,\optr_n}\sub$ is a \defterm{ground instantiation} of partial plan $P = \tup{\opset, \cform}$ \IFF $\vec{\actn} \models \cform$ and $\opset = \set{\optr_1,\ldots,\optr_n}$.%, where:
+%\begin{align*}
+%\cform_{\vec{\actn}} \eqdef \big( \bigwedge_{\mathclap{x \in \vars(\tup{\optr_1,\ldots,\optr_n})}} x = \sub(x) \big) \land \big( \bigwedge_{\mathclap{1 \leq i < j \leq n}} \optr_i \prec \optr_j \big).%\footnotemark
+%\end{align*}
+%\footnotetext{The expression $x = \sub(x)$ indicates a substitution where the left and right sides are the values before and after substitution, respectively}
+\end{defn}
+%
+%The constraint formula $\cform_{\vec{\actn}}$ is a total specificatsion for the variable bindings and ordering of classical plan $\vec{\actn}$.
+Plan $\vec{\actn}$ is a ground instantiation of partial plan $P = \tup{\opset, \cform}$ \IFF $\vec{\actn}$ contains precisely the operators in $\opset$, and satisfies all ordering and binding constraints in $\cform$.
+(For brevity, when clear from context, such plans will be referred to as \emph{instantiations}.)
+
+Standard definitions of plan validity can be extended to cover partial plans.
+As a classical plan is assumed to contain actions representing the initial state and goal, it is valid \IFF it is executable (Section~\ref{sec:class-po-plans}).
+This can be extended to partial plans. 
+A partial plan is valid \IFF two conditions hold: it must be \emph{sound}, that is, all of its instantiations must be executable, and, to prevent a plan with contradictory constraints from being trivially valid, it must also be \emph{satisfiable}, that is, it must admit at least one instantiation:
+
+\begin{defn}\label{def:pp-val} Let $P = \tup{\opset, \cform}$ be a partial plan. 
+Then:
+\begin{itemize}
+  \item $P$ is \defterm{sound} \IFF every instantiation of $P$ is executable,
+  \item $P$ is \defterm{satisfiable} \IFF there exists a classical plan $\vec{\actn}$ that is an instantiation of $P$, and
+  \item $P$ is \defterm{valid} \IFF it is satisfiable and sound.
+\end{itemize}
+\end{defn}
+%
+The following two theorems establish the complexity of determining the soundness and satisfiability of a partial plan:\footnote{Proofs for all theorems in this chapter are in Appendix~\ref{apx:partial-plans}.}
+%
+\begin{restatable}{theorem}{ppsnd}\label{thrm:pp-snd} 
+\csprob{Partial Plan Soundness}.
+Determining the soundness of a partial plan is \CONP-complete.
+\end{restatable}
+ 
+\begin{restatable}{theorem}{ppsat}\label{thrm:pp-sat} 
+\csprob{Partial Plan Satisfiability}.
+Determining the satisfiability of a partial plan is \NP-complete.
+\end{restatable}
+%
+From the above, it follows that determining a partial plan's validity is the conjunction of an \NP-complete problem and a \CONP-complete problem, that is, it is \DP-complete:
+%
+\begin{restatable}{theorem}{ppval}\label{thrm:pp-val} 
+\csprob{Partial Plan Validity}.
+Determining the validity of a partial plan is \DP-complete.
+\end{restatable}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Special Cases of Partial Plans}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+Partial-order and classical plans are special cases of partial plans.
+A \POP is a partial plan with fully specified variable bindings, and a classical plan is a partial plan which is both totally ordered and ground.
+Though not studied here in any detail, an additional special case is a \emph{partially-instantiated plan}, which specifies a total order over the operators, but need not fully specify the variable bindings:
+
+\pagebreak
+
+\begin{defn}\label{def:pp-special-cases} Let $P = \tup{\opset, \cform}$ be a partial plan.
+Then:
+\begin{itemize}
+  \item $P$ is a \defterm{partially-instantiated plan} \IFF for all $\optr_1, \optr_2 \in \opset$, either $\cform \models \optr_1 \prec \optr_2$ or $\cform \models \optr_2 \prec \optr_1$,
+  \item $P$ is a \defterm{partial-order plan} \IFF there exists a \POP $Q = \tup{\opset, \sub, \precrel'}$ \ST $\cform \equiv \bigwedge \set{x = c : \sub(x) = c} \land \bigwedge \set{\optr_1 \prec \optr_2 : (\optr_1, \optr_2) \in \precrel'}$, and 
+  \item $P$ is a \defterm{classical plan} \IFF it is a partially instantiated plan, and for all $x \in \vars(\opset)$ there is a $c \in \consts(\opset)$ \ST $\cform \models x = c$. 
+\end{itemize}
+\end{defn}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Parameterised Complexity of Partial Plans}\label{sec:pp-param-comp}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+Theorem~\ref{thrm:pp-sat} above shows that finding a classical plan that satisfies a partial plan's constraints is \NP-complete.
+While it may seem that this result renders partial plans unsuitable for real-time use, further analysis from a parameterised complexity perspective shows that the problem of partial plan instantiation is tractable when the plan's constraint formula is subject to certain syntactic limitations. 
+
+Unlike classical complexity analysis, in which a problem's space and time requirements are measured as a function of the instance size, the parameterised complexity approach (Section~\ref{sec:param-compl}), measures them \WRT to the instance size and one or more additional parameters. 
+This fine-grained analysis aims to identify problems that are \NP-hard but nevertheless ``tractable'' in that they are computable in a time that is polynomial \WRT the instance size and exponential \WRT a small parameter.
+
+Many \NP-hard graph problems display this form of tractability when parameterised with the \emph{treewidth} (Section~\ref{sec:treewidth}) of the graph, and so a common technique in parameterised complexity analysis is to show that an otherwise intractable problem is tractable when limited to instances with an underlying graphical structure of bounded treewidth.
+
+This technique can be applied to the problem of partial plan instantiation.
+In this context, the underlying structure is the plan's \emph{primal graph}, that is, the undirected graph containing a vertex for each variable and operator appearing in the plan, and an edge between vertices \IFF the corresponding variables or operators appear together in some clause of the partial plan's constraint formula.
+A partial plan's treewidth is simply the treewidth of its primal graph:
+%
+\begin{defn}\label{def:primal-graph} Let $P = \tup{\opset, \cform}$ be a partial plan where $\cform$ is of the form $\cform_1 \land \cdots \land \cform_n$, where each $\cform_i$ is a disjunction of constraint formulae.
+Then:
+\begin{itemize}
+  \item the \defterm{primal graph} of $P$ is the graph $\tup{V, E}$ where $\gvert_t \in V$ \IFF $t \in \opset \cup \vars(\cform)$, and $\gedge{\gvert_t, \gvert_s} \in E$ \IFF there exists $1 \leq i \leq n$ such that both $t, s \in \vars(\cform_i) \cup \consts(\cform_i)$, and
+  \item the \defterm{treewidth} of $P$, denoted $\treewidth(P)$, is equal to the treewidth of the primal graph of $P$.
+\end{itemize}
+\end{defn}
+%
+\noindent
+The satisfiability of a partial plan with bounded treewidth can be determined in polynomial time:
+%
+\begin{restatable}{theorem}{ppsatfpt}\label{thrm:pp-sat-ftp} 
+\csprob{Parameterised Partial Plan Satisfiability}.
+Determining the satisfiability of a partial plan $P$ is in \XP and is $\W{1}$-hard when parameterised with $\treewidth(P)$.
+\end{restatable}
+%
+While computing a graph's treewidth is intractable, determining if it is bounded by some constant $k > 0$ is in \FPT with respect to $k$~\cite{Bodlaender1996-LinearTreewidth}.
+As the size of the primal graph of a partial plan $P = \tup{\opset, \cform}$ is bounded by $(|\vars(\cform)| + |\opset|)^2$, it follows that determining whether a partial plan's treewidth is bounded by $k$ is also in \FPT:
+%
+\begin{observation}\label{pp-tw-fpt} 
+Determining whether $\treewidth(P) \leq k$ for some partial plan $P$ and $k > 0$ is in \FPT.
+\end{observation}
+

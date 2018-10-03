@@ -1,0 +1,126 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Conclusion}\label{chap:conclusion}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This thesis introduced, theoretically analysed and empirically evaluated novel techniques for representing and generating \emph{flexible} plans. 
+In particular, it was demonstrated that allowing an agent to reason about both action orderings and domain objects when optimising and executing plans results in significantly more execution-time flexibility.
+
+Chapter~\ref{chap:pop-maxsat} focused on reasoning about, and possibly modifying, domain objects at \emph{optimisation time}, specifically when relaxing a classical plan into a partial-order plan (\POP), and Chapter~\ref{chap:partial-plans} studied the problem of allowing the agent to choose domain objects at \emph{execution time}.
+In both cases, an experimental comparison with \emph{explanation-based order generalisation}~\cite{Kambhampati:2004:ExplBasedGeneralisation} (\EOG), an effective albeit non-optimal technique for optimising orderings, showed that simultaneously optimising a plan's actions' orderings and parameters results in significantly more flexible plans than optimising orderings alone, although this additional flexibility comes at significant computational cost.
+
+Effectively reasoning about domain objects to maximise flexibility comes with a number of interrelated computational challenges.
+Firstly, a \emph{plan representation} must be found that allows the agent to \myi decide on both action ordering and domain objects at execution time, and \myii determine which of its available actions are compatible with its plan in a time suitable for real-time decision-making.
+Further, the plan should be expressed in a form that lends itself to algorithmic manipulation, for the purposes of generation and optimisation.
+Chapter~\ref{chap:pop-maxsat} used an existing representation, namely a \POP, that meets all criteria except allowing domain objects to be selected at execution time, and thus focused on the problem of finding a fixed set of objects that maximises ordering flexibility.
+The central challenge in Chapter~\ref{chap:partial-plans} was the development of a new plan representation, a \emph{partial plan}, that satisfies all of the above criteria.
+
+The second challenge is the development of \emph{optimality criteria} that define the degree to which a plan can provide execution-time flexibility, and then determining the complexity of the problems of finding plans that satisfy those criteria.
+Chapters~\ref{chap:pop-maxsat} and~\ref{chap:partial-plans} introduced theoretical frameworks for comparing the flexibility of \POP{}s with different variable bindings, and assessing the flexibility and tractability of partial plans, respectively.
+
+Finally, algorithms that \emph{generate} optimally flexible plans must be designed and implemented.
+Rather than synthesising such plans directly, both Chapters~\ref{chap:pop-maxsat} and~\ref{chap:partial-plans} take an \emph{optimisation} approach, and make a given classical plan more flexible by \emph{relaxing} its actions' orderings and variable bindings.
+The effectiveness of these approaches is dependent on their handling of the combinatorial explosion that results from allowing variable bindings to change.
+In both chapters, the range of possible bindings is exponentially reduced by only considering those that are relevant to the plan's \emph{causal structure}, and by breaking symmetries with the \multilex technique introduced in Chapter~\ref{chap:symmetry-breaking}.
+
+The contributions of this thesis were as follows:
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{Chapter~\ref{chap:symmetry-breaking}: Breaking generalised symmetries in matrix and graph models}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This chapter showed that problems related to plan relaxation and reasoning about alternative domain objects can have highly \emph{symmetrical} search spaces (Section~\ref{sec:symmetries}), that is, they can contain an exponential number of equally valid and flexible plans that are identical up to a permutation of orderings, domain objects, or both.
+Thus, before the plan relaxation techniques were studied directly, Chapter~\ref{chap:symmetry-breaking} introduced an effective, compact and domain-independent optimisation technique that accelerates the relaxation process by breaking symmetries.
+
+A small example from a synthetic domain demonstrated that symmetries can occur in a plan's \emph{causal structure}, that is, the mapping between its actions' effects and preconditions that determines its validity and variable bindings, and partially determines its ordering constraints.
+A causal structure can be naturally represented as a matrix of Boolean variables.
+While standard approaches to symmetry breaking in matrix and graph models break symmetries in which rows, columns or vertices are \emph{individually} interchangeable, Chapter~\ref{chap:symmetry-breaking} identified a generalised form of symmetry in which they are only interchangeable in \emph{combinations}.
+A series of examples showed that these symmetries can occur in many plan optimisation problems and \CSP benchmark domains~\cite{csplib}, and cannot be broken with standard techniques such as \dblex~\cite{Flener2002:DoubleLex} or \snakelex~\cite{Grayland2009:SnakeLex}.
+
+Thus, a novel symmetry breaking constraint was introduced, \multilex, that generalises \dblex and can break generalised symmetries in matrix and graph models, including directed graphs with self-loops.
+An empirical evaluation over a series of unconstrained matrix, simple graph and \DAG models of different sizes and symmetries showed that \myi these generalised symmetries result in a factorial size increase in the search space, and \myii \multilex is a compact and efficient symmetry breaking constraint that removes all but a constant factor of non-canonical solutions.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{Chapter~\ref{chap:pop-maxsat}: Optimising partial-order plans by modifying orderings and variable bindings}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This chapter demonstrated that reasoning about domain objects while optimising plans allows \POP{}s that are significantly more flexible to be found.
+A brief opening example taken from the \IPC \ipcdomain{rovers} domain showed that some plans \emph{cannot} be made more flexible unless the optimisation process is allowed to modify the domain objects used by the plan.
+
+A theoretical framework based on the idea of \emph{reinstantiated deordering} and \emph{reinstantiated reordering} -- generalisations of the well-known \emph{deordering} and \emph{reordering} processes~\cite{Backstrom-CompAspects} (Section~\ref{sec:opt-defs-de-reorder}) in which variable bindings can also change -- is used to compare the relative flexibility of \POP{}s that use different domain objects.
+Under this framework, a \emph{reinstantiated reorder} of a plan uses the same action \emph{types} but with possibly different variable bindings and orderings, and amongst those, a \emph{minimum reinstantiated reorder} has the fewest ordering constraints.
+
+A practical method for finding such optimal plans was introduced and empirically evaluated. 
+The technique is an optimisation and generalisation of that of \citet{Muise2016-PopMaxSAT}, in which the plan optimisation problem is reduced to an instance of the partial weighted \MAXSAT problem (Section~\ref{sec:maxsat}).
+
+The \MAXSAT encoding has a number of features that tackle the combinatorial explosion that results from considering all ways of rebinding variables.
+All refer to the possible \emph{causal structures} of the final optimised \POP.
+The first reduces the encoding size by removing any variables or clauses that are not used to enforce validity under some possible structure.
+The second accelerates the search process with additional \emph{symmetry breaking} constraints that rule out solutions with non-canonical causal structures.
+To detect these symmetries, the idea of a \emph{plan description graph} was introduced, an undirected coloured graph with automorphisms that correspond to the plan's symmetries.
+The symmetries were broken with the \multilex constraint as introduced in Chapter~\ref{chap:symmetry-breaking}.
+
+An empirical evaluation over all previous \IPC \STRIPS domains showed that allowing parameters to change results in a large increase in flexibility, but at a large computational cost. 
+In the $55.6\%$ of cases in which a result was returned within the time limit, allowing the input plan to be reinstantiated resulted in a $21.1\%$ \flex increase over the baseline, as opposed to a $3.3\%$ increase when bindings must remain static. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{Chapter~\ref{chap:partial-plans}: Finding tractable and flexible partial plans}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This chapter demonstrated that allowing an agent to select domain objects at execution time provides a significant increase in flexibility.
+Indeed, a modification of the example in Chapter~\ref{chap:pop-maxsat} shows that there are plans that can \emph{only} provide flexibility if the agent can vary actions' parameters during the course of running the plan.
+
+Much of the chapter was concerned with the problem of plan representation, in particular, how to express a plan that allows choices regarding domain object use to be made quickly at execution time.
+To this end, the idea of a \emph{partial plan} was introduced, a partially specified plan comprising a set of \emph{operators}, that is, schematised actions with parameters replaced by variables, and a \emph{constraint formula}, that is, a set of constraints expressed in a fragment of first-order logic defining the allowable combinations of orderings and variable bindings.
+While the problem of finding a classical plan that is consistent with a constraint formula is \NP-complete, a parameterised complexity analysis showed that the problem is polynomial, and thus suitable for real-time decision-making, when limited to formulae of bounded \emph{treewidth} (a measure of the ``cyclicity'' of a formula's underlying graph). 
+
+A theoretical framework was introduced to assess the amount of flexibility provided by a partial plan.
+Central to this framework is the notion of a \emph{minimal $k$-treewidth relaxation}, that is, a partial plan with constraints that cannot be made any weaker without its treewidth exceeding some predetermined parameter.
+
+To simplify the process of generating such a plan, a further representation was introduced in which constraints are expressed as a set of allowable causal links: a simpler representation that inherits many of the tractability properties of constraint formulae while being easier to generate and optimise algorithmically. 
+This allowed the introduction of \MKTR, an fpt-algorithm that generates a minimal $k$-treewidth relaxation of a plan by greedily and iteratively relaxing its causal structure while keeping its treewidth below an input parameter.
+As in Chapter~\ref{chap:pop-maxsat}, a number of optimisations were introduced, such as symmetry breaking with the \multilex  constraint, to accelerate this process.
+
+An empirical evaluation over all previous \IPC \STRIPS domains showed that with a maximum treewidth of two (i.e., searching for plans of quadratic ``complexity''), \MKTR can find a partial plan that represents $163.2\%$ more plans than the \EOG baseline.
+Increasing the maximum treewidth to five increased this to $302.3\%$ with little change in the time required to find a classical plan that satisfies the constraints.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Future Work}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Earlier chapters discussed various possible avenues for future research, such as extending \multilex to handle rotational symmetries (Section~\ref{sec:symm-breaking-discussion}), finding sets of variable bindings that allow for greater reduction in \POP size or makespan, or better \emph{block deorderings}~\cite{SiddiquiHaslum2012-Block} (Section~\ref{sec:pop-maxsat-discussion}), and extending partial plans to allow for instantiations that differ in size (Section~\ref{sec:partial-plans-discussion}).
+This thesis will conclude with a discussion of some broader possibilities for future work.
+
+\paragraph{Exploiting symmetries for plan flexibility}
+
+Chapter~\ref{chap:partial-plans} showed that a classical plan can be relaxed into a partial plan with huge numbers of instantiations, but raised the question of how many of these are simply symmetrical permutations of the original.
+Given the relative ease with which a plan's symmetries can be computed (Section~\ref{sec:symm-breaking-pdg} of Chapter~\ref{chap:pop-maxsat}) this suggests an area of future work in which a plan comprising a canonical classical plan and its symmetry group provides flexibility by compactly representing an exponential number of symmetrical variations.
+
+The computational challenge would be allowing an agent to determine, in a reasonable time, which of its available actions are compatible with such a plan. 
+More specifically, the agent must determine which actions are the first step of a classical plan with a canonical form that is identical to that held by the plan.
+While canonicalisation is \NP-hard~\cite{Luks1993:PermCompl}, approximate canonicalisation techniques have proved to be effective in practice, for example in the work of \citet{Pochter2011:SymmStatePlanners} and~\citet{Shleyfman2015:HeursSymms}. 
+Indeed, Section~\ref{sec:pp-symm-breaking} of Chapter~\ref{chap:partial-plans} introduced an approximation scheme that extends this work with the highly effective \multilex symmetry breaking constraint (Section~\ref{sec:multi-lex-evaluation} of Chapter~\ref{chap:symmetry-breaking}). 
+This suggests the possibility that determining which actions are compatible with the plan could be approximated in a time suitable for execution-time decision-making with minimal loss of flexibility.
+But of course, confirming this, and evaluating the effectiveness of this approach, is left for future work.
+
+\paragraph{Flexibility from plan diversity}
+
+An implicit assumption in this thesis is that the flexibility of a \POP or a partial plan can be measured by the size of the set of classical plans that it represents.
+However, as it is possible that all elements of the set are nearly entirely identical, a more sophisticated approach could maximise the set's \emph{diversity}.
+A benefit of maximising diversity rather than cardinality is that the likelihood of all plans in the set sharing a common point of failure is reduced.
+For example, a plan in a logistics domain may allow for many different shipping routes, but if they all use the Suez Canal then a single blockage will render the whole plan useless.
+By contrast, a plan that provides a \emph{qualitatively distinct} range of shipping routes, or perhaps includes air or road freight options, is more likely to provide useful alternatives.
+
+Typically, the \emph{diversity} of a set of plans is derived from the ``distance'' between each pair of plans in the set, and ideally the set would evenly cover as large a proportion of the solution space as possible~\cite{Meyers1999:GenQualDiffPlans}.
+Since it is preferable for a plan to provide flexibility in both actions' orderings and parameters, a distance measure is required that takes both of these into account.
+Many measures are based on a comparison of the plans' ground actions, for example edit distance or \emph{stability} (i.e., the proportion of shared actions~\cite{Fox2006:ReplanningRepair,Coman2011:DiversePlans}). 
+Unfortunately, this can obscure degrees of difference between variable bindings.
+For example, these measures would consider the three one-step plans $\tup{\grasp(\lhand, \shot_1)}$, $\tup{\grasp(\lhand, \shot_2)}$ and $\tup{\grasp(\rhand, \shot_3)}$ to be equally different from each other despite the common domain object in the first two.
+Distances derived from differences in the plans' state space transitions~\cite{Srivastava:2007:DomainIndDiversePlans} suffer the same problem.
+Measures derived from set-wise comparisons of plans' causal structures~\cite{Srivastava:2007:DomainIndDiversePlans} will recognise degrees of difference between variable bindings (since the causal links define the actions' parameters), but not reorderings of plans with the same causal links. 
+Thus, future work that develops a diversity measure for sets of plans that differ in both their ordering and domain object usage will help to determine the amount of flexibility provided by that set.
+
+A further area of future work is the development of plan relaxation algorithms that optimise the diversity of the final \POP or partial plan.
+A challenge here is balancing the three competing optimisation objectives, namely the number of classical plans represented by the final plan, their diversity, and, in the case of partial plans, the plan's tractability.
+The problem of finding the most diverse $k$ elements of a set (i.e., with the largest sum of pairwise distances) is known to be \NP-hard~\cite{Kuo1993:DiersityProb} and in \FPT when parameterised with $k$~\cite{Baste2020:DiversityFpt}.
+Thus, the complexity of the problem of finding an optimally diverse relaxation of a plan is likely to be at least as hard as the relaxation problems studied in this thesis.
+

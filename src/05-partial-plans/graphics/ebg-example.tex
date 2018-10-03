@@ -1,0 +1,76 @@
+\newcommand{\kkexample}[7]{
+\begin{tikzpicture}[
+	op/.style={draw,minimum height=0.5cm,inner sep=1pt,text=black},
+	cond/.style={text=black,font=\bfseries,font=\scriptsize}
+	]
+		
+	\node[op] (op1) []	{$A(#2)$};
+	\node[cond] (post11) [above right = 0.15cm and 0.42cm of op1.east, anchor = center] {$q(#2)$};
+	\node[cond] (post12) [below right = 0.15cm and 0.42cm of op1.east, anchor = center] {$g_1$};
+	
+	\node[op] (op2) [#5]	{$B(#3)$};
+	\node[cond] (post21) [above right = 0.15cm and 0.42cm of op2.east, anchor = center] {$q(#3)$};
+	\node[cond] (post22) [below right = 0.15cm and 0.42cm of op2.east, anchor = center] {$r(#3)$};
+	
+	\node[op] (op3) [#6]	{$C(#4)$}; 
+	\node[cond] (pre31) [above left = 0.15cm and 0.42cm of op3.west, anchor = center] {$q(#4)$};
+	\node[cond] (pre32) [below left = 0.15cm and 0.42cm of op3.west, anchor = center] {$r(#4)$};
+	\node[cond] (post31) [right = 0.25cm of op3.east, anchor = center] {$g_2$};
+	
+	#7%
+\end{tikzpicture}%
+}
+
+\begin{figure}[t]
+% plan
+\begin{subfigure}[t]{\textwidth}
+\centering
+\kkexample{\actn}{1}{1}{1}{right = 3cm of op1.center, anchor = center}{right = 3cm of op2.center, anchor = center}{}
+\caption{Classical plan $P_1$ that achieves the goal $\set{g_1, g_2}$.}
+\label{fig:kk-plan}
+\end{subfigure}
+
+\vspace{1cm}
+
+% KK result
+\begin{subfigure}[t]{\textwidth}
+\centering
+\kkexample{\optr}{x_1}{x_2}{x_3}{below = 1.2cm of op1.center, anchor = center}{right = 4cm of op1.center, anchor = center}{
+	\draw[->] (post11.east) to[out=0, in=180] (pre31.west);
+	\draw[->] (post22.east) to[out=0, in=180] (pre32.west);	
+	\node[inner sep=0pt] [right = 4cm of op3.north, anchor = north] {
+	$\begin{aligned}
+	P_2 = \langle \set{& A(x_1), B(x_2), C(x_3)}, \\
+									 & \set{A \prec C, B \prec C}, \\
+									 & x_1 = x_3 \land x_2 = x_3 \rangle
+	\end{aligned}$
+	};
+}%
+%
+\caption{\POPI $P_2$ and its validation structure, as produced by \EBG from $P_1$.}
+\label{fig:kk-nonopt}
+\end{subfigure}%
+
+\vspace{1cm}
+
+% optimal result
+\begin{subfigure}[t]{\textwidth}
+\centering
+\kkexample{\optr}{x_1}{x_2}{x_3}{below = 1.2cm of op1.center, anchor = center}{right = 4cm of op1.center, anchor = center}{
+	\draw[->] (post21.east) to[out=0, in=180] (pre31.west);
+	\draw[->] (post22.east) to[out=0, in=180] (pre32.west);
+	\node[inner sep=0pt] [right = 4cm of op3.north, anchor = north] {
+	$\begin{aligned}
+	P_3 = \langle \set{& A(x_1), B(x_2), C(x_3)}, \\
+										   & \set{B \prec C}, \\
+										   & x_2 = x_3 \rangle
+	\end{aligned}$
+	};
+}%
+%
+\caption{\POPI $P_3$ and its validation structure, a more general relaxation of $P_1$.}
+\label{fig:kk-opt}
+\end{subfigure}
+\caption[\EBG non-optimality example]{Non-optimal \EBG example.}
+\label{fig:kk-example}
+\end{figure}

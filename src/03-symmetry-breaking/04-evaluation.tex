@@ -1,0 +1,137 @@
+\pagebreak
+\section{Experimental Evaluation}\label{sec:multi-lex-evaluation}
+
+This evaluation addresses two questions.
+As discussed in Section~\ref{sec:gen-symm-hierarchy}, more general symmetry groups can express ``weaker'' symmetries.
+The first question is thus whether multi-row-column symmetries introduce a significant number of non-canonical solutions into the search space, as compared with stronger symmetries that swap the same rows and columns individually.
+Secondly, \multilex is a partial symmetry breaking constraint, raising the question of its effectiveness in practice. 
+
+Symmetry breaking techniques are typically assessed by measuring the degree to which they improve search times, however, this approach is not ideal.
+Constraint solvers rely on variable ordering and branching heuristics that can clash with symmetry breaking constraints~\cite{Heller2008:ModelRestarts,Smith2005:SetsOfSbs}, meaning that any difference in search time cannot be attributed solely to symmetry reduction.
+Additionally, isolating the degree of symmetry introduced by multi-row-column symmetries is complicated by the fact that benchmark problems may contain a combination of generalised and simple symmetries, or no generalised symmetries at all.
+Thus, this section takes the same approach as~\citet{Shlyakhter2007:SymmBreaking}, and answers the above questions by counting the number of non-canonical solutions that are introduced by generalised symmetries, and removed by \multilex, over a range of synthetic test cases.
+%, that is, unconstrained matrix, simple graph and \DAG models of different sizes and with different symmetries.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Experimental Setup}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+Tests were performed over unconstrained matrix models, simple graph models and \DAG models with a range of sizes and symmetries.
+Each test case comprises a variable matrix $\mat{M}$, a set of constraints $\mat{C}$, and a symmetry group $\group$ with generator $\generator$. 
+For all matrix models $\mat{C} = \emptyset$, and for graph models $\mat{C}$ contains only those constraints required to ensure that a solution represents a simple graph or \DAG, as appropriate. 
+For each model, a range of different symmetry groups were created by dividing the rows and columns into varying numbers of equal-sized divisions as in Definition~\ref{def:multi-row-col-symm-grp}.
+Four sets of tests were performed, as described below:
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{A: Matrices with multi-row-column symmetry} Test cases comprise an unconstrained $r \times c$ matrix model $\mat{M}$ and a multi-row-column symmetry group $\group$ with generator $\generator$ defined by partitioning the rows and columns into $n$ interchangeable divisions.
+%For example, a $4 \times 2$ matrix with $n = 2$ indicates that $\group$ and $\generator$ are defined from the row-column divisions $\tup{\tup{\mat{M}[1], \mat{M}[2]}, \tup{\mat{M}[][1]}}$ and $\tup{\tup{\mat{M}[3], \mat{M}[4]}, \tup{\mat{M}[][2]}}$.
+Tests cover all $2 \leq c \leq r \leq 6$ and all $n$ \ST $n | r$ and $n | c$.\footnote{$x | y$ indicates that $x$ and $y$ are positive integers and $y$ is a multiple of $x$.}
+%The values of $\cancount$ and $\mlcount$ were computed by counting the satisfying assignments to BLAH and BLAH, respectively.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{B: Matrices with multi-row and multi-column symmetry} Test cases comprise an unconstrained $r \times c$ matrix model $\mat{M}$ and a multi-row and multi-column symmetry group $\group = \group_r \times \group_c$ with generator $\generator = \generator_r \cup \generator_c$.
+Multi-row symmetry group $\group_r$ and multi-column symmetry group $\group_c$ were produced by partitioning the rows into $n_r$ interchangeable lists, the columns into $n_c$ interchangeable lists, respectively.
+%For example, a $4 \times 2$ matrix $\mat{M}$ with $n_r = n_c = 3$, indicates that $\group_R$ and $\generator_R$ are defined from the row-column divisions $\tup{\tup{\mat{M}[1], \mat{M}[2]}, \tup{}}$ and $\tup{\tup{\mat{M}[3], \mat{M}[4]}, \tup{}}$, and $\group_C$ and $\generator_C$ are defined from $\tup{\tup{}, \tup{\mat{M}[][1]}}$, $\tup{\tup{}, \tup{\mat{M}[][2]}}$.
+Tests cover all $2 \leq c \leq r \leq 6$ and all $n_r, n_c$ \ST $n_r | r$ and $n_c | c$.
+%When $n_r = r$ and $n_c = c$ (i.e., all rows and columns are interchangeable), $\cancount$ was taken from \citet{Harisson1973:BinaryMatrices}, otherwise it was computed as described above.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\paragraph{C: Simple graph models} Test cases comprise a $v$-vertex simple graph model $\mat{M}$ and a multi-vertex symmetry group produced by dividing the vertices into $n$ interchangeable lists.
+%For example, if $v = 4$ and $n = 2$, then $\group$ and $\generator$ are defined from the row-column divisions $\tup{\tup{\mat{M}[1], \mat{M}[2]}, \tup{\mat{M}[1], \mat{M}[2]}}$ and $\tup{\tup{\mat{M}[3], \mat{M}[4]}, \tup{\mat{M}[3], \mat{M}[4]}}$.
+Constraint set $\mat{C}$ ensures that solutions represent simple graphs:
+%
+\begin{align}
+    \bigwedge_{1 \leq i \leq v} \neg & \mat{M}[i][i]. \label{eq:simple-1} \\
+    \bigwedge_{1 \leq i < j \leq v} & \mat{M}[i][j] \leftrightarrow \mat{M}[j][i]. \label{eq:simple-2}
+\end{align}
+%
+Tests cover all graph models with all $2 \leq v \leq 12$, and all $n$ \ST $n | v$.
+%When $v = n$ (i.e., all vertices are interchangeable), $\cancount$ was taken from \citet{Sloane1973:Handbook}, otherwise it was computed as described above.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{D: \DAG models} Test cases comprise a $v$-vertex \DAG model and a multi-vertex symmetry group defined by dividing the vertices into $n$ interchangeable lists.
+The \DAG model contains a $v^2$ adjacency matrix $\mat{M}$, and additional variables and constraints to enforce acyclicity.
+The $v^2$ matrix $\mat{T}$ contains the transitive closure of $\mat{M}$, with $\mat{T}[i][j] = 1$ indicating that $\gvert_j$ is reachable from $\gvert_i$, and $\mat{A}$ is a $v^3$ matrix with $\mat{A}[i][j][k]$ indicating that $\gvert_k$ is reachable from $\gvert_i$ via $\gvert_j$.
+Formulae~\ref{eq:dag-1} and~\ref{eq:dag-2} define the values of $\mat{T}$ and $\mat{A}$, and Formula~\ref{eq:dag-3} enforces acyclicity:
+%
+\begin{align}
+    & \bigwedge_{1 \leq i,j,k \leq v} \mat{A}[i][j][k] \leftrightarrow \mat{M}[i][j] \land \mat{T}[j][k]. \label{eq:dag-1} \\
+    & \bigwedge_{1 \leq i,j \leq v} \mat{T}[i][j] \leftrightarrow ( \mat{M}[i][j] \lor \bigvee_{1 \leq k \leq n} \mat{A}[i][k][j] ). \label{eq:dag-2} \\
+    & \bigwedge_{1 \leq i \leq v} \neg \mat{T}[i][i]. \label{eq:dag-3}
+\end{align}
+%
+Tests cover all \DAG models with $2 \leq v \leq 8$, and all $n$ \ST $n | v$.
+%The number of solutions $\solcount$ was taken from \citet{Harary1973:GraphEnum}, as was $\cancount$ when $n = v$ (i.e., all vertices are interchangeable).
+%Otherwise, $\cancount$ was computed by counting the solutions as described above.
+%
+
+\bigskip
+
+For each test case, the total number of solutions ($\solcount$, i.e., the total number of $r \times c$ matrices, or simple or directed acyclic graphs with $v$ vertices), the number of canonical solutions ($\cancount$) and the number of solutions allowed by \multilex ($\mlcount$) are reported.
+All values of $\solcount$ are well-known~\cite{Harary1973:GraphEnum}, and some values of $\cancount$~\cite{Harisson1973:BinaryMatrices,Sloane1973:Handbook,Harary1973:GraphEnum}.
+Unknown values of $\cancount$ were computed by counting the solutions that satisfy $\mat{C} \land \bigwedge_{\perm \in \group} \mat{M}_R \lexleq \perm(\mat{M}_R)$, and the value of $\mlcount$ was computed by counting the solutions that satisfy $\mat{C} \land \MultiLex(\mat{M}, \generator)$.
+For this, the exact model counters \relsat~\cite{Bayardo200:CountingModels} and \ganak~\cite{Sharma2019:Ganak} were used over appropriately constructed \SAT instances.
+
+The degree of symmetry created by a symmetry group is measured by the proportion of non-canonical solutions, that is, $\symmrate = (\solcount - \cancount) / \solcount$, and the success of \multilex is measured by its efficiency in ruling out non-canonical solutions, that is $\eff = (\solcount - \mlcount) / (\solcount - \cancount)$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Results}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\subimport*{./tables/}{results.tex}
+%
+Results are displayed in Tables~\ref{tab:mat-mrc-results}--\ref{tab:graph-dag-results}.
+Canonical solution counts indicate that while generalised symmetries result in fewer redundant solutions than row, column or vertex symmetries, they still result in a factorial size increase in the search space.
+Efficiency results show that \multilex removes nearly all non-canonical solutions, and that as the model size increases, the number of solutions that remain in each symmetry class tends towards a constant factor of the input.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Symmetry Rates for Generalised Symmetries}
+%
+As expected, generalised symmetries introduce fewer symmetrical solutions than their simple counterparts.
+For example, Table~\ref{tab:mat-mrmc-results} shows that while a $4 \times 4$ matrix with total row and column symmetry ($n_r = n_c = 4$) has $317$ canonical solutions ($99.51\%$ symmetry), splitting the row and columns into two interchangeable groups of two ($n_r = n_c = 2$) increases this to $16,576$ ($74.7\%$ symmetry).
+More extreme differences occur in larger models.
+For example, Table~\ref{tab:graph-simple-results} shows that a $12$-vertex simple graph with total vertex symmetry ($n=12$) has $1.6 \times 10^{11}$ canonical solutions ($99.99\%$ symmetry), but splitting the vertices into two interchangeable groups of six ($n=2$) increases this to $3.6 \times 10^{19}$ ($49.99\%$ symmetry).
+Nevertheless, generalised symmetries render a significant proportion of the search space redundant, with $\symmrate \geq 95\%$ for most non-trivial matrices. 
+
+\subimport*{./tables/}{canon-rate-plot.tex}
+%
+Closer examination reveals that the proportion of non-canonical solutions increases factorially with the number of interchangeable divisions of rows and/or columns, or vertices.
+This should come as no surprise.
+\citet{Polya1937:Enumeration} observed that the proportion of $v$-vertex graphs that admit only trivial automorphisms (i.e., $\perm(G) = G$ \IFF $\perm = \idperm$) approaches $1$ as $v$ increases. 
+Thus, for any given $\group$, the number of symmetric alternatives for a graph will tend towards $\card{\group}-1$, and the proportion of graphs that are canonical \WRT $\group$ tends towards $1/\card{\group}$.
+
+To determine how quickly this theoretical limit is reached in the context of simple graphs, \DAG{}s and matrices (i.e., undirected bipartite graphs) with generalised symmetries, the value $\Delta_c = (\cancount/\solcount) - (1/\card{\group})$ was computed for each test case, that is, the difference between the observed proportion of canonical solutions and the predicted asymptotic limit.
+As multi-vertex and multi-row-column symmetry groups are isomorphic to $S_n$ and multi-row and multi-column symmetry groups are isomorphic to $S_{n_r} \times S_{n_c}$ (Section~\ref{sec:gen-symm-grps}), this limit is $1/n!$ and $1/(n_r!n_c!)$, respectively.
+
+Results show that $\Delta_c$ approaches $0$ as either the model size $\card{\mat{M}}$ increases or $n$ decreases.
+Figure~\ref{fig:can-rate-plot} depicts this trend by plotting $\card{\mat{M}}$ against $\Delta_c$ for all test cases with values of $n, n_r, n_c \leq 4$ for which multiple data points are available. 
+(For all test cases not included in the graph, $\Delta_c \leq 0.016$.)
+The graph indicates the proportion of canonical solutions quickly approaches $1/\card{\group}$.
+Indeed, for all matrix models with $r \times c \geq 15$, and graph models with $v \geq 6$, $\Delta_c \leq 0.01$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Effectiveness of \multilex}\label{sec:symm-results-ml-eff}
+%
+The results in Tables~\ref{tab:mat-mrc-results}--\ref{tab:graph-dag-results} show that despite being a partial symmetry breaking constraint, \multilex consistently removes nearly all non-canonical solutions. 
+Its efficiency drops below $95\%$ in just nine of $94$ test cases, and all symmetries are broken in $19$.
+
+Closer examination reveals that for multi-vertex and multi-row-column symmetry groups, the proportion of solutions allowed by \multilex, $\mlcount/\solcount$, approaches $1/2(n-1)!$ as the model size increases.
+(Any pattern in matrix models with multi-row and multi-column symmetry was not immediately clear).
+Unlike the trend shown in Figure~\ref{fig:can-rate-plot}, this value is not justified theoretically, but rather by an empirical analysis that shows it to be an accurate predictor of \multilex's efficiency.
+
+\pagebreak
+
+For all test cases over multi-vertex and multi-row-column symmetries, Figure~\ref{fig:ml-all-plot} plots $\mlcount/\solcount$, the proportion of solutions left by \multilex, against $1/2(n-1)!$, the predicted asymptotic limit. 
+A clear correlation is shown, with $\mlcount/\solcount \leq 1/2(n-1)!$ in all cases.
+Overall, predicting $\mlcount/\solcount$ with $1/2(n-1)!$ gives a root mean squared error of $0.09$, and when restricted to matrices with multi-row-column symmetries, simple graphs or \DAG{}s it is $0.04$, $0.12$ and $0.06$, respectively.
+
+Prediction errors decrease as the model size $\card{\mat{M}}$ increases and $n$ decreases.
+Figure~\ref{fig:ml-rate-plot} shows this trend by plotting $\card{\mat{M}}$ against $\Delta_m = (\mlcount/\solcount) - (1/2(n-1)!)$ over values of $n \leq 4$ for which multiple data points are available. 
+(For all test cases not included in the graph, $\Delta_m \leq 0.018$.)
+All matrix models with $r \times c \geq 12$ are within $0.02$ of the asymptotic limit, all simple graphs and \DAG{}s with $v \geq 6$ are within $0.01$ and $0.04$, respectively.
+
+This observed trend indicates that \multilex performs better than could be expected.
+\citet{Katsirelos:ComplComplSymmBr} demonstrate that in the worst case, \dblex, and therefore \multilex, leaves an exponential number of non-canonical solutions in each symmetry class.
+However, the more general asymptotic limits described above show that as the matrix size increases, this number tends towards a constant factor of $n$.
+Since the number of symmetry groups (i.e., canonical solutions) tends towards $\solcount/n!$, and the number of solutions allowed by \multilex tends towards $\solcount/2(n-1)!$, it follows that the number of non-canonical solutions per symmetry class that are not removed by \multilex tends towards $n!/2(n-1)! = n/2$.

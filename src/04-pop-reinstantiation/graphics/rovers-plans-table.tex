@@ -1,0 +1,47 @@
+\newcommand{\roverstab}[3]{
+\renewcommand\tabcolsep{1pt}
+\small
+\begin{tabular}{l l }
+$1.$ & $\navigate_1(#1, \wayp_1, \wayp_2)$ \\
+$2.$ & $\samplesoil(#1, \wayp_2)$ \\
+$3.$ & $\navigate_2(#2, #3, \wayp_3)$ \\
+$4.$ & $\samplerock(#2, \wayp_3)$ 
+\end{tabular}
+}
+
+\begin{figure}
+\begin{subfigure}[b]{0.5\textwidth}
+\centering
+\roverstab{\rover_1}{\rover_1}{\wayp_2}
+\caption{Plan $P_1$.}
+\label{fig:rovers-p1} 
+\end{subfigure}%
+%
+\begin{subfigure}[b]{0.5\textwidth}
+\centering
+\roverstab{\rover_1}{\rover_2}{\wayp_1}
+\caption{Plan $P_2$.}
+\label{fig:rovers-p2} 
+\end{subfigure}
+
+\vspace{0.25cm}
+
+\begin{subfigure}[b]{\textwidth}
+\centering
+\renewcommand\tabcolsep{1pt}
+\small
+\begin{tabular}{r l l l l }
+    \\
+$\opset = \{$ & $\navigate_1(x_1, x_2, x_3)$    & $\quad$ & $\sub = \{$ & $x_1 \substo \rover_1, x_2 \substo \wayp_1, x_3 \substo \wayp_2$\\
+            & $\samplesoil(x_4, x_5)$           & &             & $x_4 \substo \rover_1, x_5 \substo \wayp_2$\\
+            & $\navigate_2(x_6, x_7, x_8)$      & &             & $x_6 \substo \rover_2, x_7 \substo \wayp_1, x_8 \substo \wayp_3$\\
+            & $\samplerock(x_9, x_{10}) \hspace{1.5pt} \}$ & &           & $x_9 \substo \rover_2, x_{10} \substo \wayp_3 \hspace{1.5pt} \}$  \\
+       \\
+$\precrel = \{$ & \multicolumn{4}{l}{$\navigate_1 \prec \samplesoil, \navigate_2 \prec \samplerock \hspace{1.5pt} \}$}
+\end{tabular}
+\caption{Partial-order plan $P_3$.}
+\label{fig:rovers-p3} 
+\end{subfigure}
+\caption[Partial-order plan reinstantiation example]{Three plans from the \ipcdomain{rovers} domain. Subscripts have been used to better distinguish between actions of the same type.}
+\label{fig:rovers-plans} 
+\end{figure}

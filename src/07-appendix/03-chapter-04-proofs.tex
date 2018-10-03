@@ -1,0 +1,518 @@
+\chapter{Proofs of Theorems in Chapter~\ref{chap:pop-maxsat}}\label{apx:pop-maxsat}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Proof of Theorem~\ref{thrm:mrd-mrr-npc}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Theorem~\ref{thrm:mrd-mrr-npc} states that determining whether a \POP has a minimum reinstantiated deordering or reordering with less than $k$ ordering constraints are both \NP-complete.
+A proof of the \NP-completeness of minimum reinstantiated reordering is presented below.
+The proof for minimum reinstantiated deordering is a trivial modification.
+
+\mmrd*
+
+\begin{proof} Let $P = \tup{\opset, \sub, \precrel}$ be a \POP and $k > 0$ an integer. 
+To prove membership in \NP, guess a \POP $Q = \tup{\opset, \sub', \precrel'}$ and verify in polynomial time that $Q$ is valid, and $\card{\precrel'} < k$.
+
+Proof of \NP-hardness is by reduction from the decision problem \MINREORDER, which is \NP-complete~\cite{Backstrom-CompAspects} and asks whether, for any \POP $P = \tup{\opset, \sub, \precrel}$ and integer $k > 0$, there exists a valid \POP $Q = \tup{\opset, \sub, \precrel'}$ such that $\card{\precrel} < k$ (Definition \ref{def:opt-de-reorder}).
+Let $P = \tup{\opset, \sub, \precrel}$ be a \POP such that $\opset = \set{\initoptr, \optr_1,\ldots,\optr_n,\goaloptr}$.
+First construct, from each constant $c \in \consts(\opset)$, the predicate symbol $is_c$.
+Next, construct the \POP $P' = \tup{\opset', \sub, \precrel}$ such that $\opset' = \set{\initoptr', \optr_1',\ldots,\optr_n',\goaloptr}$, where $\pre(\initoptr') = \emptyset$, $\post(\initoptr') = \post(\initoptr) \cup \set{is_c(c) : c \in \consts(\opset)}$, and for $1 \leq i \leq n$, $\vars(\optr_i') = \vars(\optr_i)$, $\post(\optr_i') = \post(\optr_i)$ and $\pre(\optr_i') = \pre(\optr_i) \cup \set{is_c(x) : x \in \vars(\optr_i'), c = \sub(x)}$.
+The $is_c$ preconditions in $P'$'s operators mean that the bindings of all variables in $P'$ are ``fixed'': any valid reinstantiation of $P'$ cannot alter $\sub$.
+It follows that there exists a reorder of $P$ with fewer than $k$ ordering constraints \IFF there exists a reinstantiated reorder of $P'$ with fewer than $k$ ordering constraints.
+\end{proof}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Proof of Theorem~\ref{thrm:mrd-mrr-opt}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Theorem~\ref{thrm:mrd-mrr-opt} states that finding a minimal reinstantiated de/reordering of a \POP cannot be approximated to within a constant factor.
+As above, a proof for minimum reinstantiated reordering is presented.
+The proof for minimum reinstantiated deordering is a trivial modification.
+
+\mmrdopt*
+
+\begin{proof} As the polynomial time reduction in the proof of Theorem~\ref{thrm:mrd-mrr-npc} also preserves solutions, it is therefore an approximation preserving reduction. 
+As \MINREORDER cannot be approximated within a constant factor unless $\NP \subseteq \DTIME(n^{\text{poly log n}})$~\cite{Backstrom-CompAspects}, it follows that a minimum reinstantiated reorder cannot be either.
+\end{proof}
+
+
+\section{Proof of Theorem~\ref{thrm:mrr-encoding}}
+
+Theorem~\ref{thrm:mrr-encoding} asserts that an optimal solution to the \MRR/\MRD \MAXSAT encoding of a \POP $P$ corresponds to a minimum reinstantiated de/reorder of $P$, respectively.
+This will be proved for the case of \MRR, the case for \MRD is a minor modification.
+
+The following lemma establishes that any \POP corresponding to a solution to the \MRR \MAXSAT encoding as in Definition~\ref{def:mrr-soln} has well-formed ordering constraints:
+
+%%%%%%%%%% acyclic, transitively closed
+\begin{lemma}\label{lemma:mrr-encoding-wf-1} Let $P = \tup{\opset, \sub, \precrel}$ be a \POP, $S$ be a solution to the \MRR \MAXSAT encoding of $P$, and $\popfunc(S) = \tup{\opset, \sub', \precrel'}$ be the \POP corresponding to $S$.
+Then, $\precrel'$ is acyclic and transitively closed.
+\end{lemma}
+
+\begin{proof} Assume that there is an $\optr_1$, $\optr_2$ and $\optr_3$ \ST $\optr_1 \prec' \optr_2$ and $\optr_2 \prec' \optr_3$.
+From Definition~\ref{def:mrr-soln}, $\precp{\optr_1}{\optr_2}, \precp{\optr_2}{\optr_3} \in \precpset$ and $S(\precp{\optr_1}{\optr_2}) = S(\precp{\optr_2}{\optr_3}) = \true$.
+Therefore, $\precp{\optr_1}{\optr_3} \in \precpset$ (Definition~\ref{def:maxsat-props-sets}), and from Formula~\ref{eq:mrr-trans}, $S(\precp{\optr_1}{\optr_3}) = \true$, and so $\optr_1 \prec' \optr_3$.
+Therefore, $\precrel'$ is transitively closed.
+
+Assume that there is an $\optr_1$, $\optr_2$ \ST $\optr_1 \prec' \optr_2$.
+From Definition~\ref{def:mrr-soln}, $\precp{\optr_1}{\optr_2} \in \precpset$, and $S(\precp{\optr_1}{\optr_2}) = \true$.
+Either $\precp{\optr_2}{\optr_1} \in \precpset$, or not.
+Assume that $\precp{\optr_2}{\optr_1} \in \precpset$. 
+Then, from Formula~\ref{eq:mrr-asymm}, $S(\precp{\optr_2}{\optr_1}) = \false$, and so $\optr_2 \not\precrel' \optr_1$, and thus $\precrel'$ is acyclic.
+Assume that $\precp{\optr_2}{\optr_1} \not\in \precpset$.
+Then, from Definition~\ref{def:mrr-soln}, $\optr_2 \not\precrel' \optr_1$ and so $\precrel'$ is acyclic.
+\end{proof}
+
+%%%%%%% bindings lemma
+The following lemma establishes that if variable $x$ is bound to constant $c$ in a \POCL-valid reinstantiated reorder of a \POP, then $\eqp{x}{c} \in \eqpset$:
+
+\begin{lemma}\label{lemma:var-bind-eqp} Let $P = \tup{\opset, \sub, \precrel}$ be a \POCL-valid \POP with \POCL-valid reinstantiated reorder $Q = \tup{\opset, \sub', \precrel'}$.
+Then, for each $x \in \vars(\opset)$ and $c \in \consts(\opset)$ \ST $\sub'(x) = c$, $\eqp{x}{c} \in \eqpset$.
+\end{lemma}
+
+\begin{proof} This proof assumes that every variable appears in an operator precondition, and constants only appear in the initial state.
+This results in no loss of generality as this can be achieved in any \POP through the addition of ``dummy'' preconditions.
+
+For every $t \in \vars(\opset) \cup \consts(\opset)$, a chain of causally-connected terms $\vec{k}_t$ can be defined as follows.
+If $t \in \consts(\opset)$, then $\vec{k}_t = \tup{t}$.
+If $t \in \vars(\opset)$, then $\vec{k}_t = \tup{t} \concat \vec{k}_{t'}$\footnote{Where $\vec{x}\concat\vec{y}$ indicates the concatenation of $\vec{x}$ and $\vec{y}$.}, where $t$ and $t'$ are causally connected via an unthreatened causal link $\tup{\optr_p, q(\vec{u}), \optr_c, q_1(\vec{s})}$ \ST there is an $i$ where $\vec{u}[i] = t'$ and $\vec{s}[i] = t$.
+As $Q$ is \POCL-valid, such a $t'$ must exist for every $t \in \vars(\opset)$, and $\sub'(t') = \sub'(t)$.
+
+From Definition~\ref{def:maxsat-props-sets}, for each $t \in \vars(\opset)$ and $s \in \vec{k}_t$, $\eqp{t}{s} \in \eqpset$, and from the definition of $\vec{k}_t$, all elements must to the same constant, that is, $\sub'(t) = \sub'(s)$.
+As the last element in all such chains must be some $c \in \consts(\initoptr)$, it follows that for all $x \in \vars(\opset)$ \ST $\sub'(x) = c$, $\eqp{x}{c} \in \eqpset$.
+\end{proof}
+
+The following lemma establishes that any \POP corresponding to a solution to the \MRR \MAXSAT encoding as in Definition~\ref{def:mrr-soln} has well-formed binding constraints:
+
+%%%%%%%%%% ground and complete bindings
+\begin{lemma}\label{lemma:mrr-encoding-wf-2} Let $P = \tup{\opset, \sub, \precrel}$ be a \POP, $S$ be a solution to the \MRR \MAXSAT encoding of $P$, and $\popfunc(S) = \tup{\opset, \sub', \precrel'}$ be the \POP corresponding to $S$.
+Then, $\sub'$ is ground and complete \WRT $\vars(\opset)$.
+\end{lemma}
+    
+\begin{proof} It suffices to prove that \myi if $x \in \vars(\opset)$ then there is a $c$ \ST $S(\eqp{x}{c}) = \true$, and \myii if $x \in \vars(\opset)$, $c_1,c_2 \in \consts(\opset)$ and $S(\eqp{x}{c_1}) = S(\eqp{x}{c_2}) = \true$, then $c_1 = c_2$.
+
+First, \myi is proved.
+Let $x \in \vars(\opset)$. 
+From Formula~\ref{eq:mrr-eq-domain}, not all propositions $\eqp{x}{c} \in \eqpset$ \ST $c \in \consts(\opset)$ can be set to \false.
+It suffices to show that there is at least one $c \in \consts(\opset)$ \ST $\eqp{x}{c} \in \eqpset$.
+Let $c = \sub'(x)$.
+Then, from Lemma~\ref{lemma:var-bind-eqp}, $\eqp{x}{c} \in \eqpset$.
+Proof of \myii follows directly from Formula~\ref{eq:mrr-eq-domain}.
+\end{proof}
+
+%%%%%%%%%% POCL-valid
+Lemma~\ref{lemma:mrr-encoding-valid} establishes that any \POP corresponding to a solution to the \MRR \MAXSAT encoding as in Definition~\ref{def:mrr-soln} is \POCL-valid:
+
+\begin{lemma}\label{lemma:mrr-encoding-valid} Let $P = \tup{\opset, \sub, \precrel}$ be a \POP, $S$ be a solution to the \MRR \MAXSAT encoding of $P$, and $\popfunc(S) = \tup{\opset, \sub', \precrel'}$ be the \POP corresponding to $S$.
+Then, $\popfunc(S)$ is \POCL-valid.
+\end{lemma}
+
+\begin{proof} Let $\optr_c$ and $q(\vec{s})$ be an operator and literal \ST $\consms(\optr_c, q(\vec{s}))$.
+To prove that $\popfunc(S)$ is \POCL-valid it suffices to show that $\optr_c$ and $q(\vec{s})$ are supported by an unthreatened causal link.
+
+Formula~\ref{eq:mrr-cl} states that not all $\pclp{\optr_p}{q(\vec{u})}{\optr_c}{q(\vec{s})} \in \pclpset$ can be set to \false.
+It first must be shown that there is at least one such $\pclp{\optr_p}{q(\vec{u})}{\optr_c}{q(\vec{s})} \in \pclpset$.
+
+As $P$ is \POCL-valid, each $\optr_c$ and $q(\vec{s})$ \ST $\consms(\optr_c, q(\vec{s}))$ are supported by an unthreatened causal link $\tup{\optr_p, q(\vec{u}), \optr_c, q(\vec{s})}$, and so from Definition~\ref{def:maxsat-props-sets}, $\pclp{\optr_p}{q(\vec{u})}{\optr_c}{q(\vec{s})} \in \pclpset$. 
+Therefore, there is at least one $\pclp{\optr_p}{q(\vec{u})}{\optr_c}{q(\vec{s})} \in \pclpset$. 
+
+Let $\pclp{\optr_p}{q(\vec{u})}{\optr_c}{q(\vec{s})} \in \pclpset$ and $S(\pclp{\optr_p}{q(\vec{u})}{\optr_c}{q(\vec{s})}) = \true$.
+Then, from Definition~\ref{def:maxsat-props-sets} and Formula~\ref{eq:mrr-cl-holds}, $\precp{\optr_p}{\optr_c} \in \precpset$ and $S(\precp{\optr_p}{\optr_c}) = \true$, and for $1 \leq i \leq \card{\vec{s}}$, $\eqp{\vec{u}[i]}{\vec{s}[i]} \in \eqpset$ and $S(\eqp{\vec{u}[i]}{\vec{s}[i]}) = \true$. 
+Therefore, $\optr_p \precrel' \optr_c$, $\sub'(\vec{u}) = \sub'(\vec{s})$, that is, $\optr_c$ and $q(\vec{s})$ are supported by a causal link.
+
+Let $\optr_t$ and $q(\vec{v})$ be a operator and literal \ST $\thrts(\optr_t, q(\vec{v}))$. 
+Then, from Definition~\ref{def:maxsat-props-sets}, $\precp{\optr_t}{\optr_p}, \precp{\optr_c}{\optr_t} \in \precpset$ and for $1 \leq i \leq \card{\vec{s}}$, $\eqp{\vec{p}[i]}{\vec{v}[i]} \in \eqpset$.
+And, from Formula~\ref{eq:mrr-cl-holds}, either $S(\precp{\optr_t}{\optr_p}) = \true$, $S(\precp{\optr_c}{\optr_t}) = \true$, or there is some $1 \leq i \leq \card{\vec{s}}$ \ST $S(\eqp{\vec{s}[i]}{\vec{v}[i]}) = \false$.
+Therefore, either $\optr_t \precrel' \optr_p$, $\optr_c \precrel' \optr_t$ or $\sub'(\vec{v}) \neq \sub'(\vec{s})$, that is, the causal link is unthreatened.
+\end{proof}
+
+%%%%%%%%%% POCL-valid POP -> solution
+Lemma~\ref{lemma:pop-to-mrr-encoding} establishes that any \POCL-valid reinstantiated reorder $Q$ of a \POP $P$ corresponds to a solution to the \MRR \MAXSAT encoding of $P$.
+The exact form of this solution is defined as follows:
+
+\begin{defn}\label{def:pop-to-sol} Let $P = \tup{\opset, \sub, \precrel}$ be a \POP and $Q = \tup{\opset, \sub', \precrel'}$ be a reinstantiated reorder of $P$.
+Then, $S_Q$ denotes the transformation of $Q$ into a solution to the \MRR \MAXSAT encoding of $P$ \ST:
+\begin{itemize}
+    \item for all $\precp{\optr_1}{\optr_2} \in \precpset$, $S_Q(\precp{\optr_1}{\optr_2}) = \true$ \IFF $\optr_1 \prec' \optr_2$,
+    \item for all $\eqp{t}{u} \in \eqpset$, $S_Q(\eqp{t}{u}) = \true$ \IFF $\sub'(t) = \sub'(u)$, and
+    \item for all $\pclp{\optr_p}{\vec{u}}{\optr_c}{\vec{s}} \in \pclpset$, $S_Q(\pclp{\optr_p}{\vec{u}}{\optr_c}{\vec{s}}) = \true$ \IFF precondition $q(\vec{s})$ of $\optr_c$ is supported by postcondition $q(\vec{u})$ of $\optr_p$ and the causal link $\tup{\optr_p, q(\vec{u}),$ $\optr_c, q(\vec{s})}$ is unthreatened in $Q$.
+\end{itemize}
+\end{defn}
+
+\noindent
+Lemma~\ref{lemma:pop-to-mrr-encoding} assumes that $Q$ is \emph{\POCL-minimal}, as defined below:
+
+\begin{defn} A \POP $P = \tup{\opset, \sub, \precrel}$ is \defterm{\POCL-minimal} \IFF it is \POCL-valid, and for all $Q = \tup{\opset, \sub, \precrel'}$ \ST $\precrel' \subset \precrel$, $Q$ is not \POCL-valid.
+\end{defn}
+
+This assumption results in no loss of generality as any \POCL-valid \POP can be made \POCL-minimal by greedily removing ordering constraints.
+
+\begin{lemma}\label{lemma:pop-to-mrr-encoding} Let $P = \tup{\opset, \sub, \precrel}$ be a \POP, and $Q = \tup{\opset, \sub', \precrel'}$ be a \POCL-minimal reinstantiated reorder of $P$.
+Then $S_Q$ is a solution to the \MRR \MAXSAT encoding of $P$.
+\end{lemma}
+
+\begin{proof} As $Q$ is \POCL-minimal, it follows that every ordering constraint is required to ensure that a consumer is supported by a producer, a causal link is protected from threats, or that $\precrel'$ is transitively closed.
+Therefore, from Definitions~\ref{def:mrr-causal-rel} and~\ref{def:maxsat-props-sets}, if $\optr_1 \precrel' \optr_2$ then $\precp{\optr_1}{\optr_2}\in \precpset$.
+As $Q$ is a well-formed \POP, and $S_Q(\precp{\optr_1}{\optr_2}) = \true$ \IFF $\optr_1 \precrel' \optr_2$ (Definition~\ref{def:pop-to-sol}), $S$ satisfies Formulae~\ref{eq:mrr-asymm}--\ref{eq:mrr-ig}.
+
+Formula~\ref{eq:mrr-eq-symm} requires that for all $\eqp{s}{u}, \eqp{s}{u} \in \eqpset$, $S_Q(\eqp{s}{u}) = S_Q(\eqp{u}{s})$, which follows directly from Definition~\ref{def:pop-to-sol}.
+Formula~\ref{eq:mrr-eq-trans} requires that for all $\eqp{s}{u}, \eqp{u}{v}, \eqp{s}{v} \in \eqpset$, if $S_Q(\eqp{s}{u}) = S_Q(\eqp{u}{v}) = \true$ then $S_Q(\eqp{s}{v}) = \true$.
+From Definition~\ref{def:pop-to-sol}, $S_Q(\eqp{s}{u}) = S_Q(\eqp{u}{v}) = \true$ \IFF $\sub'(s) = \sub'(u) = \sub'(v)$, which implies $S_Q(\eqp{s}{v}) = \true$, as desired.
+Formula~\ref{eq:mrr-eq-domain} requires that for each variable $x \in \vars(\opset)$ there is exactly one constant $c \in \consts(\opset)$ \ST $\eqp{x}{c} \in \eqpset$ and $S_Q(\eqp{x}{c}) = \true$.
+As $\sub'$ is ground, there is exactly one $c$ \ST $\sub'(x) = c$.
+From Lemma~\ref{lemma:var-bind-eqp}, $\eqp{x}{c} \in \eqpset$, and from Definition~\ref{def:pop-to-sol}, $S_Q(\eqp{x}{c}) = \true$, as desired.
+
+Let $q(\vec{s})$ be a precondition of $\optr_c \in \opset$.
+As $Q$ is \POCL-valid, $q(\vec{s})$ is supported by a postcondition $q(\vec{u})$ of $\optr_p \in \opset$ and causal link $\tup{\optr_p, q(\vec{u}), \optr_c, q(\vec{s})}$ is unthreatened in $Q$.
+From Definitions~\ref{def:maxsat-props-sets} and~\ref{def:pop-to-sol}, $\pclp{\optr_p}{\vec{u}}{\optr_c}{\vec{s}} \in \pclpset$ and $S_Q(\pclp{\optr_p}{\vec{u}}{\optr_c}{\vec{s}}) = \true$, thus satisfying Formula~\ref{eq:mrr-cl}.
+From Definition~\ref{def:maxsat-props-sets}, $\precp{\optr_p}{\optr_c} \in \precpset$, and for $1 \leq i \leq \card{\vec{s}}$, $\eqp{\vec{s}[i]}{\vec{u}[i]} \in \eqpset$.
+As $\optr_p \prec \optr_c$ and $\sub'(\vec{s}) = \sub'(\vec{u})$, then from Definition~\ref{def:pop-to-sol}, $S_Q(\precp{\optr_p}{\optr_c}) = \true$ and for $1 \leq i \leq \card{\vec{s}}$, $S_Q(\eqp{\vec{s}[i]}{\vec{u}[i]}) = \true$.
+Therefore, the first line of Formula~\ref{eq:mrr-cl-holds} is satisfied.
+Let postcondition $\neg q(\vec{v})$ of operator $\optr_t$ be a threat to the above link.
+Then, from Definition~\ref{def:maxsat-props-sets}, $\precp{\optr_t}{\optr_p}, \precp{\optr_c}{\optr_t} \in \precpset$, and for $1 \leq i \leq \card{\vec{s}}$, $\eqp{\vec{v}[i]}{\vec{u}[i]} \in \eqpset$.
+As either $\optr_t \prec \optr_p$, $\optr_c \prec \optr_t$ or $\sub'(\vec{s}) \neq \sub'(\vec{v})$, then from Definition~\ref{def:pop-to-sol}, either $S_Q(\precp{\optr_t}{\optr_p}) = \true$, $S_Q(\precp{\optr_c}{\optr_t}) = \true$, or there is some $1 \leq i \leq \card{\vec{u}}$ \ST $S_Q(\eqp{\vec{u}[i]}{\vec{v}[i]}) = \false$. 
+Thus, the second line of Formula~\ref{eq:mrr-cl-holds} is satisfied.
+\end{proof}
+
+\pagebreak
+\noindent
+Proof of Theorem~\ref{thrm:mrr-encoding} follows from the above lemmas:
+
+\mrrenc*
+
+\begin{proof} Let $Q = \popfunc(S)$. 
+From Lemmas~\ref{lemma:mrr-encoding-wf-1}--\ref{lemma:mrr-encoding-valid}, $Q$ is a ``well-formed'' \POCL-valid \POP.
+As $Q$ has the same operator set as $P$, then from Definition~\ref{def:reins-re-deorder}, $Q$ is a reinstantiated de/reorder of $P$.
+
+Proof of minimality is by \emph{reductio}.
+Let $R = \tup{\opset, \sub'', \precrel''}$ be a \POCL-valid \POP \ST $\precrel'' \subset \precrel'$.
+From Lemma~\ref{lemma:pop-to-mrr-encoding}, there is some solution $S'$ \ST $\popfunc(S') = R$.
+As $\precrel'' \subset \precrel'$, then from Definition~\ref{def:mrr-soln} $\set{\satprop : \satprop \in \precpset, S'(\satprop) = \true} \subset \set{\satprop : \satprop \in \precpset, S(\satprop) = \true}$.
+As this contradicts the assumption that $S$ is optimal (Definition~\ref{def:mrr-soln}), either $R$ is not \POCL-valid, or $\precrel'' \not\subset \precrel'$.
+Therefore, $Q$ is minimal.
+\end{proof}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Proof of Theorem~\ref{thrm:pdg}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Theorem~\ref{thrm:pdg} states that the automorphisms of a \POP's plan description graph (\PDG) are symmetries of the \POP, that is, if $P$ is a \POP and $\perm \in \auts(\pdg_P)$ then $\tperm$ is a symmetry of $P$.
+
+The proof will be split into two sections.
+The first section will show that the automorphisms of a \POP's \PDG are also automorphisms of the \POP's problem description.
+Lemmas~\ref{lemma:pdg-init-to}--\ref{lemma:pdg-init} show that $\tperm$ leaves the initial state unchanged, Lemma~\ref{lemma:pdg-goal} shows that it leaves the goal unchanged, and Lemmas~\ref{lemma:pdg-ops-to}--\ref{lemma:pdg-ops} show that it leaves the other operators unchanged.
+Lemma~\ref{lemma:pdg-aut} follows directly from these, and shows that the entire problem description is left unchanged.
+
+The second section will show that the automorphisms preserve the validity and well-formed-ness of the \POP.
+Lemma~\ref{lemma:pdg-sub-grd} shows that after applying $\tperm$, the \POP{}'s variable binding constraints remain ground and complete \WRT to the operators, and Lemma~\ref{lemma:pdg-po} shows that the transitivity and irreflexivity of the \POP's precedence relation is preserved.
+Lemma~\ref{lemma:pdg-valid} shows that $\tperm$ preserves validity.
+
+% automorphism edge
+The following observation follows directly from the definition of an automorphism (Definition~\ref{def:automorphism}), and will be used throughout the proofs:
+
+\begin{observation}\label{obs:aut-edge} Let $G = \vertset, \edgeset$ be a graph, and $\perm \in \auts(G)$.
+If $\gedge{v_1, v_2} \in \edgeset$ and $\perm(v_1) = v_3$, then $\gedge{v_3, \perm(v_2)} \in \edgeset$.
+\end{observation}
+
+The following lemma, which will also be used throughout the proofs, shows that if a function $f$ that maps every $x \in X$ both to and from another element in $X$, then $f$ is a permutation over $X$:
+
+\begin{lemma}\label{lemma:permutation-func} Let $f : S \times S$ be a function and $X \subset S$ be set \ST if $x \in X$ then \myi $f(x) \in X$, and \myii there is a $y \in X$ \ST $f(y) = x$.
+Then $f$ is a permutation over $X$.
+\end{lemma}
+
+\begin{proof} It suffices to show that $f$ is surjective and injective over $X$. 
+Surjectivity requires that for all $x \in X$, there is a $y \in X$ \ST $f(y) = x$, which follows directly from \myii.
+Injectivity requires that if $x,y \in X$ and $f(x) = f(y)$ then $x = y$. 
+This follows from surjectivity and the pigeonhole principle, and can be shown by \emph{reductio}.
+Assume there is an $x,y \in X$ \ST $f(x) = f(y)$ and $x \neq y$.
+As every element of $X$ is mapped to another element in $X$ (assumption \myi), and $x$ and $y$ map to the same element, then there must be a $z \in X$ for which there is no $z' \in X$ \ST $f(z') = z$.
+As this contradicts surjectivity, $f$ must be injective over $X$.
+\end{proof}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% initial state unchanged
+The next three lemmas show that the initial state is left unchanged.
+Lemma~\ref{lemma:pdg-init-to} shows that if $\perm \in \auts(\pdg_P)$, then $\tperm$ maps every $q(\vec{c}) \in \post(\initoptr)$ to some $q(\vec{d}) \in \post(\initoptr)$:
+
+\begin{lemma}\label{lemma:pdg-init-to} Let $P$ be a \POP, $q(\vec{c}) \in \post(\initoptr)$ and $\perm \in \auts(\pdg_P)$.
+Then, there is some $q(\vec{d}) \in \post(\initoptr)$ \ST $\tperm(q(\vec{c})) = q(\vec{d})$.
+\end{lemma}
+
+\begin{proof} Let $\vec{c} = \tup{c_1,\ldots,c_n}$.
+From Definition~\ref{def:aut-trans}, it suffices to show that there is some $\vec{d} = \tup{d_1,\ldots,d_n}$ \ST $q(\vec{d}) \in \post(\initoptr)$ and for $1 \leq i \leq n$, $\perm(\vvert{c_i}) = \vvert{d_i}$.
+
+From Definition~\ref{def:pdg}, the chain of vertices $\litvert{q(\vec{c})}{1},\ldots,\litvert{q(\vec{c})}{n}$ represents the parameters of $q(\vec{c})$.
+First, it is shown that there is some $q(\vec{d}) \in \post(\initoptr)$ \ST for $1 \leq i \leq n$, $\perm(\litvert{q(\vec{c})}{i}) = \litvert{q(\vec{d})}{i}$.
+The proof is inductive. 
+The base cases show that there is some $q(\vec{d}) \in \post(\initoptr)$ such that $\perm(\litvert{q(\vec{c})}{1}) = \litvert{q(\vec{d})}{1}$ and $\perm(\litvert{q(\vec{c})}{2}) = \litvert{q(\vec{d})}{2}$.
+The inductive case shows that as if $\perm(\litvert{q(\vec{c})}{i-1}) = \litvert{q(\vec{d})}{i-1}$ and $\perm(\litvert{q(\vec{c})}{i}) = \litvert{q(\vec{d})}{i}$ hold, then so must $\perm(\litvert{q(\vec{c})}{i+1}) = \litvert{q(\vec{d})}{i+1}$.
+
+First, the base cases are shown for $i = 1$ and $i = 2$.
+Let $\litvert{q(\vec{c})}{1} \in \vertset$ be a vertex representing the first parameter of $q(\vec{c})$.
+From Definition~\ref{def:automorphism}, $\perm$ must permute $\litvert{q(\vec{c})}{1}$ to a vertex of the same colour, so from Definition~\ref{def:pdg}, $\perm(\litvert{q(\vec{c})}{1}) = \litvert{q(\vec{d})}{i}$, where $\litvert{q(\vec{d})}{i}$ represents the $i$th parameter of some $q(\vec{d}) \in \post(\initoptr) \cup \pre(\goaloptr)$.
+
+Since $\perm(\litvert{q(\vec{c})}{1}) = \litvert{q(\vec{d})}{i}$ and $\gedge{\litvert{q(\vec{c})}{1}, \opvertpost{\initoptr}} \in \edgeset$, it follows from Observation~\ref{obs:aut-edge} that $\gedge{\litvert{q(\vec{d})}{i}, \perm(\opvertpost{\initoptr})} \in \edgeset$.
+As $\opvertpost{\initoptr}$ has a unique colour, $\perm(\opvertpost{\initoptr}) = \opvertpost{\initoptr}$ and so $\gedge{\litvert{q(\vec{d})}{i}, \opvertpost{\initoptr}} \in \edgeset$. 
+So, from Definition~\ref{def:pdg} it follows that $i = 1$ and $q(\vec{d}) \in \post(\initoptr)$.
+Since $\perm(\litvert{q(\vec{c})}{1}) = \litvert{q(\vec{d})}{1}$ and $\gedge{\litvert{q(\vec{c})}{1}, \litvert{q(\vec{c})}{2}} \in \edgeset$, it follows from Observation~\ref{obs:aut-edge} that $\gedge{\litvert{q(\vec{d})}{1}, \perm(\litvert{q(\vec{c})}{2})} \in \edgeset$.
+As $\litvert{q(\vec{d})}{1}$ is only linked to $\opvertpost{\initoptr}$ and $\litvert{q(\vec{d})}{2}$, and $\colfunc(\litvert{q(\vec{c})}{2}) \neq \colfunc(\opvertpost{\initoptr})$, it follows that $\perm(\litvert{q(\vec{c})}{2}) = \litvert{q(\vec{d})}{2}$.
+
+Next, the inductive case is shown for $i > 2$.
+Let $\litvert{q(\vec{c})}{1},\ldots,\litvert{q(\vec{c})}{n}$ and $\litvert{q(\vec{d})}{1},\ldots,\litvert{q(\vec{d})}{n}$ be two chains of vertices representing $q(\vec{c})$ and $q(\vec{d})$, respectively, let $2 \leq i \leq n$, and let $\perm(\litvert{q(\vec{c})}{i-1}) = \litvert{q(\vec{d})}{i-1}$ and $\perm(\litvert{q(\vec{c})}{i}) = \litvert{q(\vec{d})}{i}$.
+Since $\perm(\litvert{q(\vec{c})}{i}) = \litvert{q(\vec{d})}{i}$ and $\gedge{\litvert{q(\vec{c})}{i}, \litvert{q(\vec{c})}{i+1}} \in \edgeset$, then from Observation~\ref{obs:aut-edge}, $\gedge{\litvert{q(\vec{d})}{i}, \perm(\litvert{q(\vec{c})}{i+1})} \in \edgeset$.
+As $i > 2$, from Definition~\ref{def:pdg} $\litvert{q(\vec{d})}{i}$ is only connected to $\litvert{q(\vec{d})}{i-1}$ and $\litvert{q(\vec{d})}{i+1}$.
+However, as $\perm(\litvert{q(\vec{c})}{i-1}) = \litvert{q(\vec{d})}{i-1}$ and $\litvert{q(\vec{c})}{i-1} \neq \litvert{q(\vec{c})}{i+1}$, it follows that $\perm(\litvert{q(\vec{c})}{i+1}) = \litvert{q(\vec{d})}{i+1}$. 
+
+From Definition~\ref{def:pdg}, for $1 \leq i \leq n$, each parameter vertex $\litvert{q(\vec{c})}{i}$ is connected to the vertex representing that parameter's binding, that is, $\gedge{\litvert{q(\vec{c})}{i}, \vvert{c_i}} \in \edgeset$. 
+Let $\vec{d} = \tup{d_1,\ldots,d_n}$.
+As $q(\vec{d}) \in \post(\initoptr)$, then similarly, for each $1 \leq i \leq n$, $\gedge{\litvert{q(\vec{d})}{i}, \vvert{d_i}} \in \edgeset$.
+From Definition~\ref{def:automorphism}, $\perm$ must map each $\vvert{c_i}$ to a vertex $\gvert$ \ST $\colfunc(v) = \colfunc(\vvert{c_i})$.
+And, because $\gedge{\litvert{q(\vec{c})}{i}, \vvert{c_i}} \in \edgeset$ and $\perm(\litvert{q(\vec{c})}{i}) = \litvert{q(\vec{d})}{i}$, it must also hold that $\gedge{\litvert{q(\vec{d})}{i}, \gvert} \in \edgeset$.
+From Definition~\ref{def:pdg}, the only vertex that both has the same colour as $\vvert{c_i}$ and is connected to $\litvert{q(\vec{d})}{i}$ is $\vvert{d_i}$, and so it follows that for $\perm(\vvert{c_i}) = \vvert{d_i}$, as desired.
+\end{proof}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Lemma~\ref{lemma:pdg-init-from} shows that if $\perm \in \auts(\pdg_P)$ and $q(\vec{c}) \in \post(\initoptr)$, then there is some $q(\vec{d}) \in \post(\initoptr)$ that $\tperm$ maps to $q(\vec{c})$:
+
+\begin{lemma}\label{lemma:pdg-init-from} Let $P$ be a \POP, $q(\vec{c}) \in \post(\initoptr)$ and $\perm \in \auts(\pdg_P)$.
+Then, there is some $q(\vec{d}) \in \post(\initoptr)$ \ST $\tperm(q(\vec{d})) = q(\vec{q})$.
+\end{lemma}
+
+\begin{proof} The proof is a trivial modification of the proof of Lemma~\ref{lemma:pdg-init-to}. 
+Let $\vec{c} = \tup{c_1,\ldots,c_n}$.
+From Definition~\ref{def:aut-trans}, it suffices to show that there is some $\vec{d} = \tup{d_1,\ldots,d_n}$ \ST $q(\vec{d}) \in \post(\initoptr)$ and for $1 \leq i \leq n$, $\perm(\vvert{d_i}) = \vvert{c_i}$.
+First it is shown inductively that $\perm$ maps the parameter vertices $\litvert{q(\vec{d})}{1},\ldots,\litvert{q(\vec{d})}{n}$ to $\litvert{q(\vec{c})}{1},\ldots,\litvert{q(\vec{c})}{n}$.
+The base cases show that for $i = 1$ and $i = 2$, there is some $q(\vec{d}) \in \post(\opset)$ such that $\perm(\litvert{q(\vec{d})}{1}) = \litvert{q(\vec{c})}{1}$ and $\perm(\litvert{q(\vec{d})}{2}) = \litvert{q(\vec{c})}{2}$.
+The inductive case shows that for $i >2$, if there is some $q(\vec{d})) \in \post(\opset)$ such that $\perm(\litvert{q(\vec{d})}{i-1}) = \litvert{q(\vec{c})}{i-1}$ and $\perm(\litvert{q(\vec{d})}{i}) = \litvert{q(\vec{c})}{i}$ then $\perm(\litvert{q(\vec{d})}{i+1}) = \litvert{q(\vec{c})}{i+1}$.
+Finally, it is shown that for $1 \leq i \leq n$, as $\gedge{\litvert{q(\vec{d})}{i}, \vvert{d_i}}, \gedge{\litvert{q(\vec{c})}{i}, \vvert{c_i}} \in \edgeset$ then $\perm(\vvert{d_i}) = \vvert{c_i}$, as desired.
+\end{proof}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Lemma~\ref{lemma:pdg-init} uses the above two results to show that if $\perm \in \auts(\pdg_P)$, then $\tperm$ leaves $\initoptr$ unchanged:
+
+\begin{lemma}\label{lemma:pdg-init} If $P$ is a \POP and $\perm \in \auts(\pdg_P)$ then $\tperm(\initoptr) = \initoptr$.
+\end{lemma}
+
+\begin{proof} It suffices to show that $\tperm$ leaves $\post(\initoptr)$ unchanged. 
+Lemmas~\ref{lemma:pdg-init-to} and~\ref{lemma:pdg-init-from} show that if $q(\vec{c}) \in \post(\initoptr)$ then $\tperm(q(\vec{c})) \in \post(\initoptr)$ and there is a $q(\vec{d}) \in \post(\initoptr)$ \ST $\tperm(q(\vec{d})) = q(\vec{c})$.
+So, from Lemma~\ref{lemma:permutation-func}, $\tperm$ is a permutation over $\post(\initoptr)$, and as $\post(\initoptr)$ is a set, it is unchanged by $\tperm$.
+\end{proof}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% goal unchanged
+The proofs for Lemmas~\ref{lemma:pdg-init-to}, \ref{lemma:pdg-init-from} and~\ref{lemma:pdg-init} above can be modified to show that if $\perm \in \auts(\pdg_P)$, then $\tperm$ leaves $\goaloptr$ unchanged:
+
+\begin{lemma}\label{lemma:pdg-goal} If $P$ is a \POP and $\perm \in \auts(\pdg_P)$ then $\tperm(\goaloptr) = \goaloptr$.
+\end{lemma}
+
+\begin{proof} A trivial modification of the proofs of Lemmas~\ref{lemma:pdg-init-to}, \ref{lemma:pdg-init-from} and~\ref{lemma:pdg-init}. 
+\end{proof}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% all other operators unchanged
+Lemma~\ref{lemma:pdg-ops-to} shows that if $\perm \in \auts(\pdg_P)$, then $\tperm$ maps every $\optr(\vec{x}) \in \opset$ to some $\optr(\vec{y}) \in \opset$:
+
+\begin{lemma}\label{lemma:pdg-ops-to} Let $P = \tup{\opset, \sub, \precrel}$ be a \POP, $\optr(\vec{x}) \in \opset \setminus \set{\initoptr, \goaloptr}$ and $\perm \in \auts(\pdg_P)$. 
+Then, there is some $\optr(\vec{y}) \in \opset \setminus \set{\initoptr, \goaloptr}$ \ST $\name(\optr(\vec{x})) = \name(\optr(\vec{y}))$ and $\tperm(\optr(\vec{x})) = \optr(\vec{y})$.
+\end{lemma}
+
+\begin{proof} From Definition~\ref{def:aut-trans}, it suffices to show that for all $\optr(\vec{x}) \in \opset \setminus \set{\initoptr, \goaloptr}$, there is some $\optr(\vec{y}) \in \opset \setminus \set{\initoptr, \goaloptr}$ such that for $1 \leq i \leq \card{\vec{x}}$, $\perm(\vvert{x_i}) = \vvert{y_i}$.
+The proof is inductive. 
+The base cases show that for all $\optr(\vec{x}) \in \opset \setminus \set{\initoptr, \goaloptr}$, there is some $\optr(\vec{y}) \in \opset \setminus \set{\initoptr, \goaloptr}$ such that $\perm(\vvert{x_1}) = \vvert{y_1}$ and $\perm(\vvert{x_2}) = \vvert{y_2}$.
+The inductive case shows that if $\perm(\vvert{x_{i-1}}) = \vvert{y_{i-1}}$ and $\perm(\vvert{x_i}) = \vvert{y_i}$ hold, then so must $\perm(\vvert{x_{i+1}}) = \vvert{y_{i+1}}$.
+
+First, the base cases are shown for $i = 1$ and $i = 2$.
+Let $\opvertpre{\optr(\vec{x})}$ and $\opvertpost{\optr(\vec{x})}$ be vertices representing operator $\optr(\vec{x})$'s pre/postcondition sets.
+From Definition~\ref{def:pdg}, $\opvertpre{\optr(\vec{x})}$ and $\opvertpost{\optr(\vec{x})}$ must be mapped to vertices $\opvertpre{\optr(\vec{y})}$ and $\opvertpost{\optr(\vec{y})}$ representing the pre/postcondition sets of an operator $\optr(\vec{y})$ \ST $\name(\optr(\vec{x})) = \name(\optr(\vec{y}))$.
+Since $\perm(\opvertpre{\optr(\vec{x})}) = \opvertpre{\optr(\vec{y})}$ and $\gedge{\opvertpre{\optr(\vec{x})}, \vvert{x_1}} \in \edgeset$, then from Observation~\ref{obs:aut-edge} it follows that $\gedge{\opvertpre{\optr(\vec{y})}, \perm(\vvert{x_1})} \in \edgeset$.
+Further, since $\perm(\opvertpost{\optr(\vec{x})}) = \opvertpost{\optr(\vec{y})}$ and $\gedge{\opvertpost{\optr(\vec{x})}, \vvert{x_1}} \in \edgeset$, then from Observation~\ref{obs:aut-edge} it follows that $\gedge{\opvertpost{\optr(\vec{y})}, \perm(\vvert{x_1})} \in \edgeset$.
+Because $\opvertpre{\optr(\vec{y})}$ and $\opvertpost{\optr(\vec{y})}$ are only connected to one vertex, $\vvert{y_1}$, it follows that $\perm(\vvert{x_1}) = \vvert{y_1}$.
+Since $\perm(\vvert{x_1}) = \vvert{y_1}$ and $\gedge{\vvert{x_1}, \vvert{x_2}}$, then from Observation~\ref{obs:aut-edge} it follows that $\gedge{\vvert{y_1}, \perm(\vvert{x_2})} \in \edgeset$.
+As $\vvert{y_1}$ is only linked to $\opvertpre{\optr(\vec{y})}$, $\opvertpost{\optr(\vec{y})}$ and $\vvert{y_2}$, and $\colfunc(\opvertpre{\optr(\vec{y})}) \neq \colfunc(\vvert{x_2})$ and $\colfunc(\opvertpost{\optr(\vec{y})}) \neq \colfunc(\vvert{x_2})$, it follows that $\perm(\vvert{x_2}) = \vvert{y_2}$.
+
+Next, the inductive case is shown for $i > 2$.
+Let $\vvert{x_1},\ldots,\vvert{x_n}$ and $\vvert{y_1},\ldots,\vvert{y_n}$ be two chains of vertices representing $\vec{x}$ and $\vec{y}$, respectively, let $2 \leq i \leq n$, and let $\perm(\vvert{x_{i-1}}) = \vvert{y_{i-1}}$ and $\perm(\vvert{x_i}) = \vvert{y_i}$.
+Since $\perm(\vvert{x_i}) = \vvert{y_i}$ and $\gedge{\vvert{x_i}, \vvert{x_{i+1}}} \in \edgeset$, then from Observation~\ref{obs:aut-edge}, $\gedge{\vvert{y_i}, \perm(\vvert{x_{i+1}})} \in \edgeset$.
+As $i > 2$, from Definition~\ref{def:pdg} $\vvert{y_i}$ is only connected to $\vvert{y_{i-1}}$ and $\vvert{y_{i+1}}$.
+However, as $\perm(\vvert{x_{i-1}}) = \vvert{y_{i-1}}$ and $\vvert{x_{i-1}} \neq \vvert{x_{i-1}}$, it follows that $\perm(\vvert{x_{i+1}}) = \vvert{y_{i+1}}$. 
+\end{proof}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Lemma~\ref{lemma:pdg-ops-from} shows that if $\perm \in \auts(\pdg_P)$, and $\optr(\vec{x}) \in \opset$, then there is some $\optr(\vec{y}) \in \opset$ \ST $\name(\optr(\vec{x})) = \name(\optr(\vec{y}))$, and $\tperm(\optr(\vec{y})) = \optr(\vec{x})$:
+
+\begin{lemma}\label{lemma:pdg-ops-from} Let $P = \tup{\opset, \sub, \precrel}$ be a \POP, $\optr(\vec{x}) \in \opset \setminus \set{\initoptr, \goaloptr}$ and $\perm \in \auts(\pdg_P)$. 
+Then, there is some $\optr(\vec{y}) \in \opset \setminus \set{\initoptr, \goaloptr}$ \ST $\tperm(\optr(\vec{y})) = \optr(\vec{x})$.
+\end{lemma}
+
+\begin{proof} The proof is a trivial modification of the proof of Lemma~\ref{lemma:pdg-ops-to}. 
+From Definition~\ref{def:aut-trans}, it suffices to show that for all $\optr(\vec{x}) \in \opset \setminus \set{\initoptr, \goaloptr}$, there is some $\optr(\vec{y}) \in \opset \setminus \set{\initoptr, \goaloptr}$ such that $\name(\optr(\vec{x})) = \name(\optr(\vec{x}))$, and for $1 \leq i \leq \card{\vec{x}}$, $\perm(\vvert{y_i}) = \vvert{x_i}$.
+The base cases show that for all $\optr(\vec{x}) \in \opset \setminus \set{\initoptr, \goaloptr}$, there is some $\optr(\vec{y}) \in \opset \setminus \set{\initoptr, \goaloptr}$ such that $\perm(\vvert{y_1}) = \vvert{x_1}$ and $\perm(\vvert{y_2}) = \vvert{x_2}$.
+The inductive case shows that if $\perm(\vvert{y_{i-1}}) = \vvert{x_{i-1}}$ and $\perm(\vvert{y_i}) = \vvert{x_i}$ hold, then so must $\perm(\vvert{y_{i+1}}) = \vvert{x_{i+1}}$.
+\end{proof}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Lemma~\ref{lemma:pdg-ops} shows that if $\perm \in \auts(\pdg_P)$, then $\tperm$ is an automorphism of $\opset \setminus \set{\initoptr, \goaloptr}$:
+
+\begin{lemma}\label{lemma:pdg-ops} Let $P = \tup{\opset, \sub, \precrel}$ be a \POP and $\perm \in \auts(\pdg_P)$. 
+Then, $\tperm(\opset \setminus \set{\initoptr, \goaloptr}) = \opset \setminus \set{\initoptr, \goaloptr}$.
+\end{lemma}
+
+\begin{proof} Lemmas~\ref{lemma:pdg-ops-to} and~\ref{lemma:pdg-ops-from} show that if $\optr(\vec{x}) \in \opset \setminus \set{\initoptr, \goaloptr}$ then $\tperm(\optr(\vec{x})) \in \opset \setminus \set{\initoptr, \goaloptr}$, and there is some $\optr(\vec{y}) \in \opset \setminus \set{\initoptr, \goaloptr}$ \ST $\tperm(\optr(\vec{y})) = \optr(\vec{x})$.
+Then, from Lemma~\ref{lemma:permutation-func}, $\tperm$ is a permutation over $\opset \setminus \set{\initoptr, \goaloptr}$. 
+Thus, as $\opset \setminus \set{\initoptr, \goaloptr}$ is a set, $\tperm(\opset \setminus \set{\initoptr, \goaloptr}) = \opset \setminus \set{\initoptr, \goaloptr}$.
+\end{proof}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% prob description is unchanged
+Lemma~\ref{lemma:pdg-aut} establishes that if $\perm \in \auts(\pdg_P)$, then $\tperm$ is an automorphism of $\opset$:
+
+\begin{lemma}\label{lemma:pdg-aut}
+If $P = \tup{\opset, \sub, \precrel}$ is a \POP and $\perm \in \auts(\pdg_P)$ then $\tperm(\opset) = \opset$.
+\end{lemma}	
+    
+\begin{proof} As $\tperm(\initoptr) = \initoptr$ (Lemma~\ref{lemma:pdg-init}), $\tperm(\goaloptr) = \goaloptr$ (Lemma~\ref{lemma:pdg-goal}) and $\tperm(\opset \setminus \set{\initoptr, \goaloptr}) = \opset \setminus \set{\initoptr, \goaloptr}$ (Lemma~\ref{lemma:pdg-ops}), it follows that $\tperm(\opset) = \opset$.
+\end{proof}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The next section of the proof shows that if $P $ is a \POP and $\perm \in \auts(\pdg_P)$, then applying $\tperm$ to any reinstantiated de/reorder of $P$ preserves its validity and optimality.
+The proofs make use of several lemmas.
+
+Lemma~\ref{lemma:aut-vars-consts} shows that if $\perm \in \auts(P)$ then $\tperm$ is a permutation over the variables and constants in $\opset$:
+
+\begin{lemma}\label{lemma:aut-vars-consts} Let $P = \tup{\opset, \sub, \precrel}$ be a \POP and $\perm \in \auts(\pdg_P)$. 
+Then, $\tperm(\vars(\opset)) = \vars(\opset)$ and $\tperm(\consts(\opset)) = \consts(\opset)$.
+\end{lemma}
+
+\begin{proof} From Definition~\ref{def:pdg}, it follows that if $x \in \vars(\opset)$, then there is some $y \in \vars(\opset)$ \ST $\perm(\vvert{x}) = \vvert{y}$.
+Therefore, from Definition~\ref{def:aut-trans}, if $x \in \vars(\opset)$ then $\tperm(x) \in \vars(\opset)$, and there is some $y \in \vars(\opset)$ such that $\tperm(y) = x$.
+Thus, from Lemma~\ref{lemma:permutation-func}, $\tperm$ is a permutation over $\vars(\opset)$.
+The above proof can be trivially modified to show the same for $\consts(\opset)$.
+\end{proof}
+
+Lemma~\ref{lemma:pdg-eq-pres} follows from Definition~\ref{def:aut-trans}, and shows that if $\perm \in \auts(P)$ then $\tperm$ preserves the equality relation over the \POP's variables:
+
+\begin{lemma}\label{lemma:pdg-eq-pres} Let $P$ be a \POP, $Q = \tup{\opset, \sub, \precrel}$ be a reinstantiated reorder of $P$, $\perm \in \auts(\pdg_P)$ and $\tperm(Q) = \tup{\opset, \sub', \precrel'}$. 
+Then for all $x, y \in \vars(\opset)$, $\sub(x) = \sub(y)$ \IFF $\sub'(\tperm(x)) = \sub'(\tperm(y))$.
+\end{lemma}
+
+\begin{proof} First, it is shown that if $\sub(x) = \sub(y)$ then $\sub'(\tperm(x)) = \sub'(\tperm(y))$. 
+If $\sub(x) = \sub(y)$ then there is a $c$ such that $\set{x \substo c, y \substo c} \subseteq \sub$. 
+As $\tperm(\sub) = \sub'$, it follows from the definition of a permutation in Section~\ref{sec:permutations} that $\set{\tperm(x) \substo \tperm(c), \tperm(y) \substo \tperm(c)} \subseteq \sub'$, and so $\sub'(\tperm(x)) = \sub'(\tperm(y))$.
+Next it is shown that if $\sub(x) \neq \sub(y)$ then $\sub'(\tperm(x)) \neq \sub'(\tperm(y))$.
+If $\sub(x) \neq \sub(y)$ then there is a $c \neq d$ such that $\set{x \substo c, y \substo d} \subseteq \sub$. 
+As $\tperm(\sub) = \sub'$, it follows that $\set{\tperm(x) \substo \tperm(c), \tperm(y) \substo \tperm(d)} \subseteq \sub'$, and so $\sub'(\tperm(x)) \neq \sub'(\tperm(y))$.
+\end{proof}
+
+Lemma~\ref{lemma:pdg-po-obs} follows directly from the definition of a permutation (Section~\ref{sec:permutations}), and makes clear some consequences of applying $\tperm$ to $\precrel$:
+
+\begin{lemma}\label{lemma:pdg-po-obs} Let $P$ be a \POP, $Q = \tup{\opset, \sub, \precrel}$ be a reinstantiated reorder of $P$, $\perm \in \auts(\pdg_P)$ and $\tperm(Q) = \tup{\opset, \sub', \precrel'}$. 
+Then:
+\begin{itemize}
+    \item if $\optr_1 \precrel \optr_2$ \IFF $\tperm(\optr_1) \precrel' \tperm(\optr_2)$, and 
+    \item if $\optr_1' \precrel' \optr_2'$ then there is some $\optr_1, \optr_2$ such that $\tperm(\optr_1) = \optr_1'$, $\tperm(\optr_2) = \optr_2'$ and $\optr_1 \prec \optr_2$.
+\end{itemize}
+\end{lemma}
+
+\begin{proof} Follows directly from the definition of a permutation (Section~\ref{sec:permutations}), which states that a permutation $\perm$ can be applied to a logical structure $\eta$ by simultaneously replacing every term $t \in \eta$ with $\perm(t)$ while maintaining the structure, or type, of $\eta$.
+Thus, if $\precrel = \set{(\optr_1, \optr_2)$, $\ldots$, $(\optr_{n-1}, \optr_n)}$ then $\precrel' = \set{(\tperm(\optr_1), \tperm(\optr_2))$,$\ldots$,$(\tperm(\optr_{n-1}), \tperm(\optr_n))}$.
+\end{proof}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% bindings well-formed
+The next two lemmas show that if $\perm \in \auts(\pdg_P)$, then applying $\tperm$ to a reinstantiated reorder of $P$ results in a well-formed \POP.
+First, Lemma~\ref{lemma:pdg-sub-grd} shows that if $\perm \in \auts(\pdg_P)$, then applying $\tperm$ to $\sub$ results in a ground substitution that is complete \WRT to $\opset$:
+
+\begin{lemma}\label{lemma:pdg-sub-grd} Let $P$ be a \POP, $Q = \tup{\opset, \sub, \precrel}$ be a reinstantiated reorder of $P$, $\perm \in \auts(\pdg_P)$ and $\tperm(Q) = \tup{\opset, \sub', \precrel'}$.
+Then, $\domain(\sub') = \vars(\opset)$ and for all $x \in \domain(\sub')$, $\sub'(x) \in \consts(\opset)$.
+\end{lemma}
+
+\begin{proof} Let $\sub = \set{x_1 \substo c_1, \ldots, x_n \substo c_n}$. 
+As $\sub$ is complete \WRT to $\opset$, $\vars(\opset) = \set{x_1,\ldots,x_n}$.
+As $\sub' = \tperm(\sub)$, $\sub' = \set{\tperm(x_1) \substo \tperm(c_1), \ldots, \tperm(x_n) \substo \tperm(c_n)}$.
+As $\tperm$ is a permutation over $\vars(\opset)$ (Lemma~\ref{lemma:aut-vars-consts}), it follows that $\set{\perm(x_1),$ $\ldots$ $,\perm(x_n)} = \set{x_1,$ $\ldots$ $,x_n} = \vars(\opset)$, and so $\domain(\sub') = \vars(\opset)$.
+
+Since $\set{c_1,\ldots,c_n} \subseteq \consts(\opset)$ and $\tperm$ is a permutation over $\consts(\opset)$ (Lemma~\ref{lemma:aut-vars-consts}), it follows that $\set{\perm(c_1), \ldots ,\perm(c_n)} \subseteq \consts(\opset)$. 
+Thus, for all $x \in \vars(\sub')$, $\sub'(x) \in \consts(\opset)$.
+\end{proof}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ordering transitive and acyclic
+Lemma~\ref{lemma:pdg-po} shows that if $\perm \in \auts(\pdg_P)$, then applying $\tperm$ to $\precrel$ results in a set of transitively closed, acyclic ordering constraints:
+
+\begin{lemma}\label{lemma:pdg-po} Let $P$ be a \POP, $Q = \tup{\opset, \sub, \precrel}$ be a reinstantiated reorder of $P$, $\perm \in \auts(\pdg_P)$ and $\tperm(Q) = \tup{\opset, \sub', \precrel'}$. 
+Then, $\precrel' = \transclos{\precrel'}$ and for all $\optr \in \opset$, $\optr \not\precrel' \optr$.
+\end{lemma}
+
+\begin{proof} Irreflexivity is proved by \emph{reductio}.
+Assume there is an $\optr' \in \opset$ \ST $\optr' \precrel' \optr'$.
+It follows that there must be some $\optr_1$ and $\optr_2$ such that $\optr_1 \precrel \optr_2$ and $\tperm(\optr_1) = \tperm(\optr_2) = \optr'$ (Lemma~\ref{lemma:pdg-po-obs}).
+As $\tperm$ is a permutation over $\opset$ (Lemma~\ref{lemma:pdg-aut}), it follows that $\optr_1 = \optr_2$, and so $\optr_1 \precrel \optr_1$ which contradicts the assumption that $\precrel$ is irreflexive.
+So, $\precrel'$ must be irreflexive.
+
+Next, transitivity is shown.
+Let $\optr_1' \precrel' \optr_2'$, $\optr_2' \precrel' \optr_3'$.
+Then there must be an $\optr_1, \optr_2, \optr_3 \in \opset$ such that $\tperm(\optr_1) = \optr_1'$, $\tperm(\optr_2) = \optr_2'$, $\tperm(\optr_3) = \optr_3'$, $\optr_1 \precrel \optr_2$ and $\optr_2 \precrel \optr_3$ (Lemma~\ref{lemma:pdg-po-obs}).
+As $\precrel$ is transitive, it follows that $\optr_1 \precrel \optr_3$, and so $\optr_1' \precrel' \optr_3'$ (Lemma~\ref{lemma:pdg-po-obs}), and so $\precrel'$ is transitive.
+\end{proof}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% validity unchanged
+Lemma~\ref{lemma:pdg-valid} shows if $\perm \in \auts(\pdg_P)$, then applying $\tperm$ to a reinstantiated reorder of $P$ preserves the validity of the \POP.
+For the sake of brevity, the proof only demonstrates that \POCL-validity is preserved. 
+Proving full \MTC-validity is a trivial but verbose extension that incorporates the possibility of a causal link being re-established by a ``white knight''.
+
+\begin{lemma}\label{lemma:pdg-valid} Let $P$ be a \POP, $Q = \tup{\opset, \sub, \precrel}$ be a reinstantiated reorder of $P$, $\perm \in \auts(\pdg_P)$ and $\tperm(Q) = Q' = \tup{\opset, \sub', \precrel'}$ be the image of $Q$ under $\tperm$. 
+Then, $Q$ is valid \IFF $Q'$ is valid.
+\end{lemma}
+
+\begin{proof} First it is shown that if $Q$ is \POCL-valid, then $Q'$ is \POCL-valid.
+Assume $Q$ is \POCL-valid.
+To show that $Q'$ is \POCL-valid, it suffices to show that under $\precrel'$ and $\sub'$, every precondition of every operator is supported by an unthreatened causal link.
+Let $\optr_c'$ and $p(\vec{s}')$ be an operator and a literal such that $\consms(\optr_c', p(\vec{s}'))$.
+There is therefore an $\optr_c$ such that $\tperm(\optr_c) = \optr_c'$ (Lemma~\ref{lemma:pdg-ops-from}), and therefore a $p(\vec{s}) \in \pre(\optr_c)$ such that $\tperm(\vec{s}) = \vec{s}'$.
+As $Q$ is \POCL-valid, there is an $\optr_p$ and $p(\vec{u})$ such that $\prods(\optr_p, p(\vec{u}))$, $\optr_p \precrel \optr_c$ and $\sub(\vec{s}) = \sub(\vec{u})$ (Definition~\ref{def:pocl-valid}).
+Let $\tperm(\optr_p) = \optr_p'$.
+From Lemma~\ref{lemma:pdg-ops}, there is a $p(\vec{u}') \in \post(\optr_p')$.
+As $\optr_p \precrel \optr_c$, it follows that $\optr_p' \precrel' \optr_c'$ (Lemma~\ref{lemma:pdg-po-obs}), and as $\sub(\vec{s}) = \sub(\vec{u})$ it follows that $\sub'(\vec{s}') = \sub'(\vec{u}')$ (Lemma~\ref{lemma:pdg-eq-pres}).
+Thus, $\optr_c'$ and $p(\vec{s}')$ are supported by a causal link to $\optr_p'$ and $p(\vec{u}')$.
+
+Let $\optr_t'$ and $p(\vec{v}')$ be an operator and a literal such that $\thrts(\optr_t', p(\vec{v}'))$.
+There must be an $\optr_t$ such that $\tperm(\optr_t) = \optr_t'$ (Lemma~\ref{lemma:pdg-ops-from}), and therefore a $p(\vec{v}) \in \post(\optr_t)$ such that $\thrts(\optr_t, p(\vec{v}))$.
+As $Q$ is \POCL-valid, it follows that either $\optr_t \precrel \optr_p$, $\optr_c \precrel \optr_t$ or $\sub(\vec{s}) \neq \sub(\vec{v})$ (Definition~\ref{def:pocl-valid}).
+If $\optr_t \precrel \optr_p$ then $\optr_t' \precrel' \optr_p'$, if $\optr_c \precrel \optr_t$ then $\optr_c' \precrel' \optr_t'$ (Lemma~\ref{lemma:pdg-po-obs}) and if $\sub(\vec{s}) \neq \sub(\vec{v})$, then $\sub'(\vec{s}') \neq \sub'(\vec{v}')$ (Lemma~\ref{lemma:pdg-eq-pres}).
+And so the causal link is unthreatened, and so $Q'$ is \POCL-valid.
+
+Proof that if $Q'$ is \POCL-valid then $Q$ is \POCL-valid is a trivial modification of the above.
+If $\optr_c$ and $p(\vec{s})$ are an operator and literal \ST $\consms(\optr_c, p(\vec{s}))$, then, from Lemma~\ref{lemma:pdg-ops-to}, they are mapped by $\tperm$ to some $\optr_c'$ and $p(\vec{s}')$.
+As $Q'$ is \POCL-valid, $\optr_c'$ and $p(\vec{s}')$ are supported in $Q'$ by an unthreatened causal link to some $\optr_p'$ and $p(\vec{u}')$ \ST $\prods(\optr_p', p(\vec{u}')$.
+Also, from Lemma~\ref{lemma:pdg-ops-to}, $\tperm$ must map some $\optr_p$ and $p(\vec{u})$ to $\optr_p'$ and $p(\vec{u}')$ \ST $\prods(\optr_p, p(\vec{u})$.
+And, from Lemmas~\ref{lemma:pdg-po-obs} and~\ref{lemma:pdg-eq-pres}, $\optr_c$ and $p(\vec{s})$ must, in $Q$, be supported by an unthreatened causal link to $\optr_p$ and $p(\vec{u})$.
+\end{proof}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% optimality unchanged
+Lemma~\ref{lemma:pdg-opt} shows that if $\perm \in \auts(\pdg_P)$, then applying $\tperm$ to $P$ results in an equally optimal \POP, that is, the size of $\precrel$ is unaffected by $\tperm$:
+
+\begin{lemma}\label{lemma:pdg-opt} Let $P$ be a \POP, $Q = \tup{\opset, \sub, \precrel}$ be a reinstantiated reorder of $P$, $\perm \in \auts(\pdg_P)$ and $\tperm(Q) = \tup{\opset, \sub', \precrel'}$. 
+Then, $\card{\precrel} = \card{\precrel'}$.
+\end{lemma}
+
+\begin{proof} As $\tperm(\precrel) = \precrel'$, for every $(\optr_1, \optr_2) \in \precrel'$ there is some $(\optr_3, \optr_4) \in \precrel$ \ST $\tperm(\optr_3) = \optr_1$ and $\tperm(\optr_4) = \optr_2$.
+Therefore, $\precrel'$ cannot have more elements than $\precrel$, that is, $\card{\precrel} \leq \card{\precrel'}$.
+
+Proof that $\card{\precrel} \not< \card{\precrel'}$ is by \emph{reductio}.
+If $\card{\precrel} < \card{\precrel'}$, then $\tperm$ must map at least two distinct elements of $\precrel$ to the same element of $\precrel'$.
+Assume that there is an $(\optr_1, \optr_2) \in \precrel'$ and $(\optr_3, \optr_4) \neq (\optr_5,\optr_6) \in \precrel$ \ST $\tperm(\optr_3) = \tperm(\optr_5) = \optr_1$ and $\tperm(\optr_4) = \tperm(\optr_6) = \optr_2$.
+However, as $\tperm$ is a permutation over $\opset$ (Lemma~\ref{lemma:pdg-aut}), $\tperm(\optr_3) = \tperm(\optr_5)$ \IFF $\optr_3 = \optr_5$ and $\tperm(\optr_4) = \tperm(\optr_6)$ \IFF $\optr_4 = \optr_6$, which contradicts the assumption that $(\optr_3, \optr_4) \neq (\optr_5,\optr_6)$. 
+Therefore, $\card{\precrel} \not< \card{\precrel'}$, so $\card{\precrel} = \card{\precrel'}$.
+\end{proof}
+
+\pdgthrm*
+
+\begin{proof} Follows from Lemmas~\ref{lemma:pdg-aut}, \ref{lemma:pdg-valid} and~\ref{lemma:pdg-opt}.
+\end{proof}

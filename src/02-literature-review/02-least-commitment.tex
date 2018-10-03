@@ -1,0 +1,255 @@
+\section{Least Commitment Planning}~\label{sec:least-commitment-planning}
+
+In order to achieve its goals in a dynamic environment, an agent must plan ahead while remaining flexible enough to handle unexpected events.
+The aim of the \emph{least commitment} approach to planning is to improve the agent's flexibility by only making decisions regarding the ordering of actions, or the domain objects used by the plan, when absolutely necessary.
+
+Under this strategy, plans are typically represented as a set of actions and a set of ordering constraints over those actions, that is, as a partial-order plan (\POP)~\cite{Backstrom-CompAspects}.
+A \POP is a compact representation of a set of plans -- the \POP's linearisations -- all of which contain the same actions, and achieve the same goals, but differ in the order in which the actions are executed.
+Other approaches go further, and instead of completely specifying the \POP's actions, instead supply a set of constraints that define the allowable combinations of variable bindings (e.g.,~\cite{Kambhampati:2004:ExplBasedGeneralisation}).
+These plan representations reduce the agent's commitment to any particular execution order or set of domain objects.
+
+The benefit of least-committed plans is that the scheduler (or executing agent) has more plans to choose from at execution time.
+If the agent is situated in an environment which is dynamic, partially observable, or contains other active agents, it may find that its intended plan becomes infeasible due to unforeseen external events. 
+A least-committed plan may allow a feasible alternative to be found without resorting to replanning.
+Thus, the use of least-committed plans can provide an agent with both a robust guarantee of success if the plan is followed, as well as a degree of flexibility that is beneficial for real-time execution.
+
+The least-commitment approach is reflected in the field of \emph{partial-order planning}~\cite{Weld94:LeastCommitment}. 
+A partial-order planner does not commit to a sequence of actions, instead it begins with an empty plan, and only commits to the timing of actions, or variable bindings (e.g.,~\cite{Barruffi2000:LeastCommVarBindings,Yang1994:DelayingVarBinding}) as actions are added and constraints emerge.
+
+Another common approach to minimising commitment is to post-process the output of a state-space planner to remove over-commitments to action ordering (e.g.,~\cite{Backstrom-CompAspects,Muise2016-PopMaxSAT,Kambham2002:TemporalFlex,Say2016:MathematicalPOP,SiddiquiHaslum2012-Block}) and/or domain objects (e.g.,~\cite{Kambhampati:2004:ExplBasedGeneralisation}), or to even optimise the plan size by removing unnecessary actions (e.g.,~\cite{Muise2016-PopMaxSAT}).
+There are two benefits to the post-processing approach. 
+Firstly, it takes advantage of recent developments in state-space planning, which, due to the effectiveness of heuristic-based planners, is currently receiving more attention from the planning community than partial-order planning.
+Secondly, by separating the processes of plan generation and optimisation, it allows for the optimisation of plans that do not originate from an automated planner, but instead from, for example, a human subject-matter expert.
+
+This section will next discuss various approaches to partial-order planning, and then examine some different notions of optimal or least-committed plans, and some practical approaches to the intractable problem of computing such optimums.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Partial-Order Planning}\label{sec:po-planners}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection{Partial-Order Causal Link Planning}
+
+Standard partial-order planners perform a search through \emph{plan space} in a process known as \emph{partial-order causal link planning} (\POCL planning)~\cite{Weld94:LeastCommitment}.
+Nodes and edges in the \POCL search space represent (possibly partially specified) \POP{}s, plan refinement operations, respectively.
+The search process begins with an empty \POP, and is complete when \POCL-valid node is found.
+Each non-goal node represents a \POP with at least one \emph{flaw}, in that it has either an open precondition, (i.e., a consumer not causally linked to any producer), or a threatened causal link.
+Open preconditions can be resolved by adding in actions and/or causal links, and threats can be resolved by either promotion, demotion or separation (i.e., ordering the threat before the producer or after the consumer, or rebinding the variables).
+The two steps in \POCL planning are therefore \emph{plan selection}: deciding which \POP to refine, and \emph{flaw selection}: choosing a flaw to resolve, and generating successor \POP{}s that resolve it.
+
+% plan selection
+Plan selection strategies are typically based on \ASTAR search. 
+The early, well-studied planners \SNLP by \citet{Mcallester91:SNLP} and \UCPOP by \citet{Penberthy92:UCPOP} estimate the remaining search cost as the number of open preconditions.
+\citet{NguyenKambham2001:RevivePOP} use heuristics adapted from state-space planning (e.g., planning graphs~\cite{BlumFurst97:GraphPlan}) to estimate the number of actions required to resolve open preconditions, and prune plans with inconsistent constraints from the search space, and \citet{Geffner2006:BranchingPruningPOCL} prune plans by combining heuristic lower bounds with a constraint programming technique that detects whether a plan will always lead to a dead-end.
+More recently, \citet{Younes2011:VHPOP} use a variation of the additive heuristic~\cite{Bonet1997:RobustActionSel} that can account for subgoal independence and action reuse, and an estimate of number of actions needed to achieve particular preconditions~\cite{Younes2002:Ground}.
+
+% flaw selection
+The flaw selection strategy of \SNLP and \UCPOP is to resolve threats before open preconditions. 
+A wide range of other strategies have been studied. 
+\citet{Peot1993:ThreatRemoval} propose delaying separable or unforced threats (i.e., those with more than one way to be resolved), and \citet{Gerevini1996:AccPops} take a ``least commitment'' approach and resolve non-separable threats and forced open conditions first.
+In contrast, \citet{Joslin94:LeastCostFlaw} do not treat threats and open preconditions differently, and order all flaws by how many ways they can be resolved.
+\citet{Younes2011:VHPOP} explore the use of heuristic-based flaw selection, and conflict-driven flaw selection, that aims to detect inconsistent plans early in the search.
+
+While partial-order planning is an intuitively attractive approach to plan synthesis, in practice it has been far less successful than planning techniques based on early-commitment, heuristic-guided state-space search.
+The next two sections will outline planning techniques which represent a middle ground between least-commitment partial-order planning and early-commitment state-space planning.
+
+\subsubsection{Forward-Chaining Partial-Order Planning}
+
+The \POPF partial-order planner developed by \citet{Coles2010:ForwardChaining} combines the least-commitment strategy of partial-order planning with the powerful advances in heuristic-based forward-chaining planning.
+As in forward-chaining planners, nodes in the \POPF search space represent both a plan and the state that results from its execution, and edges represent the addition of actions to the plan.
+However, rather than simply append new actions to a linear plan, \POPF maintains a \POP and adds only the ordering constraints needed to ensure that preconditions are met, threats are avoided, and importantly, the state representing the result of executing the \POP can be computed.
+
+%In the context of \POCL, plan refinement is limited to the addition of new actions, with the requirememt that the new action \myi have all preconditions satisfied by existing actions, \myii only be promoted to resolve threats, and \myiii be ordered after any existing action which produces the negation of any of its effects. 
+%These requirements ensure that the planner maintains an executable \POP, and allows it to compute the state representing the result of executing of the \POP. 
+Maintaining the post-execution state allows \POPF to make use of the powerful heuristic approach of forward-chaining planners, and maintaining a \POP allows it to avoid exploring multiple linear plans which differ only by an irrelevant permutation of actions. 
+
+
+\subsubsection{Petri Net Unfolding}
+%
+\citet{Hickmott2007:PetriNet} introduce a novel approach for synthesising parallel partial-order plans by transforming a planning instance into a \emph{Petri net reachability} problem~\cite{Murata1989:PetriNets}.
+Petri nets are compact representations of state transition systems that expressly model parallelism and causal connections between possible state changes, and are frequently used for modelling and analysing distributed systems.
+A Petri net is (broadly speaking) a directed bipartite graph of \emph{transition} nodes, that represent state changes, and \emph{place} nodes, that represent transition preconditions and contain tokens when those preconditions are satisfied.
+The \emph{firing} of a transition moves tokens from a transition node's immediate predecessors to its immediate successors.
+The Petri net \emph{reachability problem} is a search for a sequence of transition firings that results in a desired token placement, and is solved by \emph{unfolding} the Petri net.
+The unfolding process, like \POPF, reasons about partially-ordered actions while still having access to a fully-specified state, meaning that state-based heuristics can be used to direct the search.
+
+Analysis by \citet{Hickmott2009:OptPropPetriNet} gives a theoretical foundation to the clear parallels between Petri net unfolding and partial-order planning.
+Their results reveal that Petri net unfolding produces \POP{}s that are minimally deordered under the requirement of \emph{strong independence} (actions with conflicting pre/postconditions cannot be unordered, and there is no ambiguity as to which producer supports a consumer), and, with the appropriate unfolding heuristic, have a minimal parallel plan length.
+
+\subsection{Partial-Order Plan Optimisation}\label{sec:pop-opt-related-work}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Optimality Definitions for Partial-Order Plans}\label{sec:opt-defs-de-reorder}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% theoretical basis
+The seminal work on action ordering for plan flexibility is that of~\citet{Backstrom-CompAspects}, which studies the complexity of the problems of deordering and reordering \POP{}s in order to meet various optimality criteria.
+Two types of modifications are considered: \emph{deordering}, in which constraints can be removed but not added, and \emph{reordering}, in which any modification can be made.
+In both cases, the modifications must result in a \emph{valid} \POP:\footnote{From Definition~\ref{def:pop}, these optimality criteria always compare the transitive closure of the \POP{}s' ordering constraints.}
+
+\begin{defn}\label{def:de-reorder} Let $P = \tup{\opset, \sub, \precrel}$ and $Q = \tup{\opset, \sub, \precrel'}$ be \POP{}s. Then: 
+  \begin{itemize}
+    \item $Q$ is a \defterm{reordering} of $P$ \IFF they are both valid,
+    \item $Q$ is a \defterm{deordering} of $P$ \IFF it is a reordering and $\precrel' \subseteq \precrel$, and
+    \item $Q$ is a \defterm{strict deordering} of $P$ \IFF it is a deordering and $\precrel' \subset \precrel$.
+\end{itemize}
+\end{defn}
+  
+A number of optimality criteria are introduced.
+These criteria define the relative optimality of two \POP{}s by comparing their ordering relations based on set inclusion and cardinality.
+A \emph{minimal deorder} of a \POP cannot be relaxed any further (i.e., removing any ordering constraint will render the \POP invalid), and a \emph{minimum deorder} is the smallest of all valid deorderings of a \POP.
+A \emph{minimum reorder} places the fewest possible constraints over the \POP's actions while remaining valid: 
+
+\pagebreak
+\begin{defn}\label{def:opt-de-reorder} Let $P = \tup{\opset, \sub, \precrel}$ and $Q = \tup{\opset, \sub, \precrel'}$ be \POP{}s. Then: 
+\begin{itemize}
+    \item $Q$ is a \defterm{minimal deordering} of $P$ \IFF $Q$ is a deordering of $P$ and there is no \POP $R$ such that $R$ is a strict deordering of $Q$,
+    \item $Q$ is a \defterm{minimum deordering} of $P$ \IFF $Q$ is a deordering of $P$ and there is no \POP $R = \tup{\opset, \sub, \precrel''}$ such that $R$ is a deordering of $P$ and $\card{\precrel''} < \card{\precrel'}$, and
+    \item $Q$ is a \defterm{minimum reordering} of $P$ \IFF $Q$ is a reordering of $P$ and there is no \POP $R = \tup{\opset, \sub, \precrel''}$ such that $R$ is a reordering of $P$ and $\card{\precrel''} < \card{\precrel'}$.
+\end{itemize}
+\end{defn}
+%
+A minimal deorder of a given \POP can be found in polynomial time. 
+However, deciding whether there exists a deorder or reorder with fewer than $k$ ordering constraints is \NP-complete, and finding a minimum deorder or reorder is \NP-hard and cannot be approximated within a constant factor.
+% param complexity deordering reordering
+\citet{Backstrom2017-PlanReorderParamCompl} extend this analysis from a parameterised complexity perspective: deciding whether there exists a minimum deorder or reorder with fewer than $k$ ordering constraints are both \W{2}-hard and in \W{P} when parameterised with $k$, and when parameterised with the size of the original order relation, deciding the existence of a minimum deorder or reorder of any size are in \FPT and \W{P}, respectively.
+
+While the optimality definitions above have become the \emph{de facto} standard in the plan relaxation literature, the approach is not without its problems.
+Firstly, these definitions cannot compare \POP{}s with different actions, which is required to compare the performance of different partial-order planners, or a reordering algorithm over different problem sets.
+Secondly, while \citeauthor{Backstrom-CompAspects} correctly states that these optimality definitions are ``intuitively reasonable'', the further claim that ``it is questionable whether considerably better or more natural definitions [exist]'', is less certain.
+An obvious alternative flexibility measure is the number of linearisations represented by a \POP: a definition which does not always coincide with the number of ordering constraints.
+
+\subimport*{graphics/}{linearisation-count-example.tex}
+%
+\citet{Muise2016-PopMaxSAT} demonstrate that two partial orders of the same cardinality may not have the same number of linearisations.
+Their example can be extended to show that two minimum reorderings of the same plan can represent different sized sets of classical plans. 
+Figure~\ref{fig:lin-count-example} depicts two minimum reorders of the plan $\tup{\actn_1,\actn_2, \actn_3,\actn_4}$.\footnote{In all plan diagrams in this section, symbols to the left and right of actions indicate preconditions and postconditions, respectively, and arrows indicate ordering constraints. Initial and goal states are omitted for clarity.}
+Despite having the same number of (transitive) ordering constraints, the \POP in Figure~\ref{fig:lin-count-example-1} has five linearisations, while that in Figure~\ref{fig:lin-count-example-2} has only four.
+Thus, \citeauthor{Backstrom-CompAspects}'s definitions would classify both \POP{}s as equally optimal despite Figure~\ref{fig:lin-count-example-1} being intuitively less constrained.
+
+As a result, many authors use richer definitions of optimality. 
+Originally introduced by \citet{NguyenKambham2001:RevivePOP}, $\flex$ measures the proportion of actions in a \POP which are not (transitively) ordered, and so avoids the problem of comparing the optimality of plans with different actions.
+\citet{Say2016:MathematicalPOP} and \citet{Muise2016-PopMaxSAT} explicitly define optimality in terms of linearisations, although as counting linearisations is \HASHP-complete~\cite{Brightwell1991:LinearExt}, \citeauthor{Muise2016-PopMaxSAT} also introduce a modified $\flex$ measure that correlates with a \POP{}'s linearisation count.
+
+However, implemented \POP relaxation algorithms typically do not directly optimise either the $\flex$ value or the number of linearisations.
+Instead, \citeauthor{Backstrom-CompAspects}'s criteria serve as a computable ``proxy'' for the more complex optimality definitions, that is, algorithms are developed which minimise the number of ordering constraints, and the success of these algorithms is evaluated based on, for example, the $\flex$ or (approximate) linearisation count of the generated \POP{}s.
+
+Other authors have studied the problem of reordering \POP{}s in order to optimise other aspects of the \POP. %, such as size and makespan. 
+For example, as modifying a \POP{}s ordering constraints can modify its (implicit) causal links, and actions without dependent consumers need not be executed, reordering can allow the \POP size to be minimised.
+\citet{Bercher2019:ElimActions} study the theoretical aspects of plan size minimisation, and show that deciding whether a \POP admits a de/reordering that allows actions to be removed is \NP-complete.
+Similarly, modifying orderings can allow a \POP{}'s makespan to be minimised, and \citet{Bercher2020:POPvsPOCL} show that finding a de/reorder that allows a reduction in parallel plan length is also \NP-complete. 
+
+The rest of this section will examine some practical approaches to post-processing \POP{}s.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Deordering and Debinding via Explanation Based Generalisation}\label{sec:kk-ebg}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\citet{Kambhampati:2004:ExplBasedGeneralisation} study the problem of relaxing both action orderings \emph{and} variable bindings in the context of \emph{explanation based generalisation}.
+The notion of a \emph{partially ordered, partially instantiated plan} (\POPI) is introduced.
+A \POPI is a generalisation of a \POP that specifies which action \emph{types}(i.e., operators) must be executed, without (completely) specifying their order or their variable bindings.
+Like \POP{}s, \POPI{}s are compact representations of a set of classical plans.
+However, a \POPI's instantiations can differ in their variable bindings (i.e., the domain objects used by actions) as well as the order in which actions are executed.
+
+A \POPI is a tuple $P = \tup{\opset, \bndgs, \precrel}$ where $\opset$ is a set of operators, $\precrel$ is a strict partial order over $\opset$, and $\bndgs$ is a set of literals of the form $\vec{t} = \vec{u}$ or $\vec{t} \neq \vec{u}$, where $\vec{t}$ and $\vec{u}$ are lists of terms (i.e., variables or constants).
+There is no syntax for representing domain constraints, and many of the paper's complexity claims are under the assumption of infinite domains.
+
+Two techniques are presented, \emph{explanation-based order generalisation} (\EOG) and \emph{explanation-based precondition generalisation} (\EPG), that relax a \POPI{}'s ordering and variable binding constraints, respectively.
+Both algorithms use a \emph{validation structure} -- a subset of $L_P$ (Definition~\ref{def:pop-clinks}) that ``explains'' the plan's validity -- as a guide for this relaxation.
+A validation structure links every consumer in a \POPI with the \emph{supporting} producer (Section~\ref{sec:pct}) that appears \emph{first} in an arbitrary linearisation. 
+
+The \EOG algorithm removes all ordering constraints that are not required by the validation structure, that is, consumers must be preceded by their associated consumers, and any threats to the link that can be codesignated with the consumer must either precede the producer, or be preceded by the consumer, depending on how there were ordered in the input \POPI. 
+Similarly, \EPG removes all binding constraints except those required by the validation structure, that is, consumers and producers must be codesignated, and any threats that can be ordered between them must remain non-codesignated.
+
+The authors claim that \EOG and \EPG produce relaxations that are optimal \WRT a validation structure, but provide no formal definitions of \POPI{} optimality.
+Additionally, as \EOG relies on a choice of validation structure, it does not guarantee even a minimal deordering of its input~\citet{Backstrom-CompAspects}.
+
+To build a validation structure, or compute an \EPG, it must be determined whether the \POPI{}'s binding constraints entail a given literal, which is in \POLY when variables domains are infinite.
+Similarly, under the infinite domain assumption, finding a classical plan which satisfies the \POPI{}'s binding constraints is trivial. 
+However, if this assumption is dropped then no complexity guarantees are given for either \POPI relaxation or instantiation.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Finding Optimally Ordered \POP{}s with \MAXSAT}\label{sec:muise-maxsat}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\citet{Muise2016-PopMaxSAT} introduce a practical technique for the problem of finding optimal de/reorderings of a \POP by encoding it as a partially weighted \MAXSAT instance (Section \ref{sec:maxsat}).
+Two \MAXSAT encodings are defined: \MD and \MR.
+In both encodings, plan validity is preserved by expressing \POCL validity as hard clauses that must be satisfied by any solution. 
+Further clauses and clause weights are constructed to ensure that an optimal solution to the \MAXSAT instance corresponds to a minimum deordering (in the case of \MD) or reordering (in the case of \MR) of the input plan. 
+
+%The quality of the \POP{}s produced by \MR, \MD and \EOG are compared by way of their $\flex_M$ value.
+The quality of the \POP{}s produced by \MD and \MR are compared experimentally with those produced by the polynomial, non-optimal deordering algorithm \EOG (Section~\ref{sec:kk-ebg}) over test instances taken from $15$ \IPC \STRIPS domains.
+Results show that the \MAXSAT approach is an effective optimisation technique, despite at times being unable to encode the acyclicity constraints: closing the precedence relation for an $n$-step plan requires $n^3$ clauses, which is infeasible for $n > 200$.
+%As many result, many test instances (mostly from the \ipcdomain{elevators}, \ipcdomain{logistics} and \ipcdomain{transport} domains) could not be encoded into \MAXSAT problems.
+The comparative results show that \myi despite having no optimality guarantees, \EOG algorithm always produces a minimum deorder, and \myii searching for a minimum reorder with \MR, rather than a minimum deorder with \MD, provides very little increase in plan quality (less than $0.01$ average $\flex$ increase in all but three domains, and a maximum average increase of $0.09$).
+%In all but three of the test domains, the difference between the average $\flex$ values of minimum deorders and reorders is less than $0.01$.
+%However, in the \ipcdomain{airport} and \ipcdomain{depot} domains, this increases to $0.09$ and $0.05$, respectively.
+%These two points combined suggest that \EOG is so unreasonably effective, that there are few cases when finding a provably optimal de/reordering is worth the additional computational cost.
+
+%Furthermore, in many test instances (mostly from \ipcdomain{tpp} and \ipcdomain{rovers}) the \MAXSAT solver timed out before finding an optimal de/reordering.
+
+\citet{Muise2016-PopMaxSAT} also present an extension to \MR that minimises both ordering constraints \emph{and plan size}.
+The notion of a \emph{minimum cost least commitment \POP} (\MCLCP) is introduced, an extension of \citeauthor{Backstrom-CompAspects}'s optimality definitions that can account for differences in \POP size.
+Assuming uniform action cost, an \MCLCP can be defined as follows:
+%
+\begin{defn}\label{def:mclcp} Let $P = \tup{\opset, \sub, \precrel}$ and $Q = \tup{\opset', \sub, \precrel'}$ be two \POP{}s and $c$ be a cost function over \POP{}s. 
+Then, $P$ is a \defterm{minimum cost least commitment \POP} of $Q$ \IFF it is a minimum reordering of itself, and there is no \POP $R = \tup{\opset'', \sub, \precrel''}$ \ST $\opset'' \subset \opset$.
+\end{defn}
+%
+As a \POP with both minimal cost and orderings may not exist, \MCLCP optimisation prioritises plan cost. 
+It is therefore possible for an \MCLCP to have lower cost but more ordering constraints than a minimum reorder.
+
+A generalisation of \MR is introduced that allows action removal, and includes additional soft clauses ensuring that an optimal solution corresponds to an \MCLCP of a given \POP.
+Experimental results~\cite{muise2014:phdthesis} show that an \MCLCP typically has both lower cost and fewer ordering constraints than a minimum reorder. 
+However, as \MCLCP removes actions, the difference in ordering constraints is a not an indicator of increased flexibility. 
+When \MCLCP does not remove actions, the number of ordering constraints coincides with a minimum reorder.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Finding Optimal \POP{}s with \MILP models}\label{sec:milp-reorder}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\citet{Kambham2002:TemporalFlex} introduce a number of \MILP models for converting \emph{parallel position-constrained plans}, that is, plans that specify each action's execution time, into optimal \POP{}s.
+Beyond minimising orderings, three other optimality definitions are considered: minimising the makespan, maximising the \emph{summation of slacks} (the distances between $\goalactn$ and each action that achieves a goal) and maximising the \emph{average flexibility} (the average range of possible action start times).
+However, of these only makespan optimisation is evaluated.
+
+As discussed above, \citet{Backstrom-CompAspects}'s optimality definitions are often used as a computable proxy for more complex flexibility measures based on, for example, linearisation count.
+\citet{Say2016:MathematicalPOP} extend the work of \citet{Kambham2002:TemporalFlex} and \citet{Muise2016-PopMaxSAT}, and introduce \MILP models that implement three such proxy functions.
+The $\mathcal{O}_{C}^{MILP}$ model finds an \MCLCP (Definition~\ref{def:mclcp}), and so optimises the plan size, then the number of (transitively closed) ordering constraints. 
+The $\mathcal{O}_{O}^{MILP}$ and $\mathcal{T}^{MILP}$ models optimise plan size and then \emph{open ordering constraints} (a minimal set of constraints derived from \POCL validity) and \emph{temporal flexibility} (the sum of the time between each action's earliest possible start time and latest possible finish time), respectively.
+
+While theoretically none of these proxies always produces more linearisations than the others, in practice $\mathcal{T}^{MILP}$ produces (on average) more linearisations than $\mathcal{O}_{C}^{MILP}$ and \MR.
+Unlike $\mathcal{O}_{C}^{MILP}$, \MR, \MD and \MCLCP, where ordering constraints are encoded explicitly with a propositional variable for each pair of actions, $\mathcal{O}_{O}^{MILP}$ and $\mathcal{T}^{MILP}$ encode them implicitly with variables representing action start and end times. 
+This avoids the cubic number of clauses required to enforce transitivity in the explicit encodings, allowing $\mathcal{O}_{O}^{MILP}$ and $\mathcal{T}^{MILP}$ to find optimal solutions significantly more often than $\mathcal{O}_{C}^{MILP}$ and \MR.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Block Deordering}\label{sec:block-deorder}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% block deordering
+\citet{SiddiquiHaslum2012-Block} propose a generalised notion of plan deordering termed \emph{block deordering}. 
+A \emph{block} is a set of partially ordered actions that behaves like a macro-operator, that is, it produces and consumes propositions, and, when ordering constraints exist between actions in different blocks, blocks themselves can be (implicitly) partially ordered.
+A \emph{block decomposition} of a \POP is a division of the actions into a possibly recursive set of blocks, with the requirement that no action outside of a block can be interleaved with actions within a block.
+
+\cut{
+More formally:
+
+\begin{defn} A \defterm{block decomposed partial-order plan} is a tuple $P = \tup{\acset, B, \precrel}$ where $\acset$ is a set of actions, $\precrel$ is a strict partial order over $\acset$, and $B = \set{B_1, B_2,\ldots,B_n}$ be a set of subsets of $\acset$ such that:
+\begin{itemize}
+  \item if $\actn_1, \actn_2 \in B_i$ then there is no $\actn_3$ such that $\actn_1 \prec \actn_3 \prec \actn_2$ and $\actn_3 \not\in B_i$, and
+  \item for all $B_i,B_j \in B$, either $B_i \subset B_j$, $B_j \subset B_i$ or $B_i \cap B_j = \emptyset$.
+\end{itemize}
+\end{defn}
+%
+Any linearisation of a block decomposed \POP must also respect the block decomposition, that is, if $P = \tup{\acset, B, \precrel}$ is a block decomposed \POP, then a linearisation of $P$ is a total order $\precrel'$ such that $\precrel \subseteq \precrel'$ and $\tup{\acset, B, \precrel'}$ is also a block decomposed \POP.
+}
+%
+\subimport*{graphics/}{block-example.tex}
+%
+Because causal dependencies between actions in the same block can be ignored when deordering blocks, block deordering is sometimes able to deorder plans that cannot be deordered by standard methods.
+For example, Figure~\ref{fig:block-plan} depicts a plan which achieves the goal $\goalstate = \set{g_1, g_2}$ from an initial state $\initstate = \set{p}$. 
+The plan is totally ordered and is a minimum reordering, and cannot be further optimised by standard de/reordering methods.
+Figure~\ref{fig:block-deorder} shows a block decomposition of Figure~\ref{fig:block-plan}.
+While $\actn_1 \prec \actn_2$ and $\actn_3 \prec \actn_4$, are still required, no ordering constraints exist between actions in different blocks, meaning that Figure~\ref{fig:block-deorder} allows two linearisations: $\tup{\actn_1,\actn_2,\actn_3,\actn_4}$ and $\tup{\actn_3,\actn_4,\actn_1,\actn_2}$.
+
+A polynomial anytime block decomposition algorithm is compared experimentally with \EOG (Section~\ref{sec:kk-ebg}) over a number of \IPC domains.
+The quality of the resulting \POP{}s are compared by their $\flex$ values, that is, the proportion of actions which are not transitively ordered.
+The results show that block deordering never achieves a lower average $\flex$ value than \EOG, and can achieve an average increase in $\flex$ of up to $0.15$ (e.g., the \ipcdomain{parcprinter} domain), and in several domains is able to relax plans that \EOG cannot deorder at all.

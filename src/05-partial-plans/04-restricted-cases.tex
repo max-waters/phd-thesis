@@ -1,0 +1,110 @@
+\section{Restricted Cases}\label{sec:pp-cs-plans}
+%
+The previous sections demonstrated that while islands of tractability exist in the space of partial plans, determining whether a partial plan has a tractable relaxation is an intractable problem (Theorem~\ref{thrm:pp-mktr}). 
+To address this shortcoming, this section will introduce the idea of a \emph{causal link plan} (\CLP), a specialised partial plan that expresses constraints as a set of allowable causal links.
+Constraints represented in this way are less expressive than constraint formulae.
+However, the benefit is that, when limited to plans of this form, \emph{the problem of finding a minimally constrained, tractable plan is fixed parameter tractable}.
+A practical fpt-algorithm for finding such plans, \MKTR, is introduced.
+%
+\subsection{Causal Link Plans}
+%
+Unlike partial plans, in which the allowable variable bindings and orderings are explicitly defined with a constraint formula, causal link plans instead place high-level constraints on their instantiations' \emph{causal structures}.
+In the context of classical plans and \POP{}s, a casual structure is an implicit set of unthreatened \emph{causal links} between producers and consumers:
+%
+\clink*
+%
+A consumer in a classical plan is \emph{supported} by a causal link \IFF it is preceded by, and codesignated with, the associated producer, and the link is \emph{unthreatened} \IFF any threats to this link are either non-codesignated with, or not ordered between, the producer and consumer.
+The presence of unthreatened causal links is central to various notions of plan validity, such as \POCL-validity (Definition~\ref{def:pocl-valid}) and the \MTC (Definition~\ref{def:pp-mtc}).
+
+A \CLP constrains its instantiations' causal structures by providing a \emph{disjunctive causal structure}, that is, as a set of ``allowable'' causal links between consumers and possibly multiple producers, that implies the constraint that \emph{each consumer be supported by at least one unthreatened causal link from the set}.
+%Thus, while causal structures are typically \emph{descriptive} tools (e.g., for determining plan validity) a disjunctive causal structure is \emph{prescriptive}, that is, it is a restriction on the allowable causal structures of the \CLP's instantiations.
+More formally, a \CLP comprises a set of operators $\opset$ and a disjunctive causal structure $\cstruct$, with the condition that every consumer is linked to least one producer:
+
+\begin{defn}\label{def:pc-plan} A \defterm{causal link plan} (\CLP) is a tuple $P = \tup{\opset, \cstruct}$, where $\opset$ is a finite set of operators and $\cstruct$ is a set of causal links such that:
+\begin{itemize}
+	\item if $\tup{\optr_p, q(\vec{u}), \optr_c, q(\vec{s})} \in \cstruct_\opset$ then $\optr_p, \optr_c \in \opset$, and, 
+	\item for all $\optr_c, q(\vec{s})$ \ST $cons(\optr_c, q(\vec{s}))$ and $\optr_c \in \opset$, there exists an $\optr_p$ and $q(\vec{u})$ such that $\tup{\optr_p, q(\vec{u}), \optr_c, q(\vec{s})} \in \cstruct$.
+\end{itemize}	
+\end{defn}
+%
+\subimport*{graphics/}{cl-plan-example.tex}
+%
+Figure~\ref{fig:cl-plan-example} depicts a simple example of a \CLP, with arrows indicating the contents of $\cstruct$.
+The causal links, that is, the plan's constraints, require that unthreatened causal links exist between $A$'s precondition $p(x_1)$ and \emph{either} $p(1)$ or $p(2)$, between $B$'s precondition $r(x_2)$ and $r(2)$, and between the postconditions of both $A$ and $B$ and the goal state $\goaloptr$.
+
+A \CLP{}'s implicit constraints can be made explicit by transforming $\cstruct$ into a constraint formula.
+The translation, denoted $\ppenc(P)$, encodes the \MTC for partial plans as in Definition~\ref{def:pp-mtc}, but with the additional requirement that a consumer be supported by a causal link in $\cstruct$:
+
+\pagebreak
+
+\begin{defn}\label{def:pc-encoding} For any \CLP $P = \tup{\opset, \cstruct}$, $\ppenc(P)$ encodes $\opset$ and $\cstruct$ into a constraint formula as follows:
+\begin{align*}
+& \ppenc(P) \eqdef \bigwedge_{\clapstack{\optr_c, q(\vec{s}) : \consms(\optr_c, q(\vec{s}))}} \ppenc'(\optr_c, q(\vec{s})) \text{, where} \\
+& \ppenc'(\optr_c, q(\vec{s})) \eqdef \bigvee_{\clapstack{\tup{\optr_p, q(\vec{u}), \optr_c, q(\vec{s})} \in \cstruct}} \vec{s} = \vec{u} \land \optr_p \prec \optr_c \land \\
+& \qquad \qquad \qquad \quad \bigwedge_{\clapstack{\optr_t, \vec{v} : \thrts(\optr_t, q(\vec{v}))}} \big( \vec{s} \neq \vec{v} \lor \optr_t \prec \optr_p \lor \optr_c \preceq \optr_t \lor \\
+& \qquad \qquad \qquad \qquad \qquad  \big[ \bigvee_{\clapstack{\optr_w, \vec{r} : \prods(\optr_w, q(\vec{r}))}} \vec{s} = \vec{r} \land \optr_t \prec \optr_w \prec \optr_c \big] \big). 
+\end{align*}
+\end{defn}
+%
+For example, partial plan $P_2$ in Figure~\ref{fig:cl-plan-pp-example} is the result of using $\ppenc$ to transform the causal structure in Figure~\ref{fig:cl-plan-example} into a constraint formula.
+
+Because the above encoding translates any \CLP into a standard partial plan, any property of partial plans, such as satisfiability, soundness, validity or treewidth, can be applied to \CLP{}s. 
+If $P = \tup{\opset, \cstruct}$ is a \CLP and $Q = \tup{\opset, \ppenc(P)}$ is a partial plan, then $P$ is satisfiable, sound or valid \IFF $Q$ is, respectively, and $\treewidth(P) = \treewidth(Q)$. 
+
+\paragraph{Optimising causal structures}
+There are a number of aspects of \CLP{}s and the $\ppenc$ encoding that greatly simplify the plan relaxation process. 
+The first is that the $\ppenc$ encoding is \emph{at least as strong as the \MTC} (Definition~\ref{def:pp-mtc}).
+The \MTC requires that each consumer in a \CLP $P = \tup{\opset, \cstruct}$ be supported by a causal link which is either unthreatened, or re-established by a ``white knight'', while $\ppenc$ requires that the link also be selected from $\cstruct$.
+Thus, for any \CLP $P = \tup{\opset, \cstruct}$, $\ppenc(P) \models \MTCFUNC(\opset)$, and so, from Observation~\ref{thrm:pp-snd-mtc}, a \CLP is \emph{always sound}.
+
+The second key aspect of the $\ppenc$ encoding is that if $P = \tup{\opset, \cstruct}$ and $Q =\tup{\opset, \cstruct'}$ are two \CLP{}s such that $\cstruct \subseteq \cstruct'$, that is, $P$ has a smaller set of causal links available, then $\ppenc(P) \models \ppenc(Q)$.
+Thus, $Q$ is a relaxation of $P$, and if $P$ is satisfiable, so is $Q$.
+
+As a \CLP is valid \IFF it is sound and valid, an observation that is central to the \CLP relaxation process follows, that is, \emph{adding a causal link into a valid \CLP's causal structure will maintain its validity}:
+
+\begin{observation}\label{obs:pc-plan-val-relax} Let $P = \tup{\opset, \cstruct}$ and $Q =\tup{\opset, \cstruct'}$ be \CLP{}s such that $\cstruct \subseteq \cstruct'$. 
+Then, if $P$ is valid so is $Q$.
+\end{observation}
+
+The $\ppenc$ encoding also allows a comparison of the treewidths of \CLP{}s. 
+It follows from Definitions~\ref{def:pc-encoding} and~\ref{def:primal-graph} that if $P = \tup{\opset, \cstruct}$ and $Q =\tup{\opset, \cstruct'}$ are two \CLP{}s such that $\cstruct \subseteq \cstruct'$, then $P$'s primal graph is a subgraph of $Q$'s, meaning that $P$'s treewidth is bounded by that of $Q$~\cite{Bodlaender98:Arboretum}.
+Thus, \emph{expanding a \CLP{}'s causal structure cannot decrease its treewidth}:
+%
+\begin{observation}\label{obs:pc-plan-tw} If $P = \tup{\opset, \cstruct}$ and $Q =\tup{\opset, \cstruct'}$ are two \CLP{}s such that $\cstruct \subseteq \cstruct'$, then $\treewidth(P) \leq \treewidth(Q)$.
+\end{observation}%
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Optimising Causal Link Plans}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+The optimality criteria for standard partial plans can be slightly modified and applied to \CLP{}s.
+The relative flexibility of \CLP{}s can be determined with a set-wise comparison of their constraints, and their relative tractability can be determined by comparing the treewidths of the formulae produced by $\ppenc$.
+
+Thus, a \emph{$k$-treewidth CS relaxation} of a \CLP is an expansion of its disjunctive causal structure that keeps its treewidth below $k$, a \emph{minimal $k$-treewidth CS relaxation} is a \CLP with a causal structure that cannot be expanded any further without its treewidth exceeding $k$, and a \emph{minimum $k$-treewidth CS relaxation} is the $k$-treewidth CS relaxation with the \emph{largest} causal structure:
+
+\begin{defn} Let $P = \tup{\opset, \cstruct}$ and $Q = \tup{\opset, \cstruct'}$ be two valid \CLP{}s. 
+	\begin{itemize}
+		\item $Q$ is a \defterm{$\mathbf{k}$-treewidth CS relaxation} of $P$ \IFF $\treewidth(Q) \leq k$ \\ and $\cstruct \subseteq \cstruct'$.
+		\item $Q$ is a \defterm{proper $\mathbf{k}$-treewidth CS relaxation} of $P$ \IFF $\treewidth(Q) \leq k$ and $\cstruct \subset \cstruct'$.
+		\item $Q$ is a \defterm{minimal $\mathbf{k}$-treewidth CS relaxation} of $P$ \IFF it is a $k$-treewidth CS relaxation of $P$ and there is no \CLP $R$ such that $R$ is a proper $k$-treewidth CS relaxation of $Q$.
+		\item $Q$ is a \defterm{minimum $\mathbf{k}$-treewidth CS relaxation} of $P$ \IFF it is a $k$-treewidth CS relaxation of $P$ and there is no \CLP $P = \tup{\opset, \cstruct''}$ such that $R$ is a $k$-treewidth CS relaxation of $Q$ and $\card{\cstruct''} > \card{\cstruct'}$.
+	\end{itemize}
+\end{defn}
+%
+\subimport*{graphics/}{mktr-alg.tex}
+%
+While the complexity of finding a minimum $k$-treewidth CS relaxation remains open, the \MKTR algorithm in Figure~\ref{alg:MKTR} demonstrates that the problem of finding a minimal $k$-treewidth CS relaxation is in \FPT:
+
+\begin{restatable}{theorem}{mktrfpt}\label{thrm:MKTR-fpt} 
+\csprob{Minimal k-treewidth CS Relaxation}.
+Finding a minimal $k$-treewidth CS relaxation of a \CLP is in \FPT for parameter $k$.
+\end{restatable}
+%
+The \MKTR algorithm takes as its input a valid \CLP, $P = \tup{\opset, \cstruct}$.
+It first checks $P$'s treewidth, and, consistent with Observation~\ref{obs:pc-plan-tw}, returns failure if it already exceeds $k$.
+It then constructs $A$, a set containing every possible causal link between operators in $\opset$ that do not already appear in $\cstruct$.
+At each iteration of the loop, an element of $A$ is added into $\cstruct$, and its treewidth is measured.
+From Observation~\ref{obs:pc-plan-val-relax}, expanding $\cstruct$ will not render the plan invalid, meaning that if the treewidth is less than $k$, the resulting \CLP is a proper $k$-treewidth CS relaxation of $P$.
+Once all links have been tried, $P$ is returned.
+The minimality of $P$ follows from Observation~\ref{obs:pc-plan-tw}, that is, any links that have been rejected cannot be added to $P$ without causing its treewidth to exceed $k$.
+(For a complete proof see Appendix~\ref{apx:partial-plans}).

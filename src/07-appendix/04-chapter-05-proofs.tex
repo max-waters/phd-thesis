@@ -1,0 +1,411 @@
+\chapter{Proofs of Theorems in Chapter~\ref{chap:partial-plans}}\label{apx:partial-plans}
+%
+Proofs of Theorems~\ref{thrm:pp-snd} and~\ref{thrm:pp-sat} will make use of the definition below, which translates any given formula of propositional logic into an equisatisfiable constraint formula expressed in language $\clang$ (Definition~\ref{def:conslang}).
+The first line creates a constraint formula by substituting every proposition $p$ appearing in $\varphi$ with the constraint atom $x_p = 1$.
+The second line adds the requirement that all variables must be bound to either $0$ or $1$:
+
+\begin{defn}\label{def:proptocon} For any Boolean formula $\varphi$ constructed from $n$ propositional variables $\vars(\varphi)= \set{\propvar_1,\ldots,\propvar_n}$ and the usual logical connectives ($\land$, $\lor$ and $\neg$), $\ptoc(\varphi)$ denotes its translation into a constraint formula:
+\begin{align*}
+\ptoc(\varphi) \eqdef & \varphi \set{\propvar_i \substo (x_i = 1) : \propvar_i \in \vars(\varphi)} \land \\
+& \qquad \bigwedge_{\mathclap{\propvar_i \in \vars(\varphi)}} (x_i = 0 \lor x_i = 1).
+\end{align*}
+\end{defn}
+
+For example, if $\varphi$ is $(\propvar_1 \lor \propvar_2) \land (\neg\propvar_1 \lor \neg\propvar_2)$ then $\ptoc(\varphi)$ is $(x_1 = 1 \lor x_2 = 1) \land (x_1 \neq 1 \lor x_2 \neq 1) \land (x_1 = 0 \lor x_1 = 1) \land (x_2 = 0 \lor x_2 = 1)$.
+It follows from this definition that $\varphi$ is satisfiable \IFF there exists some substitution $\sub$ such that $\ptoc(\varphi)\sub$ is ground and evaluates to \true.
+
+Proofs of Theorems~\ref{thrm:pp-snd} and~\ref{thrm:pp-sat} also refer to the following lemma:
+
+\begin{lemma}\label{lemma:binding} Let $P = \tup{\opset, \cform}$ be a partial plan and $\vec{\actn} = \vec{\optr}\sub$ be a classical plan. 
+Whether or not $\vec{\actn}$ is an instantiation of $P$ can be determined in polynomial time.
+\end{lemma}
+%
+\begin{proof} First check, in linear time, that $\optr \in \opset$ \IFF $\optr \in \vec{\optr}$.
+Whether $\vec{\actn} \models \cform$ can be determined by recursively applying the rules in Definition~\ref{def:cons-semantics}.
+As atoms are base cases, it follows that if $\cform$ contains $n$ atoms this will take at most $2n - 1$ steps.
+\end{proof}
+
+%%%%%%%%%% SOUNDNESS PROOF %%%%%%%%%%
+\section{Proof of Theorem~\ref{thrm:pp-snd}}
+
+\ppsnd*
+
+\begin{proof} A partial plan $P$ is sound \IFF all of its instantiations are valid. 
+To show membership in \CONP, guess a classical plan $\vec{\actn}$, then verify in polynomial time that it is not valid and is an instantiation of $P$ (Lemma~\ref{lemma:binding}). 
+
+Proof of \CONP-hardness is by reduction from the \CONP-complete problem \UNSAT, which asks whether a given Boolean formula $\varphi$ is unsatisfiable.
+First, construct the constraint formula $\cform = \ptoc(\varphi)$ (Definition~\ref{def:proptocon}).
+Let $\vars(\cform) = \set{x_1,\ldots,x_n}$.
+Next, construct the partial plan $P = \tup{\opset, \cform}$, where the operator set $\opset$ comprises three operators $\initoptr$, $\optr_1(x_1,\ldots,x_n)$ and $\goaloptr$, none of which have any postconditions, and only $\goaloptr$ has preconditions -- a single atom, $g$.
+Because neither $\initoptr$ nor $\optr_1$ have any postconditions, no instantiation of $P$ can be valid, as the preconditions of $\goaloptr$ will never hold.
+Therefore, $P$ is sound \IFF it has no instantiations, that is, \IFF $\cform$ is unsatisfiable.
+As $\cform$ and $\varphi$ are equisatisfiable, it follows that $P$ is sound \IFF $\varphi$ is unsatisfiable, as desired.
+\end{proof}
+
+%%%%%%%%%% SATISFIABIITY PROOF %%%%%%%%%%
+\section{Proof of Theorem~\ref{thrm:pp-sat}}
+
+\ppsat*
+
+\begin{proof} A partial plan $P = \tup{\opset, \cform}$, is satisfiable \IFF it admits at least one instantiation.
+To prove membership in \NP, guess a classical plan $\vec{a}$ and verify in polynomial time that it is an instantiation of $P$ (Lemma~\ref{lemma:binding}).
+
+Proof of \NP-hardness is by reduction from \SAT, which asks whether a given a Boolean formula $\varphi$ is satisfiable.
+First, construct the constraint formula $\cform = \ptoc(\varphi)$ (Definition~\ref{def:proptocon}).
+Let $\vars(\cform) = \set{x_1,\ldots,x_n}$.
+Next, construct the partial plan $P = \tup{\opset, \cform}$, where $\opset$ comprises the three operators $\set{\initoptr, \optr_1(x_1,\ldots,x_n), \goaloptr}$, none of which have any preconditions or postconditions.
+A classical plan will be an instantiation of $P$ \IFF it is of the form $\tup{\initoptr,\optr_1,\goaloptr}\sub$ where the formula $\cform\sub$ is ground and evaluates to \true.
+Thus, $P$ is satisfiable \IFF $\cform$ is satisfiable.
+As $\cform$ and $\varphi$ are equisatisfiable, it follows that $P$ is satisfiable \IFF $\varphi$ is satisfiable.
+\end{proof}
+%
+
+%%%%%%%%%% VALIDITY PROOF %%%%%%%%%%
+\section{Proof of Theorem~\ref{thrm:pp-val}}
+
+\ppval*
+
+\begin{proof} A language $L$ is in \DP \IFF there are two languages $L_1 \in \NP$ and $L_2 \in \CONP$ such that $L = L_1 \cap L_2$.
+Let language $L_{SAT} = \set{P : P \text{ is satisfiable}}$ and $L_{SND} = \set{P : P \text{ is sound}}$, where $P$ is a partial plan.
+From Definition~\ref{def:pp-val}, the language of partial plan validity is $L_{VAL} = L_{SAT} \cap L_{SND}$.
+Since $L_{SND} \in \CONP$ (Theorem~\ref{thrm:pp-snd}) and $L_{SAT} \in \NP$ (Theorem~\ref{thrm:pp-sat}), it follows that $L_{VAL} \in \DP$.
+ 
+\DP-hardness shown by reduction from the \DP-complete problem \SATUNSAT~\cite{Papadimitriou1984:ComplFacets}, which asks, given two Boolean formulae $\varphi_1$ and $\varphi_2$, whether $\varphi_1$ is satisfiable and $\varphi_2$ is unsatisfiable.
+
+From $\varphi_1$ and $\varphi_2$ construct the constraint formulae $\cform_1 = \ptoc(\varphi_1)$ and $\cform_2 = \ptoc(\varphi_2)$, where $\vars(\cform_1) = \set{x_1, \ldots, x_n}$ and $\vars(\cform_2) = \set{y_1, \ldots, y_m}$.
+Next, construct the partial plan $P = \tup{\opset, \cform}$. 
+Operator set $\opset$ contains four elements: $\initoptr$, which has no preconditions or postconditions, $\optr_1(x_1,\ldots,x_n)$, which has no preconditions and the postcondition $\neg g$, $\optr_2(y_1,\ldots,y_m)$, which has no preconditions and the postcondition $g$, and $\goaloptr$, which has the precondition $g$ and no postconditions.
+Constraint formula $\cform = \cform_1 \land (\optr_1 \prec \optr_2 \lor \cform_2)$.
+
+Partial plan $P$ will be valid \IFF it is satisfiable and sound, that is \IFF $\cform$ is satisfiable and $\optr_1 \prec \optr_2$ in all instantiations.
+Clearly if $\cform_1$ is satisfiable and $\cform_2$ is unsatisfiable, then $P$ is valid.
+However, if $\cform_1$ is unsatisfiable, then so is $\cform$, and if $\cform_1$ and $\cform_2$ are both satisfiable then $\optr_1 \prec \optr_2$ need not hold and $P$ is not sound.
+Therefore, $P$ is valid \IFF $\cform_1$ is satisfiable and $\cform_2$ is unsatisfiable.
+As $\varphi_1$ and $\cform_1$ are equisatisfiable, and  $\varphi_2$ and $\cform_2$ are equisatisfiable, it follows that $P$ is valid \IFF $\varphi_1$ is satisfiable and $\varphi_2$ is unsatisfiable, as desired.
+\end{proof}
+
+%%%%%%%%%% W[1] AND XP SAT PROOF %%%%%%%%%%
+\section{Proof of Theorem~\ref{thrm:pp-sat-ftp}}
+
+Theorem~\ref{thrm:pp-sat-ftp} says that determining the satisfiability of a partial plan with treewidth $k$ is $\W{1}$-hard and in \XP when parameterised with $k$.
+A problem is in \XP \IFF it is solvable in time $\bigo(n^{f(k)})$~\cite{DowneyFellows2012:PC} (Section~\ref{sec:param-compl}). 
+The first part of the proof will show membership in \XP by demonstrating that any partial plan with treewidth $k$ can, in time $\bigo(|P|^{k})$, be translated into an equivalent constraint satisfaction problem (\CSP, Definition~\ref{def:csp}) with the same treewidth and then solved.
+
+A \CSP is a triple $\tup{X, D, C}$ where $X$ is a finite set of variables, $D$ defines the variables' domains, and $C = \set{C_1,\ldots,C_m}$ defines the constraints, where each $C_j \in C$ is of the form $\tup{t_j, R_j}$ where $t_j \subseteq X$, the constraint scope, is a subset of $k$ variables and $R_j$ is a $k$-ary relation over the corresponding domains.
+
+The \emph{primal graph} of a \CSP is an undirected graph $\tup{V, E}$ where $V = X$ and $\gedge{x_1, x_2} \in E$ \IFF there exists a constraint $\tup{t_j, R_j} \in C$ such that $x_1,x_2 \in t_j$.
+A \CSP can be solved in time $\bigo(n^k)$ where $k$ is equal to the treewidth (Section~\ref{sec:treewidth}) of the primal graph of the \CSP~\cite{Freuder1990-kTreeCSPs}. 
+
+The definition below transforms partial plan $P = \set{\opset, \cform}$ into \CSP $S_P$:
+
+\begin{defn}\label{def:pp-csp} Let $P = \tup{\opset, \cform}$ be a partial plan where $\opset = \set{\optr_1,\ldots,\optr_n}$, $\cform = \cform_1 \land \cdots \land \cform_m$, and for each $\cform_i$, $\vec{t}_i = \tup{t_1^i,\ldots,t_k^i}$ is an ordering of all variables and constants appearing in $\cform_i$.
+Then, $S_P = \tup{\mathcal{X, D, C}}$ defines the \CSP \ST:
+    \begin{itemize}
+        \item $X = \set{v_x : x \in \vars(\opset)} \cup \set{v_\optr : \optr \in \opset}$,
+        \item $D = \set{D_1,\ldots,D_{\card{X}}}$, where $D_{v_{t_i}} = \consts(\opset)$ if $t_i \in \vars(\opset)$, or $\set{1,\ldots,n}$ if $t_i \in \opset$, and
+        \item $C = \set{\tup{s_1, R_1},\dots,\tup{s_m, R_m}}$ where each $s_i = \tup{v_{t_i^i},\ldots,v_{t_k^i}}$ and $\vec{c} = \tup{c_1,\ldots,c_k} \in R_i$ \IFF $\cform_i\sub$, where $\sub$ is a substitution \ST $\sub(\vec{t}_i) = \vec{c}$, evaluates to \true.
+    \end{itemize}
+\end{defn}
+
+Variable set $X$ contains a $v_x$ for each variable in $P$, and a $v_\optr$ for each operator. 
+The domain of each $v_x$ is $\consts(\opset)$, and the domain of each $v_\optr$ is $\set{1,\ldots,\card{\opset}}$ (i.e., numeric plan step indexes).
+A constraint is constructed from each conjunct of the constraint formula $\cform$.
+For each conjunct $\cform_i$, an ordering over the variables and operators in $\cform_i$ is produced, $\vec{t}_i$.
+Then, a constraint $C_i = \tup{s_i, R_i}$ is constructed, where $s_i$ is a list containing all variables in $X$ associated elements of $\vec{t}_i$, and $R_i$ contains a tuple of constants $\vec{c}$ \IFF substituting each element of $\vec{t}_i$ with the corresponding element of $\vec{c}$ in $\cform_i$ results in a ground formula that evaluates to \true (with precedence over indexes interpreted as expected).
+
+A solution to $S_P$ assigns a domain object to each variable in $P$, and an index (or time step) to each operator.
+While it is clear that if $P$ is satisfiable then $S_P$ is also, the constraints in $S_P$ are \emph{weaker} than $\cform$.
+The problem is that $S_P$ allows more than one operator to be assigned to the same index.
+For example, a constraint such as $\optr_p \not\prec \optr_q \land \optr_q \not\prec \optr_p$, is, due to the implicit constraint that a classical plan be totally ordered, unsatisfiable. 
+However, $S_P$ could satisfy it by setting the two operators to the same index. 
+
+An obvious fix, namely adding constraints to $S_P$ to enforce a total order, can change $S_P$'s treewidth and so is  unsatisfactory.
+Instead, $\cform$ is strengthened with constraints that enforce a total order over \emph{selected} operators.
+The constraints do not modify $\cform$'s treewidth or satisfiability. 
+However, they do allow any operators bound to the same index to be separated with an arbitrary ``tie-breaker''.
+The strengthening is denoted $\cformpl$ and is defined as follows:
+
+\begin{defn}\label{def:cfl} If $\cform = \cform_1 \land \cdots \land \cform_n$ is a constraint formula then $\cformpl$ denotes the following extension:
+\begin{align*}
+    \cformpl \eqdef \cform \land \bigwedge_{1 \leq i \leq n} \qquad \bigwedge_{\clapstack{\optr_j,\optr_k \in \vars(\cform_i), \\ \optr_j \neq \optr_k}} \optr_j \prec \optr_k \lor \optr_k \prec \optr_j.
+\end{align*}
+\end{defn}
+
+If two operators appear in the same clause in $\cform$, then $\cformpl$ has a total order constraint over them.
+Lemma~\ref{lemma:cfl} shows that the additional clauses introduced by $\cformpl$ do not change the formula's satisfiability or treewidth:
+
+\begin{lemma}\label{lemma:cfl} Let $P = \tup{\opset, \cform}$ and $Q = \tup{\opset, \cformpl}$ be partial plans. Then \myi $\treewidth(P) = \treewidth(Q)$, and \myii $\vec{\actn}$ is an instantiation of $P$ \IFF it is an instantiation of $Q$.
+\end{lemma}
+
+\begin{proof} A partial plan's primal graph connects two vertices \IFF their associated terms appear in the same clause (Definition~\ref{def:primal-graph}).
+As $\cformpl$ has an additional clause of the form $\optr_j \prec \optr_k \lor \optr_k \prec \optr_j$ \IFF $\optr_j$ and $\optr_k$ appeared in some clause in $\cform$, it follows that the additional clauses will not modify the primal graph of $\cform$.
+Therefore, $\treewidth(P) = \treewidth(Q)$.
+
+As $\cformpl$ has additional clauses enforcing a total order over selected pairs of operators, and classical plans are totally ordered, it is trivially true that if $\vec{\actn} \models \cform$ then $\vec{\actn} \models \cformpl$, and \emph{vice versa}.
+\end{proof}
+
+The following lemma shows that if $P = \tup{\opset, \cformpl}$ is a partial plan with a strengthened constraint formula, then any solution to \CSP $S_P$ (Definition~\ref{def:pp-csp}) that sets operators to the same index can be linearised with an arbitrary ``tie-breaker''.
+It does this by demonstrating that if $\sub$ is a solution to $S_P$ that sets $\optr_p$ and $\optr_q$ to the same index, then there is another solution, $\sub'$, that binds all variables to the same domain objects, and maintains the same relative ordering of operators with the exception that $\optr_p$ is instead set to the index immediately before $\optr_q$:
+
+\begin{lemma}\label{lemma:tie-break} Let $P = \tup{\opset, \cformpl}$ be a partial plan, $\optr_p, \optr_q \in \opset$ be two operators \ST $\optr_p \neq \optr_q$, and $\sub$ be a solution to $S_P$ \ST $\sub(v_{\optr_p}) = \sub(v_{\optr_q})$.
+Then, there is a solution to $S_P$, $\sub'$ \ST 
+\begin{itemize}
+    \item if $x \in \vars(\opset)$ then $\sub(v_x) = \sub'(v_x)$,
+    \item if $\set{\optr_1, \optr_2} \subseteq \opset$ and $\set{\optr_1, \optr_2} \neq \set{\optr_p, \optr_q}$, then $\sub'(\optr_1) < \sub'(\optr_2)$ \IFF $\sub(\optr_1) < \sub(\optr_2)$, and
+    \item $\sub'(v_{\optr_p}) = \sub'(v_{\optr_q})-1$.
+\end{itemize}  
+\end{lemma}
+
+\begin{proof} First, construct the constraint formula $\psi$ from $\cformpl$ by replacing every $x \in \vars(\opset)$ with $\sub(x)$, and every atom of the form $\optr_1 \prec \optr_2$ \ST $\set{\optr_1, \optr_2} \neq \set{\optr_p, \optr_q}$ with $(\optr_1 \prec \optr_2 \lor \bot)$ if $\sub(\optr_1) < \sub(\optr_2)$ or $(\optr_1 \prec \optr_2 \land \bot)$ otherwise.
+The formula strengthens $\cformpl$ by fixing all variable bindings, and all ordering constraints except for those directly between $\optr_p$ and $\optr_q$, to those in $\sub$.
+Note that $\psi \models \cformpl$, and if a clause in $\cformpl$ contained a precedence atom, then that atom remains in the corresponding clause in $\psi$.
+It suffices to prove that these constraints do not rule out the possibility of ordering $\optr_p$ directly before $\optr_q$, that is, that $\psi \not\models \optr_p \not\prec \optr_q$.
+
+Proof is by \emph{reductio}.
+Assume that $\psi \models \optr_p \not\prec \optr_q$.
+Therefore, there is a list of operators $\tup{\optr_1, \ldots, \optr_k}$ \ST $\optr_p = \optr_1$, $\optr_q = \optr_k$ and for $1 \leq i < k$, $\psi \models \optr_i \not\prec \optr_{i+1}$, and there is no $\optr'$ \ST $\psi \models \optr_i \not\prec \optr' \land \optr' \not\prec \optr_{i+1}$. 
+Because $\psi \models \optr_i \not\prec \optr_{i+1}$ directly, that is, without any transitive links, $\psi$ must contain a precedence atom containing $\optr_i$ and $\optr_{i+1}$.
+Therefore, so does $\cformpl$, meaning that $\cformpl \models (\optr_i \prec \optr_{i+1} \lor \optr_{i+1} \prec \optr_i)$ (Definition~\ref{def:cfl}).
+Because $\psi \models \cformpl$, it follows that $\psi \models (\optr_i \prec \optr_{i+1} \lor \optr_{i+1} \prec \optr_i)$ also. 
+And, as $\psi \models \optr_i \not\prec \optr_{i+1}$, it follows that $\psi \models \optr_{i+1} \prec \optr_i$.
+As this applies to all $1 \leq i < k$, it follows that $\psi \models \optr_k \prec \optr_1$, that is, $\psi \models \optr_q \prec \optr_p$, which contradicts the assumption that $\sub(\optr_p) = \optr(\optr_q)$.
+Therefore, $\psi \not\models \optr_p \not\prec \optr_q$, as desired.
+\end{proof}
+
+\noindent
+Proof of membership in \XP uses the above definitions and lemmas:
+
+\begin{lemma}\label{lemma:pp-sat-pc-xp}
+Determining the satisfiability of a partial plan $P$ is in \XP when parameterised with $\treewidth(P)$.
+\end{lemma}
+
+\begin{proof} Let $P = \tup{\opset, \cform}$ be a partial plan and $k = \treewidth(P)$ (Definition~\ref{def:primal-graph}).
+From $P$, construct the partial plan $Q = \tup{\opset, \cformpl}$ (with $\cformpl$ defined as in Definition~\ref{def:cfl}).
+As $\cformpl$ contains, at most, an extra clause for each clause in $\cform$, each of size $2\card{\opset}$, $Q$ is of size $\bigo(\card{P}^2)$.
+Next, construct the \CSP $S_Q$ (Definition~\ref{def:pp-csp}). 
+Because $Q$ has a treewidth of $k$ (Lemma~\ref{lemma:cfl}), the number of variables or operators appearing in a clause is bounded by $k+1$, and so each constraint in $S_Q$ contains up to $(|\consts(\opset)|+|\opset|)^{k+1}$ tuples.
+Thus, $S_Q$ can be constructed in time $\card{Q}^{k+1}$, that is, $\bigo(\card{P}^k)$.
+As variables in $S_Q$ appear in the same constraint scope \IFF they appear in the same clause of $\cformpl$, the primal graph of $S_Q$ has treewidth $k$, meaning that $S_Q$ can be solved in $\bigo(\card{S_Q}^k)$.
+Because $S_Q$ is of size $\bigo(\card{P}^k)$, $S_Q$ can be constructed and solved in time $\bigo(\card{P}^{k^2})$.
+
+A solution $\sub$ to $S_Q$ will assign a constant to each variable, and an index, or time-step to each operator.
+First, any operators bound to the same index are separated with an arbitrary tie-breaker to produce valid solution $\sub'$ (Lemma~\ref{lemma:tie-break}).
+Next, $\sub'$ is transformed into a classical plan $\vec{\actn}$, which, from Definition~\ref{def:pp-csp}, is an instantiation of $Q$ and therefore instantiation of $P$ (Lemma~\ref{lemma:cfl}).
+Therefore, $P$ can be transformed into a \CSP and solved in time $\bigo(\card{P}^{k^2})$, and is in \XP.
+\end{proof}
+
+The second part of the proof shows $\W{1}$-hardness with an \emph{fpt-reduction} (Definition~\ref{def:fpt-reduction}) from \KCLIQUE to partial plan satisfiability.
+Let an instance of \KCLIQUE be a tuple $(G, k)$ where $G$ is a graph and $k > 0$, and let a partial plan satisfiability instance be a tuple $(P, k')$ where $P$ is a partial plan and $k'$ is the treewidth of $P$. 
+The fpt-reduction requires two functions, $f(k)$ and $g(k)$, and a constant $c$, such that any $(G, k)$ can be transformed into a $(P, k')$, such that $k' \leq f(k)$ and $(P, k')$ is computable from $(G, k)$ in time $g(k)|G|^c$.
+
+\begin{lemma}\label{lemma:pp-sat-pc-whard}
+Determining the satisfiability of a partial plan $P$ is $\W{1}$-hard when parameterised with $\treewidth(P)$.
+\end{lemma}
+
+\begin{proof} Proof is by fpt-reduction from \KCLIQUE parameterised by $k$, which is $\W{1}$-complete.
+Let $G = \tup{V, E}$ be an undirected graph such that $V = \set{v_1,\ldots,v_n}$ and $k > 0$. 
+\KCLIQUE asks if $G$ contains a clique of $k$ vertices.
+
+Construct the partial plan $P = \tup{\opset, \cform}$ where the operator set $\opset = \set{\initoptr, \optr_1(x_1,\ldots,x_k), \goaloptr}$, none of which have any preconditions or postconditions, and the constraint formula $\cform$ is defined such that:
+%
+\begin{align*}
+\cform \eqdef \bigwedge_{\mathclap{i,j : 1 \leq i < j \leq k}} \big( x_i \neq x_j \land ( \bigvee_{\mathclap{\tup{v,u} \in E}} x_i = v \land x_j = u ) \big).
+\end{align*}
+%
+Constraint formula $\cform$ contains $k$ variables.
+Every pair of variables must be bound to a different vertex, and moreover, every pair of variables must be bound to vertices that are connected in $G$.
+It is thus satisfiable \IFF $G$ contains a clique of size $k$.
+Because every pair of variables in $\vars(\cform)$ appear together in some clause, $P$'s primal graph forms a clique of $k$ vertices.
+Thus, if $k=1$, $P$ has a treewidth of $1$, otherwise its treewidth is $k-1$.
+
+Let $f(k) = k$ and $g(k) = 1$.
+Therefore, from the \KCLIQUE instance $(G, k)$, the partial plan satisfiability instance $(P, k')$, where $k' \leq f(k)$, can be constructed in time $g(k).|G|^2$, meaning that partial plan satisfiability is $\W{1}$-hard.
+\end{proof}
+
+\ppsatfpt*
+
+\begin{proof} Follows directly from Lemmas~\ref{lemma:pp-sat-pc-xp} and~\ref{lemma:pp-sat-pc-whard}.
+\end{proof}
+
+
+%%%%%%%%%% MTC SOUNDNESS PROOF %%%%%%%%%%
+\section{Proof of Theorem~\ref{thrm:pp-snd-mtc}}
+
+Theorem~\ref{thrm:pp-snd-mtc} states that partial plan is sound \IFF it satisfies the \emph{modal truth criterion} (\MTC).
+The \MTC for a partial plan $P = \tup{\opset, \cform}$ requires that $\cform \models \MTCFUNC(\opset)$ (Definition~\ref{def:pp-mtc}).
+Since it is established that a classical plan is valid \IFF the \MTC holds (Theorem $7.3$ in \cite{Backstrom-CompAspects}), and a classical plan is a special case of a partial plan (Definition~\ref{def:pp-special-cases}) the following observation~holds:
+
+\begin{observation}\label{obs:cp-mtc-val} A classical plan $\vec{\actn} = \tup{\optr_1,\ldots,\optr_n}\sub$ is valid \IFF $\vec{a} \models \MTCFUNC(\set{\optr_1,\ldots,\optr_n})$.
+\end{observation}
+
+\ppsndmtc*
+
+\begin{proof} Left to right is proved through a \emph{reductio}.
+Assume that $P = \tup{\opset, \cform}$ is a sound partial plan that does not satisfy the \MTC, that is, $\cform \not\models \MTCFUNC(\opset)$.
+As $\cform \not\models \MTCFUNC(\opset)$, there must be a classical plan $\vec{\actn} = \tup{\optr_1,\ldots,\optr_n}\sub$ such that $\vec{\actn} \models \cform$ but $\vec{\actn} \not\models \MTCFUNC(\set{\optr_1,\ldots,\optr_n})$.
+Therefore, $\vec{\actn}$ is an instantiation of $P$, but is not valid (Observation~\ref{obs:cp-mtc-val}).
+As $P$ has an invalid ground instantiation, it cannot be sound, contradicting the assumption.
+Therefore, if $P = \tup{\opset, \cform}$ is sound then $\cform \models \MTCFUNC(\opset)$.
+
+To prove right to left, let $P = \tup{\opset, \cform}$ be a partial plan such that $\cform \models \MTCFUNC(\opset)$.
+Either $P$ does, or does not, have any instantiations.
+If $P$ has no instantiations, it is trivially sound.
+Let $\vec{\actn} = \tup{\optr_1,\ldots,\optr_n}\sub$ be an instantiation of $P$.
+Then it follows from Definition~\ref{def:pp-instantiation} that $\vec{\actn} \models \cform$. 
+Thus, $\vec{\actn} \models \MTCFUNC(\set{\optr_1,\ldots,\optr_n})$, and it follows from Observation~\ref{obs:cp-mtc-val} that $\vec{\actn}$ is valid.
+Therefore, $P$ is sound.
+\end{proof}
+
+%%%%%%%%%% LCR PROOF %%%%%%%%%%
+\section{Proof of Theorem~\ref{thrm:pp-lcr-mtc}}
+
+\pplcrmtc*
+
+\begin{proof} From the input $P = \tup{\opset, \cform}$, produce in polynomial time the partial plan $Q = \tup{\opset, \MTCFUNC(\opset)}$.
+The proof first establishes that $Q$ is a relaxation of $P$.
+It follows from Theorem~\ref{thrm:pp-snd-mtc} that $Q$ is sound.
+Because $P$ is valid, and therefore sound, $\cform \models \MTCFUNC(\opset)$ (Theorem~\ref{thrm:pp-snd-mtc}).
+Since $P$ is valid, $\cform$ must be satisfiable, and as $\cform \models \MTCFUNC(\opset)$, $\MTCFUNC(\opset)$ must be satisfiable also.
+As $Q$ is satisfiable and sound, it is valid.
+As $Q$ is valid and $\cform \models \MTCFUNC(\opset)$, $Q$ is a relaxation of $P$ (Definition~\ref{def:pp-lcr}).
+
+Proof that $Q$ is minimally constrained is by \emph{reductio}.
+Assume $Q$ is not minimal, that is, that there exists an $R = \tup{\opset, \cform'}$ that is a proper relaxation of $Q$. 
+As $R$ is a proper relaxation of $Q$, it is valid (Definition~\ref{def:pp-lcr}), and $\MTCFUNC(\opset) \models \cform'$ but $\cform' \not\models \MTCFUNC(\opset)$.
+However, it follows from Theorem~\ref{thrm:pp-snd-mtc} that if $\cform' \not\models \MTCFUNC(\opset)$ then $R$ is not sound, and therefore not valid, contradicting the assumption.
+Therefore, no such $R$ can exist, and $Q$ is a minimally constrained relaxation of $P$.
+\end{proof}
+
+
+%%%%%%%%%% MKTR PROOF %%%%%%%%%%
+\section{Proof of Theorem~\ref{thrm:pp-mktr}}
+
+\ppmktr*
+
+\begin{proof} Proof is by fpt-reduction from \KCLIQUE parameterised by $k$, which is $\W{1}$-complete, to the problem of determining if a partial plan has a $(k+4)$-treewidth relaxation.
+Let $G = \tup{V, E}$ be an undirected graph such that $V = \set{v_1,\ldots,v_n}$ and $k > 0$. 
+\KCLIQUE asks if $G$ contains a clique of $k$ vertices.
+    
+Construct the partial plan $P = \tup{\opset, \cform}$ where the operator set $\opset = \set{\initoptr, \optr_1(x_1,\ldots,x_k), \goaloptr}$, none of which have any preconditions or postconditions, and the constraint formula $\cform = \neg\psi$, where $\psi$ defined as follows:
+%
+\begin{align*}
+\psi \eqdef \bigwedge_{\mathclap{i,j : 1 \leq i < j \leq k}} \big( x_i \neq x_j \land ( \bigvee_{\mathclap{\tup{v,u} \in E}} x_i = v \land x_j = u ) \big).
+\end{align*}
+%
+Constraint formula $\psi$ contains $k$ variables.
+Every variable must be bound to a different vertex, and moreover, every pair of variables must be bound to vertices that are connected in $G$.
+Thus, $\psi$ is satisfiable \IFF $G$ contains a clique of size $k$. 
+And, as $\cform = \neg\psi$, it follows that $\cform$ is a tautology \IFF $G$ does not contain a clique of size $k$.
+
+Let $k' = k + 4$.
+As $|\vars(\opset)| = k$ and $|\opset| = 3$, $k' = |\vars(\opset)| + |\opset| + 1$.
+A graph with $n$ vertices cannot have a treewidth greater than $n+1$ (i.e., if $n \leq 1$, the treewidth is $1$, otherwise a connected graph has treewidth $n-1$).
+Since a partial plan's primal graph has a vertex for each variable and operator, it follows that a partial plan's treewidth is bound by $|\vars(\opset)| + |\opset| + 1$.
+Therefore, all proper relaxations of $P$ will have a treewidth $\leq k'$, and so a proper $k'$-treewidth relaxation of $P$ exists \IFF a proper relaxation of $P$ exists.
+The proof will continue by cases, and show that $P$ has a proper relaxation \IFF $G$ has a clique of $k$ vertices.
+
+First, assume that $G$ does not have a clique of $k$ vertices, that is, $\cform \equiv \top$.
+It follows that $P$ has no proper relaxations, as there can be no $Q = \tup{\opset, \cform'}$ \ST $\cform' \not\models \cform$.
+
+Next, assume that $G$ has a clique of $k$ vertices.
+Construct the partial plan $Q = \tup{\opset, \MTCFUNC(\opset)}$.
+From Theorem~\ref{thrm:pp-snd-mtc}, $Q$ is sound. 
+Because there are no preconditions to any actions, the modal truth criterion for $\opset$ is empty, that is, $\MTCFUNC(\opset) \equiv \top$.
+Therefore, $Q$ is satisfiable.
+As it is sound and satisfiable, it is valid.
+As $\cform \models \MTCFUNC(\opset)$, $Q$ is a relaxation of $P$.
+$Q$ is proper relaxation of $P$ \IFF $\top \not\models \cform$, that is, if $\cform$ is not a tautology. 
+As it is assumed that $G$ has a clique of $k$ vertices, it follows that $\cform \not\equiv \top$ and so $Q$ is proper relaxation of $P$.
+
+From the cases above, it follows that $P$ has a proper relaxation \IFF $G$ has a clique of $k$ vertices. 
+And as all proper relaxations have treewidth $\leq k'$, it follows that $P$ has a proper $k'$-treewidth relaxation \IFF $G$ has a clique of $k$ vertices, as desired.
+
+Let $f(k) = k+4$ and $g(k) = 1$.
+Therefore, from the \KCLIQUE instance $(G, k)$, the $k'$-treewidth partial plan relaxation instance $(P, k')$, where $k' \leq f(k)$, can be constructed in time $g(k).|G|^2$, meaning that $k'$-treewidth partial plan relaxation is $\W{1}$-hard.
+\end{proof}
+
+\cut{
+\begin{lemma}\label{lemma:pp-mktr-eps} 
+For any partial plan $P$ and integer $k > 0$, deciding the existence of a proper $k$-treewidth relaxation of $P$ is in $\Sigma_2^P$.
+\end{lemma}
+
+\begin{proof} Guess a partial plan $Q = \tup{\opset, \cform'}$. 
+To determine if $Q$ is a proper $k$-treewidth relaxation of $P$, it must be verified that \myi $\cform \models \cform'$ (i.e., $Q$ is a relaxation), \myii $\cform' \not\models \cform$ (i.e., $Q$ is a proper relaxation), \myiii $\cform' \models \MTCFUNC(\opset)$ (i.e, $Q$ is sound), and \myiv $\treewidth(Q) \leq k$.
+
+Construct the partial plans $R = \tup{\opset, \cform \land \neg\cform'}$ and $S = \tup{\opset, \neg\cform \land \cform'}$ and $T = \tup{\opset, \cform' \land \neg\MTCFUNC(\opset)}$.
+Clearly, $\cform \models \cform'$ \IFF $R$ is not satisfiable, $\cform' \not\models \cform$ \IFF $S$ is satisfiable, and $\cform \models \MTCFUNC(\opset)$ \IFF $T$ is not satisfiable.
+Then, $Q$ is a $k$-treewidth relaxation of $P$ \IFF \myi $R$ is unsatisfiable, \myii $S$ is satisfiable, \myiii $T$ is unsatisfiable, and \myiv $\treewidth(Q) \leq k$.
+Since determining whether a graph's treewidth $< k$, and determining a partial plan's satisfiability are both \NP-complete, this can be determined by $4$ calls to an \NP oracle. 
+Thus, determining the existence of a proper $k$-treewidth relaxation is in $\Sigma_2^P$.
+\end{proof}
+}
+
+
+
+%%%%%%%%%% FPT/MKTR ALGORITHM PROOF %%%%%%%%%%
+\section{Proof of Theorem~\ref{thrm:MKTR-fpt}}
+
+Theorem~\ref{thrm:MKTR-fpt} shows that \MKTR produces a minimal $k$-treewidth relaxation of its input in fpt-time.
+The proof refers to the $\ppenc$ encoding in Definition~\ref{def:pc-encoding}, which transforms a \CLP into partial plan by encoding its causal structure into a constraint formula.
+The $\ppenc$ encoding is a strengthening of the \MTC.
+The \MTC requires that each consumer in a \CLP $P = \tup{\opset, \cstruct}$ be supported by a causal link which is either unthreatened, or re-established by a ``white knight'', while $\ppenc$ requires that the link also be selected from $\cstruct$.
+Thus, $\ppenc(\cstruct) \models \MTCFUNC(\opset)$.
+Further, if $Q = \tup{\opset, \cstruct'}$ is a \CLP \ST $\cstruct \subseteq \cstruct'$, then $\ppenc(\cstruct) \models \ppenc(\cstruct')$.
+
+The proof also makes use of the following lemma, that uses Definition~\ref{def:pc-encoding} to compare the treewidths of \CLP{}s:
+
+\begin{lemma}\label{lemma:subgraph-tw} If $P = \tup{\opset, \cstruct}$ and $Q = \tup{\opset, \cstruct'}$ are \CLP{}s \ST $\cstruct \subseteq \cstruct'$, then the treewidth of $P$ is no greater than that of $Q$.
+\end{lemma}
+
+\begin{proof} Let $\cform_P = \ppenc(P)$ and $\cform_Q = \ppenc(Q)$. 
+The constraint formulae created by the $\ppenc$ encoding in Definition~\ref{def:pc-encoding} have a clause for each consumer in the plan, and each clause contains a disjunct for each causal link that can support the consumer.
+As $\cstruct \subseteq \cstruct'$, it follows that each clause in $\cform_Q$ contains all the disjuncts in the corresponding clause in $\cform_P$.
+As a primal graph links vertices \IFF their corresponding terms appear in the same clause (Definition~\ref{def:primal-graph}), the primal graph of $P$ is a subgraph of that of $Q$.
+And so, as shown by \citet{Bodlaender98:Arboretum}, $P$'s treewidth is bounded by that of $Q$.
+\end{proof}
+
+\mktrfpt*
+
+\begin{proof} Consider the \MKTR algorithm in Figure~\ref{alg:MKTR}.
+Let $P = \tup{\opset, \cstruct}$ and integer $k > 0$ be the input to \MKTR, and $Q = \tup{\opset, \cstruct'}$ be the output.
+
+The proof first shows that $Q$ is a $k$-treewidth relaxation of $P$.
+It is clear that at every stage of the \MKTR loop, the treewidth of $Q$ never exceeds $k$.
+Since $\ppenc(\cstruct) \models \MTCFUNC(\opset)$, $Q$ is sound.
+Since \MKTR never removes links from $\cstruct$, it follows that $\cstruct \subseteq \cstruct'$, and from Definition~\ref{def:pc-encoding}, it follows that $\ppenc(\cstruct) \models \ppenc(\cstruct')$.
+As $P$ is valid, it follows that $\ppenc(\cstruct)$ is satisfiable, and as $\ppenc(\cstruct) \models \ppenc(\cstruct')$ it follows that $Q$ is also satisfiable.
+As $Q$ is sound and satisfiable, it is valid.
+And as $Q$ is valid and $\ppenc(\cstruct) \models \ppenc(\cstruct')$, it follows that $Q$ is a $k$-treewidth relaxation of $P$.
+
+Next, the minimality of $Q$ is shown.
+Let $A$ be the set of all causal links tested by \MKTR, and $A' = A \setminus \cstruct'$ be the causal links that were rejected as they resulted in a treewidth greater than $k$.
+$Q$ is minimal \IFF for all $S \subseteq A'$ the \CLP $\tup{\opset, \cstruct' \cup S}$ has a treewidth greater than $k$.
+As expanding a causal structure cannot decrease its treewidth (Lemma~\ref{lemma:subgraph-tw}), it suffices to show that for $l \in A'$, the \CLP $\tup{\opset, \cstruct' \cup \set{l}}$ has a treewidth greater than $k$.
+
+Let $l_1,\ldots,l_n$ be the order in which links are selected from $A$, and $\cstruct_1,\ldots,\cstruct_n$ be the states of $\cstruct$ before each iteration of the \MKTR loop.
+Let $l_i \in A'$, and $P_i = \tup{\opset, \cstruct_i}$.
+As $l_i \in A'$, that is, $l_i$ was not added, it follows that the treewidth of partial plan of $P_i' = \tup{\opset, \cstruct_i \cup \set{l_i}}$ is greater than $k$.
+Let $Q' = \tup{\opset, \cstruct' \cup \set{l_i}}$.
+As $\cstruct_i \cup \set{l_i} \subseteq \cstruct' \cup \set{l_i}$, it follows that the treewidth of $Q'$ is also greater than $k$ (Lemma~\ref{lemma:subgraph-tw}).
+There is therefore no relaxation of $Q$ a treewidth $\leq k$, and so $Q$ is minimal as desired.
+
+
+\end{proof}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Proof of Theorem~\ref{thrm:popi-sat}}
+
+\popisat*
+
+\begin{proof} To show membership in \NP, guess a classical plan $\vec{\actn} = \tup{\optr_1,\ldots,\optr_n}\sub$ and verify in polynomial time that \myi $\opset = \set{\optr_1,\ldots,\optr_n}$, \myii $\precrel^+ \subseteq \set{ \optr_i \prec \optr_j : 1 \leq i < j \leq n}$, \myiii if $x \in \domain(\sub)$ then $\sub(x) \in D_x$, and \myiv $\vec{\actn} \models \bndgs$.
+
+Proof of \NP-hardness is by reduction from \THRSAT, which asks whether a given 3-\CNF Boolean formula $\varphi$ constructed from propositional variables $\propvar_1,\ldots,\propvar_n$ is satisfiable.
+Assume that $\varphi$ is of the form $(l_1^1 \lor l_1^2 \lor l_1^3) \land \cdots \land (l_m^1 \lor l_m^2 \lor l_m^3)$, where each literal $l$ is either a propositional variable $\propvar$ or its negation, $\neg\propvar$.
+
+First, construct the constraint formula $\bndgs$ by replacing every instance of $\propvar_i$ in $\varphi$ with $x_i \neq 0$ and every instance of $\neg\propvar_i$ with $x_i \neq 1$.
+As $\bndgs$ is of the form $\bndgs_1 \land \cdots \land \bndgs_m$, where each $\bndgs_i$ is a disjunction of negated constraint atoms, $\bndgs$ is a syntactically valid \POPI constraint formula.
+
+Next, construct the \POPI $P = \tup{\opset, \bndgs, \precrel}$ where operator set $\opset = \set{\initoptr, \optr_1(x_1,\ldots,x_n), \goaloptr}$, none of which have any preconditions or postconditions, and $\precrel = \set{\initoptr \prec \optr_1, \optr_1 \prec \goaloptr}$.
+Finally, for each $x \in \vars(\bndgs)$, construct the domain constraint $D_x = \set{0,1}$.
+It follows that $\varphi$ is satisfiable \IFF there exists a classical plan $\vec{\actn} = \vec{\optr}\sub$ such that \myi $\vec{\actn}$ is an instantiation of $P$, and \myii for all $x \in \domain(\sub)$, $\sub(x) \in D_x$.
+\end{proof}

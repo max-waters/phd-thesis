@@ -1,0 +1,333 @@
+\section{Symmetry Breaking}\label{sec:symmetries}
+%
+In the context of planning problems, and indeed search and optimisation problems of many kinds, \emph{symmetry} refers to the presence of multiple states or branches in a search space that are ``equivalent'' in the sense that an algorithm can explore only one of them and remain sound and complete.
+Symmetries can thus be exploited to reduce the amount of search needed to solve a problem.
+This exploitation, known as \emph{symmetry breaking}, typically takes one of two approaches: \emph{static symmetry breaking} extends the problem description with additional constraints that rule out redundant areas of the search space, and \emph{dynamic symmetry breaking} modifies the search algorithm to avoid such areas.
+
+A \emph{syntactic symmetry} is an \emph{automorphism} (Section~\ref{sec:automorphisms}) of a problem description, that is, a permutation of symbols that maps the description back to itself. 
+Arguably the simplest form of symmetry in planning problems is \emph{object symmetry}, which occurs when the problem contains interchangeable (combinations of) domain objects~\cite{FoxLong1999:DetExp,Riddle2016:BaggedSymm,JoslinRoy97:ExploitingSymm}. 
+More complex symmetries result when variables and operator pre/postconditions can also be permuted~\cite{Pochter2011:SymmStatePlanners,Shleyfman2015:HeursSymms}, or occur in structures implied by the problem description, such the automorphisms of the transition graph~\cite{Rintanen2003:Symmetry}, and permutations of interchangeable ground actions~\cite{Coles2016:StateMemo}.
+
+As many \POP optimisation tasks, including that of maximising flexibility (Section~\ref{sec:pop-opt-related-work}), can be naturally represented as constraint optimisation problems, this section will also discuss symmetries in the context of \CSP{}s.
+And since a plan's \emph{causal structure} (Definition~\ref{def:pop-clinks}), which is central to many \POP optimisation approaches, can be expressed as a matrix of propositional variables, particular attention will be paid to lexicographic symmetry breaking techniques in graph~\cite{Miller2012:DiamondFree,Codish2013:SymmGraphReps} and matrix models~\cite{Flener2002:DoubleLex, Grayland2009:SnakeLex}.
+
+This section will first describe a commonly-used, general-purpose technique for detecting and breaking syntactic symmetries, before describing some specialised approaches to symmetry breaking in matrix models, graph models, and classical planning.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Detecting and Breaking Syntactic Symmetries}\label{sec:symm-det-break}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+A \emph{syntactic symmetry}, broadly speaking, is an automorphism of a problem instance that preserves the validity and optimality of its solutions.  
+For example, consider the \SAT instance $\phi = (\satprop_1 \lor \satprop_2) \land (\neg\satprop_1 \lor \neg\satprop_2)$ and the permutation $\perm = \cycle{\propvar_1, \propvar_2}$. 
+As swapping $\satprop_1$ and $\satprop_2$ in $\phi$ produces an identical formula, $\perm$ is an automorphism of $\phi$.
+Additionally, $\perm$ preserves validity.
+A solution to $\phi$ is a substitution $\sub: \set{\satprop_1,\satprop_2} \rightarrow \set{0, 1}$, and a valid solution sets exactly one variable to $1$. 
+As swapping $\propvar_1$ and $\propvar_2$ in any solution simply swaps their bindings, it follows that $\perm$ preserves validity. 
+It is therefore a symmetry of $\phi$.
+
+In this example, $\perm$ is a \emph{variable symmetry}, that is, it permutes variables but fixes constants.
+Common variations include \emph{value symmetries}, which permute constants but fix values, and \emph{variable/value symmetries}, which permute both.
+
+A problem's symmetries form a \emph{symmetry group} (Definition~\ref{sec:permutations}) that partitions the solution space into sets of equivalent, or \emph{symmetrical} solutions: two solutions are symmetrical, that is, they belong to the same \emph{symmetry class}, if one is the image of the other under one of the problem's symmetries.
+In the above example, the solutions $\sub_1 = \set{\propvar_1 \substo 0, \propvar_2 \substo 1}$ and $\sub_2 = \set{\propvar_1 \substo 1, \propvar_2 \substo 0}$ are symmetrical.
+
+\subimport*{graphics/}{col-graph-example.tex}
+%
+\paragraph{Detecting syntactic symmetries} \citet{Crawford1996:SymmetryPredicates} introduced a now standard (e.g.,~\cite{Puget2005:AutoDetSymm,Mears2009:ImplSymmDetection,JoslinRoy97:ExploitingSymm,Pochter2011:SymmStatePlanners}) technique that reduces symmetry detection to the problem of finding the automorphisms (Definition~\ref{def:automorphism}) of a coloured graph that captures the relevant aspects of the problem instance. 
+
+%The graph's automorphisms are then found with an off-the-shelf solver such as \NAUTY~\cite{McKay2104:PracGraphIso}, and translated back into symmetries of the problem.
+
+The colours and edges of the graph must be carefully constructed to ensure that its automorphisms correspond to the instance's symmetries.
+For example, a \SAT instance can be transformed into coloured graph with three differently-coloured sets of variables representing the clauses, positive literals and negative literals, respectively, and edges connecting literals to any clauses in which they appear. 
+Figure~\ref{fig:col-graph-example} depicts such a transformation of $\phi$. 
+The graph has a single automorphism, $\cycle{v_{\propvar_1}, v_{\propvar_2}} \cycle{v_{\neg\propvar_1}, v_{\neg\propvar_2}}$, which corresponds to the symmetry above $\perm = \cycle{\propvar_1, \propvar_2}$.
+
+\paragraph{Lex-leader constraints} \citet{Puget1993:SatSymm}~showed that symmetries can be statically \emph{broken} by selecting a single member of each symmetry class -- the \emph{canonical} solution -- and adding \emph{symmetry breaking constraints} to the problem description to rule out some or all non-canonical solutions.
+These constraints are \emph{correct} \IFF they admit at least one element from each symmetry class, and \emph{total} if they admit exactly one.
+A correct set of constraints that is not total is \emph{partial}.
+
+\citet{Crawford1996:SymmetryPredicates}~present the \emph{lex-leader} method, a general technique for generating symmetry breaking constraints for variable symmetries under which the \emph{lexicographic least} element of each symmetry class is considered canonical.
+Lexicographic ordering is a generalisation of alphabetic ordering that derives an ordering over lists of symbols from an ordering over their individual elements:
+%
+\begin{defn}\label{def:lex-order} If $\vec{x}$ and $\vec{y}$ are lists of symbols of length $n$, and $\prec$ is a total order over all elements appearing $\vec{x}$ and $\vec{y}$, then:
+  \begin{itemize}
+    \item $\vec{x} \lexeq \vec{y}$ \IFF for all $1 \leq i \leq n$, $\vec{x}[i] = \vec{y}[i]$, and
+    \item $\vec{x} \lexleq \vec{y}$ \IFF $\vec{x} \lexeq \vec{y}$, or there exists a $1 \leq k < n$ such that $\vec{x}[k] \prec \vec{y}[k]$, and $\tup{x_1,\ldots x_{k-1}} \lexeq \tup{y_1,\ldots y_{k-1}}$.
+\end{itemize}
+\end{defn}
+%
+Under the lex-leader approach, lexicographic comparison of solutions derives from a selected ordering of variables.
+If $\vec{x}$ is the selected variable order, then $\sub \lexleq \sub'$ \IFF $\sub(\vec{x}) \lexleq \sub'(\vec{x})$.
+For example, let $\tup{\propvar_1, \propvar_2}$ be an ordering of the variables in \SAT instance $\phi$ above. 
+The two (symmetrical) solutions $\sub_1 = \set{\propvar_1 \substo 0, \propvar_2 \substo 1}$ and $\sub_2 = \set{\propvar_1 \substo 1, \propvar_2 \substo 0}$ can be lexicographically ordered by comparing the lists $\sub_1(\tup{\propvar_1, \propvar_2})$ and $\sub_2(\tup{\propvar_1, \propvar_2})$. 
+As these resolve to $01$ and $10$, respectively, it follows that $\sub_1 \lexleq \sub_2$.
+
+A symmetry $\perm$ is broken by ruling out any solution that is lexicographically greater than its symmetric equivalent, that is, all solutions $\sub$ must satisfy the constraint $\sub \lexleq \perm(\sub)$. 
+In the case of variable symmetries, this can be equivalently expressed as $\sub(\vec{x}) \lexleq \sub(\perm(\vec{x}))$ (i.e., the bindings of $\vec{x}$ are on the left, and the bindings of the permuted variables are on the right).
+For example, the variable symmetry $\perm$ in the \SAT example above can be broken with the following constraint:
+%
+\begin{equation*}
+    \sub(\tup{\propvar_1,\propvar_2}) \lexleq \sub(\tup{\perm(\propvar_1),\perm(\propvar_2)}).
+\end{equation*}
+%
+For $\sub_1$, this resolves to $01 \lexleq 10$, which holds, but for $\sub_2$ it resolves to $10 \lexleq 01$, which does not.
+
+While \citeauthor{Crawford1996:SymmetryPredicates}'s original approach applied to variable symmetries, it has since been extended other symmetries such as value symmetries~\cite{Puget2005:ValSymmSurjection,Flener2002:DoubleLex,Walsh2006:GenSymmBreaking}, problems with variable \emph{and} value symmetries~\cite{Puget2006:EffValueSymm}, variable/value symmetries, and symmetries acting on sets~\cite{Walsh2006:GenSymmBreaking}.
+%\todo{Non-boolean variable symms (cite Petrie paper)?}
+%Value symmetries are broken by with the constraint $\sub(\vec{x}) \lexleq \perm(\sub(\vec{x}))$ (i.e., the right-hand side contains the permuted variable bindings), and variable/value symmetries are broken with the constraint $\sub(\vec{x}) \lexleq \perm(\sub(\perm(\vec{x})))$ (i.e., the right-hand side contains the permuted bindings of the permuted variables).
+
+As the lex-leader approach places a constraint per symmetry, and symmetry groups can be exponential in size, total symmetry breaking with lex-leaders is, in general, infeasible.
+While in some cases all symmetries can be broken with a polynomial number of constraints (e.g., \emph{all-different} problems~\cite{Puget2005:AllDiff} and some special cases of matrices~\cite{Flener2002:DoubleLex}), most lex-leader implementations instead break only a polynomial subset of symmetries (typically the generating set). %and/or reduce the size or number of constraints by removing redundancies (e.g., excluding fixed elements from constraints or exploiting transitivity).
+\citet{Shlyakhter2007:SymmBreaking} notes that the challenge with partial lex-leader methods is to find a set of constraints that is both \emph{effective} and \emph{compact}, that is, that removes as many non-canonical solutions as possible without being so large as to slow the search process.
+This is often achieved by exploiting the structure of the problem, and effective, specialised partial lex-leaders have been developed for structures such as relations, functions, directed acyclic graphs~\cite{Shlyakhter2007:SymmBreaking}, undirected graphs~\cite{Miller2012:DiamondFree,Codish2013:SymmGraphReps}, matrices~\cite{Flener2002:DoubleLex, Grayland2009:SnakeLex}, and \SAT formulae~\cite{Aloul2003:SolvingDifficultSATSymm}.
+The use of lex-leaders in matrices and graphs will now be examined in more detail.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Symmetry Breaking in Matrix Models}\label{sec:symm-break-matrix}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+A \emph{matrix model} is a \CSP (Definition~\ref{def:csp}) with one or more matrices (Section~\ref{sec:notation}) of variables.
+Such models occur frequently in \CSP{}s~\cite{Flener2002:MatrixModelling,Flene2002:MatrixExpCommon}.
+%Symmetry is an important aspect of matrix models.
+As rows and columns typically correspond to objects in the \CSP problem description, indistinguishable objects result in forms of variable symmetry known as \emph{row symmetry} and \emph{column symmetry}, in which entire rows or columns, respectively, of variables are pairwise interchangeable.
+More concretely, a symmetry between rows and $i$ and $j$ in a $n \times m$ matrix $\mat{M}$ takes the form $\perm = \cycle{\mat{M}[i][1], \mat{M}[j][1]}\cdots\cycle{\mat{M}[i][m], \mat{M}[j][m]}$. 
+Column symmetries are defined similarly.
+
+For example, the goal of the \cspdomain{Balanced Incomplete Block Design} problem~\cite{Meseguer2001:ExplSymm} (BIBD, \csplib problem $26$\footnote{\url{http://www.csplib.org/}}) is to divide $n$ objects into $m$ (possibly overlapping) sets of size $k$, called blocks, \ST all objects appear in $r$ blocks and all pairs of objects appear together in $s$ blocks.
+A BIBD instance can be modelled as an $n \times m$ Boolean ($0/1$) matrix $\mat{M}$ \ST $\mat{M}[i][j] = 1$ if object $i$ is in block $j$.
+As objects and blocks are interchangeable, a BIBD instance has \emph{total row and column symmetry} (i.e., all rows and all columns are interchangeable).
+
+In group theoretic terms, the symmetries of a matrix with total row and column symmetry can be generated (Definition~\ref{def:generator}) by the $n+m-2$ symmetries that swap adjacent rows and columns.
+Equivalently, this group is the composition of symmetric groups (Definition~\ref{def:symmetric-grp}) $S_R \times S_C$, where $R$ and $C$ contain the matrix rows and columns, respectively.
+As this group is of size $n!m!$, total symmetry breaking is infeasible.
+This section will outline two approaches to partially breaking symmetries in matrix models.
+%
+%For example, the \cspdomain{Warehouse Location} problem (\csplib problem $34$), in which an optimal supply chain between warehouses and shops must be found, can be naturally modelled as a Boolean ($0/1$) matrix $\mat{M}$ with rows and columns corresponding to warehouses and shops, respectively, and $\mat{M}[i][j] = 1$ indicating that warehouse $i$ supplies shop $j$. 
+%An instance with $m$ shops and $n$ warehouses of which $i$ and $j$ are interchangeable has the symmetry $\perm = \cycle{\mat{M}[i][1], \mat{M}[j][1]}\ldots\cycle{\mat{M}[i][m], \mat{M}[j][m]}$.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{\dblex}\label{sec:double-lex}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\citet{Flener2002:DoubleLex} present \dblex, a lex-leader technique for partially breaking row and column symmetries in matrix models.
+Under this approach, matrices are lexicographically ordered by placing their rows end-to-end, that is, if $\mat{M}$ and $\mat{N}$ are equal-sized $n$-row matrices, then $\mat{M} \lexleq \mat{N}$ \IFF $\mat{M}[1] \concat \cdots \concat \mat{M}[n] \lexleq \mat{N}[1] \concat \cdots \concat \mat{N}[n]$.\footnote{Where $\concat$ is the concatenation operator.}
+
+Under \dblex, a matrix $\mat{M}$ is canonical \IFF it is the lexicographic least in its symmetry class under this ordering, and non-canonical matrices are ruled out with lex-leader constraints between certain pairs of interchangeable rows and columns. 
+If an $n \times m$ matrix $\mat{M}$ has total row and column symmetry, then \dblex orders the rows and columns in non-decreasing lexicographic order with the $m + n - 2$ ordering constraints $\mat{M}[1] \lexleq \mat{M}[2], \ldots, \mat{M}[n-1] \lexleq \mat{M}[n]$, and $\mat{M}[][1] \lexleq \mat{M}[][2], \ldots \mat{M}[][m-1] \lexleq \mat{M}[][m]$.
+This can be naturally generalised to matrices with subsets of interchangeable rows and columns. 
+%For example, if rows $\mat{M}[i]$ and $\mat{M}[j]$ are interchangeable, $i < j$ and there is no $i < k < j$ such that $\mat{M}[i]$ and $\mat{M}[k]$ are interchangeable, then the constraint $\mat{M}[i] \lexleq \mat{M}[j]$ is added.
+
+\subimport*{graphics/}{double-lex-failure-example.tex}
+%
+\dblex is a \emph{partial} symmetry breaking constraint.
+While ordering rows and columns breaks all row symmetries and column symmetries~\cite{Flener2001:SymmMatrixModels}, it is not guaranteed to break those that are a composition of a row and column symmetry.
+For example, consider an unconstrained $3 \times 3$ matrix model $\mat{M}$ with complete row and column symmetry.
+As solution $\mat{M}_2$ in Figure~\ref{fig:double-lex-example} is the result of swapping the first and second rows, and the second and third columns in $\mat{M}_1$, they are symmetrical.
+However, both satisfy \dblex, meaning that at least one non-canonical solution has not been removed.
+
+\citet{Katsirelos:ComplComplSymmBr} demonstrate that in the worst case, \dblex leaves an exponential number of solutions in each symmetry class.
+Nevertheless, experimental results~\cite{Katsirelos:ComplComplSymmBr, Grayland2009:SnakeLex, Flener2002:DoubleLex} show that \dblex, in practice, breaks most row and column symmetry.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{\snakelex}\label{sec:snake-lex}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\citet{Grayland2009:SnakeLex}'s \snakelex is an alternative to \dblex that uses a different ordering of variables to determine canonicity.
+It comprises a pair of constraints, \emph{Row-Wise \snakelex} and \emph{Column-Wise \snakelex}, that partially break total row and column symmetries, respectively. 
+
+Under Column-Wise \snakelex, canonicity is defined \WRT to a \emph{column-wise snake ordering}, an ordering of variables that ``snakes'' up and down columns.
+For an $n$-column matrix $\mat{M}$, this ordering is the vector $\vec{m}_1 \concat \cdots \concat \vec{m}_n$, where for $1 \leq i \leq n$, $\vec{m}_i = \mat{M}[][i]$ if $i$ is odd, or is the reverse of $\mat{M}[][i]$ otherwise.
+%As is standard, a matrix is canonical \IFF it is the lexicographic least in its symmetry class under this ordering.
+Column symmetries are broken by requiring that the first column be lexicographically less than or equal to the second and third columns, that the reverse of the second column be lexicographically less than or equal to the reverse of the third and fourth columns, and so on.
+
+Row-Wise \snakelex is defined similarly: canonicity is determined by a \emph{row-wise snake ordering}, which ``snakes'' back and forth along columns, and row symmetries are broken with similarly rotated lexicographic constraints.
+
+The different definitions of canonicity that underpin Row-wise and Column-wise \snakelex (i.e., row-wise and column-wise snake ordering, respectively) render the two constraints incompatible.
+Additionally, like \dblex, \snakelex is a partial symmetry breaking constraint that can leave an exponential number of solutions in each symmetry class~\cite{Katsirelos:ComplComplSymmBr}.
+Nevertheless, empirical evaluation~\cite{Katsirelos:ComplComplSymmBr, Grayland2009:SnakeLex} over test instances with both row and column symmetry show that \snakelex can, with a judicious choice of Row-wise or Snake-wise, improve on \dblex by decreasing search time and pruning more non-canonical solutions.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Symmetry Breaking in Graph Models}\label{sec:symm-break-graph}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\subimport*{graphics/}{dag-example.tex}
+%
+A \emph{graph model} is a \CSP in which the variables form the adjacency matrix of a graph.
+For example, the problem of finding a minimum deorder or reorder of an $n$-step plan $\vec{\actn}$ (Definition~\ref{def:opt-de-reorder}) can be modelled as an $n^2$ graph model $\mat{M}$ \ST $\mat{M}[i][j] = 1$ \IFF $\vec{\actn}[i] \prec \vec{\actn}[j]$ in the optimised \POP, with optimality found by minimising $\sum \mat{M}$ and validity preserved by placing constraints over $\mat{M}$ derived from the \POCL requirements (Definition~\ref{def:pocl-valid}).
+
+Unlike matrix models, in which domain objects are associated with a row or column but not both, domain objects in graph models correspond to graph vertices, and are therefore associated with both a row \emph{and} column of the adjacency matrix.
+This introduces subtleties not present in matrix models: interchangeable objects create symmetries that permute rows and columns simultaneously, and rows cannot be reordered without reordering the equivalent columns (nor \emph{vice versa}).
+
+This means that symmetries in graph models cannot, in general, be broken by simply ordering rows and/or columns, as doing so could rule out entire symmetry classes.
+For example, consider the directed (cyclic) graphs $\mat{M}_3$ and $\mat{M}_4$ in Figure~\ref{fig:dag-symm-example}.
+Neither have ordered rows or columns, and yet they comprise an entire of symmetry class: swapping any pair of vertices in $\mat{M}_3$ results in $\mat{M}_4$ and \emph{vice versa}, and all other symmetries fix them both.
+
+The special case of simple graphs (i.e., undirected with no self-loops) is an exception to this.
+As the rows in such graphs are identical to the columns, and the diagonal is zero, each symmetry class will contain at least one element with ordered rows and columns~\cite{Codish2013:SymmGraphReps}. 
+Thus, breaking symmetries by ordering rows or columns is applicable in this case.
+%   
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Simple Graphs}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\citet{Miller2012:DiamondFree} introduce a lex-leader constraint for simple graphs in the context of finding \emph{diamond-free degree sequences} (i.e. graphs $\mat{M}$ with no diamond subgraphs where for $1 \leq i < \card{\mat{M}}$, $\sum \mat{M}[i] \geq \sum \mat{M}[i+1]$). 
+Their approach is essentially the row-wise component of \dblex: canonicity is defined \WRT to the same row-wise variable ordering, and non-canonical graphs are removed with lex-leaders between adjacent rows, (i.e., for an $n^2$ graph $\mat{M}$, $1 \leq i < n$, $\mat{M}[i] \lexleq \mat{M}[i+1]$).
+
+\citet{Codish2013:SymmGraphReps} observe that swapping row and column $i$ with row and column $j$ in a simple graph $\mat{M}$ fixes the elements at $\mat{M}[i][i]$, $\mat{M}[i][j]$, $\mat{M}[j][i]$ and $\mat{M}[j][j]$, and so optimise \citeauthor{Miller2012:DiamondFree}'s approach by excluding these fixed points from the lexicographic constraints.
+%, and that constraints between rows can be made both smaller and more effective by not including these fixed points.
+While these minimised lex-leaders are more effective (i.e., more non-canonical graphs are removed), they are no longer transitive (i.e., a lex-leader holding between rows $i$ and $j$, and rows $j$ and $k$ does not imply that it holds between rows $i$ and $k$). 
+Thus, transitivity must be explicitly enforced with additional constraints. 
+Symmetries are broken by requiring that for all $1 \leq i < j \leq n$, $\mat{M}[i] \vecfilter \set{i, j} \lexleq \mat{M}[j] \vecfilter \set{i, j}$ (where $\vec{t} \vecfilter S$ denotes the result of removing all elements from $\vec{t}$ at indexes in $S$).
+The effectiveness of this approach is confirmed by an experimental evaluation that closes several highly symmetric open problems in extremal graph theory. 
+    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Directed Acyclic Graphs}\label{sec:dag-symm}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\citet{Shlyakhter2007:SymmBreaking} analyses a symmetry breaking technique for directed acyclic graphs (\DAG{}s) that simply disallows edges from ``higher'' to ``lower'' vertices: if $\mat{M}$ is an $n^2$ adjacency matrix, then for $1 \leq i < j \leq n$, $\mat{M}[j][i] = 0$ must hold. % (i.e., non-zero elements must be above the diagonal).
+Unlike other techniques presented here, it is not based on lexicographic ordering; indeed it is unclear how canonicity is defined in this context (if at all). 
+Nevertheless, the observation that all symmetry classes contain at least one \DAG that is topologically sorted \WRT any given vertex ordering demonstrates its correctness.
+As there can be more than one such \DAG per class it is a partial symmetry breaking constraint, nevertheless experimental analysis shows that it is very effective in practice.
+
+Interestingly, this symmetry breaking constraint also enforces acyclicity.
+Since acyclicity constraints typically require a cubic number of constraints, this demonstrates an alternative role for symmetry breaking: to reduce the size of the original problem constraints.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Symmetry Breaking in Classical Planning}\label{sec:symm-break-planning}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+Exploiting symmetries to increase the efficiency of domain-independent automated planners is a popular area of research.
+As in other fields, symmetry breaking is typically employed to shrink the search space by (either statically or dynamically) removing as many non-canonical solutions as possible.
+Beyond search space reduction, symmetry breaking in classical planning has been applied to a wide range of areas such as reachability analysis~\cite{Roger2018:Reachability}, grounding~\cite{Sievers2019:StructSymmLifted}, task decomposition~\cite{Abdulaziz2015:SymmDescQuot} and pruning redundant operators~\cite{Wehrle2015:PoRedSymmElim}, however these will not be considered here.
+
+This section will outline some techniques for search space reduction by breaking some (related) types of symmetry, namely \emph{object symmetries}, the more general \emph{structural symmetries}, \emph{state transition symmetries} and \emph{order~symmetries}.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Object Symmetries}\label{sec:object-symms}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+Interchangeable objects in a problem instance result in so-called \emph{functional}, or \emph{object symmetries}.
+This section will examine two commonly occurring types object symmetry, here termed \emph{simple} and \emph{complex}.
+
+Simple object symmetries occur when pairs of individual objects are interchangeable, and can be detected by identifying objects with indistinguishable configurations in the initial state and goal.
+For example, in the \ipcdomain{barman} instance in Section~\ref{sec:intro-example}, hands $\lhand$ and $\rhand$ are functionally equivalent: both are initially empty, and neither appear in the goal or an operator definition.
+Swapping $\lhand$ with $\rhand$ thus results in an identical planning instance, and similarly modifying a plan will not alter its validity. %: $\cycle{\lhand, \rhand}$ is a \emph{simple object symmetry} over this instance.
+
+Complex object symmetries occur when \emph{combinations} of objects are interchangeable, but individual objects are not.
+Consider a small \ipcdomain{blocksworld} instance where initially block $A$ is on $B$ and $C$ is on $D$, and the goal is to unstack all blocks.
+There are no simple object symmetries, however, $A$ and $B$ \emph{as a pair} are interchangeable with $C$ and $D$.
+While the exploitation of complex object symmetries can result in more effective symmetry breaking than simple object symmetries, their detection is a more complex task that typically requires specialised graph automorphism software such as \NAUTY~\cite{McKay2104:PracGraphIso}.
+
+% graph plan
+\citet{FoxLong1999:DetExp} detect simple object symmetries with a straightforward analysis of the initial state and goal, and use the resulting sets of indistinguishable objects to define symmetries over actions. 
+For example, in the \ipcdomain{barman} domain, the actions $\grasp(\lhand, \shot_1)$ and $\grasp(\rhand, \shot_2)$ are interchangeable \IFF $\lhand$ and $\rhand$, and $\shot_1$ and $\shot_2$, are interchangeable.
+Symmetries are broken by preventing the \graphplan-style planner from selecting symmetric alternative actions when backtracking.  
+A limitation of this approach is that selecting an action referring to an object breaks the object symmetry. 
+However, follow-up work~\cite{FoxLong2002:ExtExpl} resolves this by identifying new symmetries that emerge during the search process.
+
+% combine objects to counters
+\citet{Riddle2016:BaggedSymm} eliminate simple object symmetries by reformulating the \PDDL into a ``bagged'' representation, where sets of interchangeable objects are replaced with counter variables, and actions are updated to modify the counters rather than specific object instances. 
+For example, interchangeable parcels in a logistics domain are replaced by counters for each location, and the action of loading a parcel into a truck is modified to decrement the depot counter and increment the truck counter.
+This replacement requires a stronger form of interchangeability than simple object symmetry: for replacements to be valid, actions must never need to discriminate between object instances. 
+It is thus only applied when various criteria are met, for example, the objects cannot appear in negated literals, and predicates referring to the object type must be \emph{single-valued} (e.g., a parcel cannot be in more than one truck).
+%\citet{Fuentetaja2016:CompObjCtrs} 
+
+\citet{JoslinRoy97:ExploitingSymm} use \citet{Crawford1996:SymmetryPredicates}'s approach to detect and break complex object symmetries in a \CSP representation of a logistics planning problem.
+The initial state and goal are transformed into a coloured graph with a vertex for each object and literal, coloured by type and predicate symbol, respectively, and edges connecting objects to any literals in which they appear.
+The automorphisms of this graph are computed with \NAUTY, translated back into symmetries of the planning instance, and encoded as lex-leaders.
+For example, if locations $L_1$ and $L_2$ are symmetrical, then a constraint such as $\at(L_2, 1) \rightarrow \at(L_1, 1)$ breaks the symmetry by preventing the solver from trying both $L_1$ and $L_2$ at step $1$.
+While this technique only breaks symmetries in the first step of the plan, experiments show that it still results in quicker solve times with little overhead.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Structural Symmetries}\label{sec:struct-symm-planning}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+Introduced by \citet{Pochter2011:SymmStatePlanners} and later formalised by \citet{Shleyfman2015:HeursSymms}, \emph{structural symmetry} is a generalisation of object symmetry that also considers interchangeable variables, operator pre/postconditions and in some cases costs (e.g., \cite{Domshlak2012:SymmCostOpt}).
+Structural symmetries are detected by finding the automorphisms of the \emph{problem description graph} (\PDG): a coloured graph that encodes the structure of the planning instance's variables, values and operators.
+The power of structural symmetries lies in the fact that each of the \PDG's automorphisms induces a symmetry of the instance's state transition graph, that is, symmetries of an exponentially large search space can be (partially) derived from a compact representation.
+
+\citet{Pochter2011:SymmStatePlanners} use structural symmetries to guide the progression of a state-space planner.
+Symmetries are dynamically broken by preventing the planner from visiting any two states with the same canonical form.
+However, as generating a canonical form is \NP-hard~\cite{Luks1993:PermCompl}, an approximate form is generated by applying various permutations and keeping the lowest state found. 
+This speeds up the algorithm at the expense of less reduction in the search space.
+
+This exploitation of structural symmetry results in an impressive reduction in execution time and/or node expansion, with little overhead from symmetry detection.
+\citet{Domshlak2012:SymmCostOpt} extend the approach by detecting further symmetries in the state transition graph as the search progresses, and \citet{Gnad2017:SymmStar} successfully combine it with \emph{star-topology decoupled search}~\cite{Gnad2015:ForkStar} (a form of factored planning with a star-shaped sub-problem dependency graph).
+
+% heuristics
+%Many state-of-the-art planners rely on heuristics to guide search to a goal state.
+\citet{Shleyfman2015:HeursSymms} study the interaction of symmetry breaking and heuristic search, and demonstrate that many heuristics, such as \emph{optimal delete relaxation} and some of its approximations, \emph{critical path}, and various \emph{landmark}-based heuristics, are invariant under structural symmetry (i.e., they compute the same estimate for symmetric states). 
+However, those that rely on arbitrary tie-breaking policies, such as \emph{fast-forward} and \emph{landmark-cut}, are not.
+Interestingly, \citet{Domshlak2013:SymmLandmark} show \emph{landmark-cut}'s variance can improve its informativeness: as symmetric states have symmetric landmarks, their heuristic values can be aggregated as search progresses.
+%
+%\todo{\citet{Sievers2015:FactoredSymms}?}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{State Transition Symmetries}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+A \emph{state transition symmetry} is an automorphism of the state transition graph implied by a planning instance.
+%\citet{Rintanen2003:Symmetry} applies \citet{EmersonSistla1996:SymmetryModelChecking}'s work in symmetry in model checking to the problem of breaking state transition symmetries in \SAT planning.
+More concretely, a \emph{transition system} is a set of \emph{transition relations} (i.e., partial functions over states), and a state transition symmetry is an automorphism that permutes both states and transitions but does map goal states to non-goal states, or \emph{vice versa}.
+
+\citet{Rintanen2003:Symmetry} addresses the problem of breaking state transition symmetries in the context of planning as satisfiability~\cite{Kautz1992:SatPlanning}.
+Typical approaches to breaking state transition symmetries cannot be directly applied to \SAT planning: state-space search algorithms that generate a single successor state from each symmetry class (e.g., \citet{EmersonSistla1996:SymmetryModelChecking} and \citet{Pochter2011:SymmStatePlanners}) are too complex to be practically expressed in propositional logic, and approaches that place lexicographic constraints on states (e.g., \citet{JoslinRoy97:ExploitingSymm}), do not generalise to sequences as successors of canonical states are not necessarily canonical.
+
+Thus, lexicographic constraints are placed on sequences of transitions, rather than individual states at given time points.
+Two transition relations $t_1$ and $t_2$ are interchangeable in state $s$ \IFF there is a state transition symmetry $\perm$ \ST $\perm(t_1) = t_2$ and $\perm(s) = s$.
+A transition sequence $t_1,\ldots,t_n$ producing states $s_0,\ldots,s_n$ is canonical \IFF each $t_i$ is the lexicographic least of all transitions with which it is interchangeable in $s_{i-1}$, and symmetries are broken with constraints limiting the applicability of non-canonical transitions.
+%Symmetrical sequences of states can be elimintated by adding lex-leader constraints for each state and transition to the \SAT representation of the planning instance.
+%As a planning instance is a compact representation of a possibly exponential number of state transitions, detecting all transition symmetries is infeasible. 
+%Instead, symmetries in the problem definition are used to infer symmetries in the state transtions.
+However, as detecting all transition symmetries is infeasible, the symmetries that are broken at each step are only simple object symmetries.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Order Symmetries}\label{sec:order-symms}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\emph{Order symmetries} occur when the search space contains plans that differ only by a permutation of equivalent actions.
+This occurs frequently in the problem of plan de/reordering: if a plan contains multiple identical steps, then each of its reorders will have an exponential number symmetric variations that differ only by a swapping of these actions.
+\citet{Say2016:MathematicalPOP} (Section~\ref{sec:milp-reorder}) break these symmetries with the \DAG symmetry breaking constraint studied by \citet{Shlyakhter2007:SymmBreaking} (Section~\ref{sec:dag-symm}), and require that for all pairs of identical actions $\actn_1, \actn_2$ \ST $\actn_1$ precedes $\actn_2$ in the original plan, $\actn_2 \not\prec \actn_1$ in the optimised \POP.
+
+% partial-order planners
+As discussed in Section~\ref{sec:po-planners}, partial-order planners such as \citet{Coles2010:ForwardChaining}'s \POPF explore a search space with nodes representing (possibly partially specified) \POP{}s and edges representing plan refinement operations.
+\citet{Coles2016:StateMemo} present an extension to \POPF that prevents it from exploring nodes with symmetrical ordering constraints.
+At each step, the node is encoded into a coloured graph with a node for each action, coloured by type, and an edge for each ordering constraint.
+The node is not expanded if the graph's canonical form has been previously seen.
+
+% strong stubborn sets
+More complex order symmetries occur when a plan comprises independent sub-sequences.
+As any interleaving of non-interfering sequences of actions will lead to the same state, a search space can contain an exponential number of symmetrical plans that differ only by a permutation of this interleaving. 
+\citet{Valmari89:StubbornSets} eliminated these equivalent interleavings (in the context of software verification) by limiting search to specific subsets of the transition system termed \emph{(strong and weak) stubborn sets}.
+Strong stubborn sets and similar partial-order reduction techniques have since been used extensively in heuristic planning~\cite{Haslum2000:Admissible,Alkhazraji12:StubbornSets,Wehrle14:EffStubbornSets,Wehrle13:RelativePowerSSS,Chen2009:CompOptPor,Xu2011:TheoryAlgsPOR,Gnad16:DSSS,Gnad19:StarTopologySSS,Chen09:StratifiedPanning}, planning with resources~\cite{Wilhelm18:ResourcesSSS}, non-deterministic planning~\cite{Winterer17:StubbornSetsNonDet} and goal recognition~\cite{Keren18:GoalRecognitionSSS}.
+While rarely referred to as such, the fact that these approaches exploit permutations of orderings means that they are certainly symmetry breaking techniques.
+
+In the context of planning, a strong stubborn set contains, intuitively, actions needed to achieve (some part of) the goal from a given state, and any other actions that might conflict with an element of the set.
+Actions outside the set need not be executed right away and can be ignored in that state.
+While several formal definitions of strong stubborn sets exist, a typical example based on necessary enabling sets and action interference is presented below.
+
+\enlargethispage*{2\baselineskip}
+
+A \emph{necessary enabling set} for action $\actn$ in state $\state$ is a set of actions such that all plans $\tup{\actn_1,\ldots,\goalactn}$ that are executable in $\state$ and contain $\actn$ also contain an element of the set before the first occurrence of $\actn$.
+When $\actn = \goalactn$, the set is known as a \emph{disjunctive action landmark}.
+Two actions \emph{interfere} if their postconditions conflict, or one threatens to the other's preconditions.
+An SSS for state $\state$ is a set of actions $T_s$ \ST \myi $T_s$ is a necessary enabling set for $\goaloptr$ in $\state$, \myii if $\actn \in T_s$ is not executable in $\state$, then $T_s$ is a necessary enabling set for $\actn$ in $\state$, and \myiii if $\actn \in T_s$, $\actn$ and $\actn'$ interfere, and there is a plan $\tup{\actn,\ldots,\actn',\ldots,\goalactn}$ that is executable in $\state$, then $\actn' \in T_s$.
+
+Order symmetries are broken dynamically.
+At each step in the search, actions outside $T_\state$ are not considered, however, as every optimal solution to the planning instance will have a permutation that is not pruned, the completeness of the search is ensured.
+
+This literature review introduced a number of fundamental background concepts, and then presented an overview of relevant research into partial-order planning, \POP optimisation, and symmetry breaking.
+
+The plan optimisation problems addressed in this thesis can be expressed as hybrid matrix/graph models. 
+However, they frequently exhibit a form of symmetry that is more general than row/column symmetry (Section~\ref{sec:symm-break-matrix}), and thus beyond the scope of standard approaches such as \dblex~\cite{Flener2002:DoubleLex} and \snakelex~\cite{Grayland2009:SnakeLex} (Sections~\ref{sec:double-lex} and~\ref{sec:snake-lex}).
+Thus, Chapter~\ref{chap:symmetry-breaking} introduces a taxonomy of symmetry groups (Section~\ref{sec:grp-perm-auts}) to define these more general symmetries, and introduces an extension of \dblex that can (partially) break them.
+Additionally, unlike standard approaches to breaking symmetries in graph models (Section~\ref{sec:symm-break-graph}), \multilex can also lexicographically break symmetries in directed or undirected (single-edged) graphs, including those with self-loops.  
+ 
+Both Chapter~\ref{chap:pop-maxsat} and Chapter~\ref{chap:partial-plans} present generalised forms of \citet{Backstrom-CompAspects}'s \POP optimality definitions (Section~\ref{sec:opt-defs-de-reorder}).
+Chapter~\ref{chap:pop-maxsat} extends them to account for \POP{}s with different variable bindings, and extends the \MAXSAT-based technique (Section~\ref{sec:maxsat}) of \citet{Muise2016-PopMaxSAT} (Section~\ref{sec:muise-maxsat}) to find bindings that minimise ordering constraints.
+Chapter~\ref{chap:partial-plans} introduces a generalised form of plan that need not completely specify either the orderings or variable bindings, and extends \citet{Backstrom-CompAspects}'s definitions to compare the optimality of plans of this type.
+A parameterised complexity analysis (Section~\ref{sec:param-compl}) resolves the central challenge of these plans, namely balancing flexibility and tractability, by limiting the search to plans of bounded treewidth (Section~\ref{sec:treewidth}).
+
+In both cases, the search for flexible plans is optimised by extending \citet{Pochter2011:SymmStatePlanners}'s notion of structural symmetry (Section~\ref{sec:struct-symm-planning}) to \POP{}s, and then simultaneously breaking object symmetries (Section~\ref{sec:object-symms}) and order symmetries (Section~\ref{sec:order-symms}) by limiting the search to \POP{}s with canonical causal structures (Section~\ref{sec:class-po-plans}).
+Chapter~\ref{chap:pop-maxsat} breaks symmetries statically with \citet{Crawford1996:SymmetryPredicates}'s standard technique (Section~\ref{sec:symm-det-break}), while Chapter~\ref{chap:partial-plans} breaks them dynamically with an approach similar that of \citet{Pochter2011:SymmStatePlanners} and \citet{Coles2016:StateMemo} (Section~\ref{sec:order-symms}.
+Both methods use the novel symmetry breaking predicate defined in Chapter~\ref{chap:symmetry-breaking}. 

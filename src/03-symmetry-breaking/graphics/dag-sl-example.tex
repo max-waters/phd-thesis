@@ -1,0 +1,43 @@
+\newcommand{\dagslgraph}[1]{
+\begin{tikzpicture}[
+    sensor/.style={draw,circle,text=black,font=\small,inner sep=0pt,text width=4mm,align=center},
+    target/.style={draw,circle,text=black,font=\scriptsize,inner sep=0pt,text width=3mm,align=center,fill=gray!50},
+]
+    
+    \node[sensor] (s1) []	{$\gvert_1$};
+    \node[sensor] (s2) [right = 1.5cm of s1.center, anchor=center]	{$\gvert_2$};  
+    \node[sensor] (s3) [below right = 0.75cm and 0.75cm of s1.center, anchor=center]	{$\gvert_3$};
+
+    #1
+    
+\end{tikzpicture}%
+}
+
+\newcommand{\dagslmatrix}[3]{
+\begin{tabular}[b]{ *{3}{p{0.1cm}} }
+#1 \\
+#2 \\
+#3 \\
+\end{tabular}
+}
+
+\begin{figure}[t]
+    \begin{subfigure}[t]{0.5\textwidth}
+        \centering
+        \dagslgraph{\draw[->] (s2) edge [loop above] (s2);\draw[->] (s1) -- (s3);}%
+        \qquad
+        \dagslmatrix{\rowcolor{lightgray} 0 & 0 & 1}{\cellcolor{lightgray}0 & 1 & 0}{\cellcolor{lightgray}0 & 0 & 0}
+        \caption{Graph $\mat{G}_1$.}
+        \label{fig:dagsl-example-1}
+    \end{subfigure}%
+    \begin{subfigure}[t]{0.5\textwidth}
+        \centering
+        \dagslgraph{\draw[->] (s1) edge [loop above] (s1); \draw[->] (s2) -- (s3);}%
+        \qquad
+        \dagslmatrix{\rowcolor{lightgray} 1 & 0 & 0}{\cellcolor{lightgray}0 & 0 & 1}{\cellcolor{lightgray}0 & 0 & 0}
+        \caption{Graph $\mat{G}_2$.}
+        \label{fig:dagsl-example-2}
+    \end{subfigure}% 
+\caption[\DAG with self-loops example]{Symmetrical solutions to \DAG model, with self-loops, in which $\gvert_1$ and $\gvert_2$ must have an out-degree of at least one.}
+\label{fig:dagsl-example}
+\end{figure}

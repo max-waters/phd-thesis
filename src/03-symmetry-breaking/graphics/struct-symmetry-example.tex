@@ -1,0 +1,88 @@
+\newcommand{\structsymmexample}[1]{
+\begin{tikzpicture}[
+    op/.style={draw,minimum height=0.4cm,font=\scriptsize,inner sep=2pt,text=black},
+        cond/.style={text=black,font=\bfseries,font=\scriptsize},
+        dummy/.style={}
+	]
+        
+        \node[op] (op1) []	{$\initoptr$};
+        \node[cond] (post11) [above right = 0.39cm and -0.1cm of op1.east, anchor = west] {$p(1)$};
+        \node[cond] (post12) [above right = 0.13cm and -0.1cm of op1.east, anchor = west] {$q(1)$};
+        \node[cond] (post13) [below right = 0.13cm and -0.1cm of op1.east, anchor = west] {$p(2)$};
+        \node[cond] (post14) [below right = 0.39cm and -0.1cm of op1.east, anchor = west] {$q(2)$};
+        
+        
+        \node[op] (op2) [right = 2.4cm of op1, anchor = center]	{$A$}; 
+        \node[cond] (pre21) [above left = 0.13cm and -0.1cm of op2.west, anchor = east] {$p(x_1)$};
+        \node[cond] (pre22) [below left = 0.13cm and -0.1cm of op2.west, anchor = east] {$q(x_2)$};
+        \node[cond] (post21) [above right = 0.13cm and -0.1cm of op2.east, anchor = west] {$r(x_1)$};
+        \node[cond] (post22) [below right = 0.13cm and -0.1cm of op2.east, anchor = west] {$r(x_2)$};
+        
+        \node[op] (opg) [right = 4.9cm of op1, anchor = center]	{$\goaloptr$}; 
+        \node[cond] (preg1) [above left = 0.13cm and -0.1cm of opg.west, anchor = east] {$r(1)$};
+        \node[cond] (preg2) [below left = 0.13cm and -0.1cm of opg.west, anchor = east] {$r(2)$};     
+
+        #1
+
+\end{tikzpicture}%
+}
+
+
+\begin{figure}[t]
+    \begin{subfigure}[t]{0.5\textwidth}
+    \centering
+    \structsymmexample{
+        \draw[->] (post11.east) to[out=0, in=180] (pre21.west);
+        \draw[->] (post14.east) to[out=0, in=180] (pre22.west);    
+        \draw[->] (post21.east) to[out=0, in=180] (preg1.west);
+        \draw[->] (post22.east) to[out=0, in=180] (preg2.west);
+    }  
+
+    \vspace{0.5cm}
+    
+    \small
+    \begin{tabular}{r c c c c}
+            & $p(x_1)$ & $q(x_2)$ & $r(1)$ & $r(2)$ \\
+           % \hline
+            $p(1)$      & 1 & 0 & 0 & 0 \\
+            $q(1)$      & 0 & 0 & 0 & 0 \\
+            $p(2)$      & 0 & 0 & 0 & 0 \\
+            $q(2)$      & 0 & 1 & 0 & 0 \\
+            $r(x_1)$    & 0 & 0 & 1 & 0 \\
+            $r(x_2)$    & 0 & 0 & 0 & 1 \\
+    \end{tabular}
+    \caption{Plan $P_1$.}
+    \label{fig:struct-symm-example-1}
+    \end{subfigure}\quad%
+%
+%    \vspace{0.7cm}
+%    
+    \begin{subfigure}[t]{0.5\textwidth}
+    \centering
+    \structsymmexample{
+        \draw[->] (post13.east) to[out=0, in=180] (pre21.west);
+        \draw[->] (post12.east) to[out=0, in=180] (pre22.west);    
+        \draw[->] (post22.east) to[out=0, in=180] (preg1.west);
+        \draw[->] (post21.east) to[out=0, in=180] (preg2.west);
+    }
+
+    \vspace{0.5cm}
+    
+    \small
+    \begin{tabular}{r c c c c}
+        & $p(x_1)$ & $q(x_2)$ & $r(1)$ & $r(2)$ \\
+       % \hline
+        $p(1)$      & 0 & 0 & 0 & 0 \\
+        $q(1)$      & 0 & 1 & 0 & 0 \\
+        $p(2)$      & 1 & 0 & 0 & 0 \\
+        $q(2)$      & 0 & 0 & 0 & 0 \\
+        $r(x_1)$    & 0 & 0 & 0 & 1 \\
+        $r(x_2)$    & 0 & 0 & 1 & 0 \\
+    \end{tabular}
+    \caption{Plan $P_2$.}
+    \label{fig:struct-symm-example-2}
+    \end{subfigure} 
+    \caption[Casual structure symmetry example]{The causal structures of two symmetrical plans from a synthetic domain.
+    Plan $P_2$ is obtained from $P_1$ by swapping rows $p(1)$ and $q(1)$ and column $r(1)$ with rows $p(2)$ and $q(2)$ and column $r(2)$, respectively.}
+    \label{fig:struct-symm-example}
+\end{figure}

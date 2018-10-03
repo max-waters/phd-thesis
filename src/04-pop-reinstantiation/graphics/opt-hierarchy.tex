@@ -1,0 +1,59 @@
+\begin{figure}
+\centering
+\begin{tikzpicture}[
+    op/.style={draw,minimum height=0.4cm,font=\scriptsize,inner sep=2pt,text=black},
+    label/.style={minimum height=0.4cm,font=\scriptsize,inner sep=2pt,text=black},
+    ]
+    
+    \node[op] (eog) []	{\EOG};
+    %\node[op] (mld) [right = 0.5cm of eog.east, anchor = west] {MLD};
+    \node[op] (md) [right = 0.5cm of eog.east, anchor = west]	{\MD}; 
+
+    \node[op] (mr) [above right = 0.8cm and 1.8cm of md.east, anchor =center]	    {\MR};     
+    \node[op] (mrd) [below right = 0.8cm and 1.8cm of md.east, anchor = center]    {\MRD}; 
+    
+    \node[op] (mrr) [right = 3.6cm of md.east, anchor = west]	{\MRR}; 
+
+    %\draw[->] (eog.east) to[out=0, in=180] (mld.west);
+    %\draw[->] (mld.east) to[out=0, in=180] (md.west);
+    \draw[->] (eog.east) to[out=0, in=180] (md.west);
+    \draw[->] (md.east) to[out=0, in=180] (mr.west);
+    \draw[->] (md.east) to[out=0, in=180] (mrd.west);
+    \draw[->] (mr.east) to[out=0, in=180] (mrr.west);
+    \draw[->] (mrd.east) to[out=0, in=180] (mrr.west);
+
+    %% P/NP
+    \node (d1) at ($(eog)!0.5!(md)$) {};
+    \node (d2) [above = 0.6cm of d1] {};
+    \node (d3) [below = 0.6cm of d1] {};
+    \draw[dotted] (d2.north) -- (d3.south);
+    \node[label] (p) [left = 0.05cm of d2.center, anchor=east] {\POLY};
+    \node[label] (nph) [right = 0.05cm of d2.center, anchor=west] {\NP-hard};
+
+    %% ground/reinstantion
+    \node (d4) at (md.center |- mrd.north) {};
+    \node (d5) at (mrr.west |- mr.east) {};
+    \node (d6) [left = 1.6cm of d4] {};
+    \node (d7) [right = 1.2cm of d5] {};
+    \draw[dashed] (d6) to[out=0, in=180] (d4.center) to[out=0, in=180] (d5.center) to[out=0, in=180] (d7);
+
+    \node[label] (g) [above left = 0.05cm and 0.1cm of d7.north, anchor=east] {Ground};
+    \node[label] (ng) [below left = 0.05cm and 0.1cm of d7.south, anchor=east] {Reinstantiated};
+
+    %% de/re-order
+    \node (d8) at (md.center |- mr.south) {};
+    \node (d9) at (mrr.west |- mrd.east) {};
+    \node (d10) [left = 1.6cm of d8] {};
+    \node (d11) [right = 1.2cm of d9] {};
+    \draw[densely dotted] (d10) to[out=0, in=180] (d8.center) to[out=0, in=180] (d9.center) to[out=0, in=180] (d11);
+
+    \node[label] (de) [below left = 0.05cm and 0.1cm of d11.south, anchor=east] {Deorder};
+    \node[label] (re) [above left = 0.05cm and 0.1cm of d11.north, anchor=east] {Reorder};
+
+\end{tikzpicture}%
+\caption[Hierarchy of partial-order plan optimisations]{Partial-order plan optimisation hierarchy.
+Arrows lead from less to more general optimisations.
+%Optimisations to the left and right of the dotted line are in \POLY or are \NP-hard to find, resp., those above and below the dashed line fix variable bindings or reinstantiate them, resp., and those above and below the densely dotted line are deorderings or reorderings, resp.
+}
+\label{fig:opt-hierarchy} 
+\end{figure}

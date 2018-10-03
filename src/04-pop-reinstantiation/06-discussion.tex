@@ -1,0 +1,46 @@
+\section{Discussion}\label{sec:pop-maxsat-discussion}
+%
+The main contributions of this chapter were as follows:
+%
+\begin{itemize}
+    \item This chapter introduced, and formally defined, the notions of \emph{reinstantiated reordering} and \emph{reinstantiated deordering}, transformations of a plan under which both ordering constraints and variable bindings can be changed.
+    These ideas generalise the well-studied \emph{deordering} and \emph{reordering}, with the aim of finding optimised \POP{}s with fewer ordering constraints than would be possible had the bindings remained unchanged. 
+    It was shown that finding an optimally reinstantiated \POP is \NP-hard and cannot be approximated within a constant factor.
+    %
+    \item A technique was presented for encoding the problem of finding a minimum reinstantiated de/reorder of a \POP into an instance of the partial weighted \MAXSAT problem. 
+    This encoding is an extension and optimisation of \citet{Muise2016-PopMaxSAT}'s approach.
+    %
+    \item A number of symmetry breaking techniques were introduced to counter the exponential increase in search space that results from allowing variable bindings to change. 
+    The notion of a \emph{causal structure symmetry} was introduced, a symmetry resulting from equivalent combinations of (potential) causal links between operator preconditions and postconditions. 
+    To detect these symmetries, a \POP{}'s \emph{plan description graph} was defined, an undirected coloured graph that encodes relevant aspects of the \POP{}'s structure, with automorphisms that correspond to the \POP{}'s symmetries.
+    %
+    \item An empirical evaluation over all previous \IPC \STRIPS domains assessed the \MAXSAT-based reinstantiation approaches' ability to minimise a \POP{}'s ordering constraints, as compared to the polynomial, non-optimal but effective \EOG technique.
+    Results show that in $55.6\%$ of cases, reinstantiation provides a $21.1\%$ \flex increase over \EOG.
+    Interestingly, in nearly half of cases \EOG found a minimum reinstantiated reorder, indicating that the original choice of variables already allowed for optimal reordering.
+    A comparison by planner showed that \dbfws benefits most from reinstantiation, with \MRRO providing a $31.6\%$ \flex increase, and that the optimised \madagascar plans are the most flexible, with an average \flex of $0.47$.
+    While symmetry breaking does not result in a further increase in \flex, it does speed up search and allow the optimality of solutions to be exhaustively proved.
+\end{itemize}
+%
+This chapter presented a practical technique for plan optimisation through the modification of both ordering and variable binding constraints.
+Results show that in $55.6\%$ of cases, reinstantiation provides a \flex increase of $21.1\%$ over the \EOG baseline in $20.51\mins$, with results varying by domain.
+
+The addition of symmetry breaking allows more plans to be optimally relaxed, but interestingly does not result in a further increase in \flex. 
+This suggests that the encodings without symmetry breaking do find optimal solutions, but time out before this can be proved by the \MAXSAT solver.
+Comparing the two symmetry breaking techniques shows that their success is dependent on domain, but it remains unclear what aspects of a domain allow a technique to succeed or not.
+Determining this is complicated by the fact that solvers rely on variable ordering and branching heuristics that can clash with symmetry breaking constraints~\cite{Heller2008:ModelRestarts,Smith2005:SetsOfSbs}, and the choice of encoding of lex-leader constraints can significantly affect run time~\cite{Elgabou2015:Thesis}.
+
+There are clear similarities between the causal structure symmetries introduced in this chapter and the commonly studied idea of \emph{strong stubborn sets} (Section~\ref{sec:order-symms}), a pruning technique in state-space planning that avoids exploring any two plans that are identical up to an interleaving of causally unrelated sequences of actions.
+Both approaches examine possible causal connections between actions with the aim of reducing symmetry, and recognise that plans with equivalent causal structures produce redundancy in the search space.
+However, beyond the obvious differences (stubborn sets are used by state-space planners to dynamically break symmetries, whereas causal structures are used to statically break symmetries when optimising \POP{}s), the two approaches also break different types of symmetry.
+Stubborn sets are used to (broadly) prune classical plans with identical causal structures and actions, but symmetrical orderings, whereas the approach here is to prune \POP{}s with symmetrical causal structures, but (possibly) different actions (i.e., bindings) and orderings.
+
+As reflected by the low coverage of reinstantiation-based encodings, the increase in \flex produced by allowing variable bindings to change comes with considerable computational cost.
+Additionally, in a significant number of cases, the additional computation simply reveals that the original bindings were already optimal.
+
+Whether \MRRO and \MRRC is preferable to less costly methods such as \EOG depends on the application. 
+If offline preprocessing time is available and execution-time flexibility is paramount, or the application domain is one where reinstantiation can quickly and consistently improve plan flexibility (e.g., \ipcdomain{mystery}), then reinstantiation is clearly worthwhile.
+
+This work generalises the \POP optimality definitions of \citet{Backstrom-CompAspects} and optimisation techniques of \citet{Muise2016-PopMaxSAT} to allow changes in variable bindings. 
+As discussed in Section~\ref{sec:pop-opt-related-work}, other \POP optimisation techniques have been studied, for example those that de/reorder via block decomposition~\cite{SiddiquiHaslum2012-Block}, speed up search with \MILP models~\cite{Say2016:MathematicalPOP}, or optimise plan size or makespan~\cite{Muise2016-PopMaxSAT,Bercher2019:ElimActions,Bercher2020:POPvsPOCL,Say2016:MathematicalPOP}.
+However, unlike the work presented here, these techniques do not allow variable bindings to change. 
+Thus, further work could investigate whether generalising these techniques by allowing reinstantiation results in more flexible block decompositions or further reductions in plan size or makespan, and whether a \MILP encoding of \MRD, \MRR or their symmetry breaking extensions improves their execution time.

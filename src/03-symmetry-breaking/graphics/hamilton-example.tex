@@ -1,0 +1,98 @@
+\newcommand{\spangraph}[1]{
+\begin{tikzpicture}[
+    sensor/.style={draw,circle,text=black,font=\small,inner sep=0pt,text width=4mm,align=center},
+    target/.style={draw,circle,text=black,font=\scriptsize,inner sep=0pt,text width=3mm,align=center,fill=gray!50},
+]
+    
+    \node[sensor] (s1) []	{$\gvert_1$};
+    \node[sensor] (s2) [right = 1cm of s1.center, anchor=center]	{$\gvert_2$};  
+    \node[sensor] (s3) [below = 1cm of s1.center, anchor=center]	{$\gvert_3$};
+    \node[sensor] (s4) [right = 1cm of s3.center, anchor=center]	{$\gvert_4$};
+    \node[sensor] (s5) [below right = 0.5cm and 1cm of s2.center, anchor=center]	{$\gvert_5$};
+
+    \draw (s1) -- (s3);
+    \draw (s2) -- (s5) -- (s4);
+    #1
+    
+\end{tikzpicture}%
+}
+
+\newcommand{\spanmatrix}[5]{
+\begin{tabular}{ *{5}{p{0.1cm}} }
+#1 \\
+#2 \\
+#3 \\
+#4 \\
+#5 \\
+\end{tabular}
+}
+
+\newcommand{\tikzmark}[1]{\tikz[overlay,remember picture] \node (#1) {};}
+
+\newcommand{\DrawBox}[3][]{%
+    \tikz[overlay,remember picture]{
+    \draw[black,#1]
+      ($(#2)+(-0.75em,1.75ex)$) rectangle
+      ($(#3)+(0.75em,-0.5ex)$);}
+}
+
+\begin{figure}[t]
+    \begin{subfigure}[t]{0.33\textwidth}
+        \centering
+        \spangraph{\draw (s2) -- (s4) -- (s3) -- (s2) -- (s1) -- (s4);}
+        \caption{Graph $\mat{G}$.}
+        \label{fig:span-example-graph}
+    \end{subfigure}%
+    \begin{subfigure}[t]{0.33\textwidth}
+        \centering
+        \spangraph{\draw (s3) -- (s4);}
+        \caption{Hamiltonian path $\mat{P}_1$.}
+        \label{fig:span-example-tree1}
+    \end{subfigure}% 
+    \begin{subfigure}[t]{0.33\textwidth}
+        \centering
+        \spangraph{\draw (s1) -- (s2);}
+        \caption{Hamiltonian path $\mat{P}_2$.}
+        \label{fig:span-example-tree2}
+    \end{subfigure}%
+
+    \vspace{0.5cm}
+
+    \begin{subfigure}[t]{0.33\textwidth}
+        \centering
+        \spanmatrix{  \rowcolor{lightgray} 0 & 0 & 1 & 0 & 0}%
+                    { \rowcolor{lightgray} 0 & 0 & 0 & 0 & 1}%
+                    { \rowcolor{gray!20}1 & 0 & 0 & 1 & 0}%
+                    { \rowcolor{gray!20}0 & 0 & 1 & 0 & 1}%
+                    { 0 & 1 & 0 & 1 & 0}%
+
+        \caption{Adjacency matrix of path $\mat{P}_1$.}
+        \label{fig:span-example-adj1}
+    \end{subfigure}% 
+    \begin{subfigure}[t]{0.33\textwidth}
+        \centering
+        \spanmatrix{  \rowcolor{gray!20} 1\tikzmark{top left 1} & 0 & 0\tikzmark{top left 2} & 1 & 0}%
+                    { \rowcolor{gray!20} 0 & 0 & 1 & 0 & 1}%
+                    { \rowcolor{lightgray} 0 & 0 & 1 & 0 & 0}%
+                    { \rowcolor{lightgray} 0 & \tikzmark{bottom right 1}0 & 0 & \tikzmark{bottom right 2}0 & 1}%            
+                    { 0 & 1 & 0 & 1 & 0}%
+        \DrawBox[]{top left 1}{bottom right 1}
+        \DrawBox[dashed]{top left 2}{bottom right 2}
+        \caption{Intermediate matrix $\mat{P}'$.}
+        \label{fig:span-example-adj-int}
+    \end{subfigure}% 
+    \begin{subfigure}[t]{0.33\textwidth}
+        \centering
+        \spanmatrix{ 0\tikzmark{top left 3} & 1 & 1\tikzmark{top left 4} & 0 & 0}%
+                    {1 & 0 &  0 &  0 & 1}%
+                    { 1 & 0 & 0 & 0 & 0}%
+                    { 0 & \tikzmark{bottom right 3}0 & 0 & \tikzmark{bottom right 4}0 & 1}%
+                    {0 & 1 & 0 & 1 & 0}%
+        \DrawBox[dashed]{top left 3}{bottom right 3}
+        \DrawBox[]{top left 4}{bottom right 4}
+        \caption{Adjacency matrix of path $\mat{P}_2$.}
+        \label{fig:span-example-adj2}
+    \end{subfigure}%
+\caption[\cspdomain{Hamiltonian Path} example]{Two solutions to a \cspdomain{Hamiltonian Path} problem.}
+\label{fig:span-example}
+\end{figure}

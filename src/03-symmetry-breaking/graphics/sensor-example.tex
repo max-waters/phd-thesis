@@ -1,0 +1,92 @@
+\newcommand{\sensorgraph}[1]{
+\begin{tikzpicture}[
+    sensor/.style={draw,circle,text=black,font=\small,inner sep=0pt,text width=4mm,align=center},
+    target/.style={draw,circle,text=black,font=\scriptsize,inner sep=0pt,text width=3mm,align=center,fill=gray!50},
+]
+    
+    \node[sensor] (s1) []	{$s_1$};
+    \node[sensor] (s2) [right = 2.7cm of s1.center, anchor=center]	{$s_2$};
+    
+    \node[sensor] (s3) [below right = 0.9cm and 0.9cm of s1.center, anchor=center]	{$s_4$};
+    \node[sensor] (s4) [below right = 0.9cm and 0.9cm of s3.center, anchor=center]	{$s_3$};
+
+    \node[sensor] (s5) [below = 2.7cm of s1.center, anchor=center]	{$s_5$};
+    \node[sensor] (s6) [right = 2.7cm of s5.center, anchor=center]	{$s_6$};
+
+    \node[target] (t1) [above right = 0.75cm and 0.6cm of s5.center, anchor=center]	{$t_1$};
+    \node[target] (t2) [below left = 0.8cm and 0.9cm of s2.center, anchor=center]	{$t_2$};
+
+    #1
+    
+\end{tikzpicture}%
+}
+
+\newcommand{\sensormatrix}[3]{
+\begin{tabular}{ c *{7}{p{0.1cm}} }
+      & $s_1$ & $s_2$ & $s_3$ & $s_4$ & $s_5$ & $s_6$ \\
+$t_1$ & #1 \\
+$t_2$ & #2 \\
+\end{tabular}
+}
+
+\begin{figure}[t]
+\begin{subfigure}[t]{0.5\textwidth}
+    \centering
+    \sensorgraph{
+        \draw[dashed] (s1) -- (s3) -- (s4) -- (s6) -- (s5) -- 
+            (s3) -- (s2) -- (s4) -- (s5) -- (s1) -- (s2) -- (s6);
+    }
+    \caption{Sensor communication graph $\mat{C}$.}
+    \label{fig:sensor-example-comms}
+\end{subfigure}%
+%     
+\begin{subfigure}[t]{0.5\textwidth}
+    \centering
+    \sensorgraph{
+        \draw[dotted] (s5) -- (t1) -- (s1) -- (t2) -- (s3) -- (t1) -- (s4) -- (t2) -- (s6) -- (t1);
+        \draw[dotted] (s2) -- (t2);         
+    }
+    \caption{Sensor range graph $\mat{R}$.}
+    \label{fig:sensor-example-range}
+\end{subfigure}
+
+\vspace{1cm}
+
+\begin{subfigure}[t]{0.5\textwidth}
+    \centering
+    \sensorgraph{
+        \draw[] (s4) -- (t1) -- (s5);
+        \draw[] (s6) -- (t1); 
+        \draw[] (s1) -- (t2) -- (s2);
+        \draw[] (s3) -- (t2);    
+    }
+
+    \vspace{0.5cm}
+
+    \sensormatrix{0 & 0 & 1 & 0 & 1 & 1 }%
+                 {1 & 1 & 0 & 1 & 0 & 0 }%
+
+    \caption{Solution tracking graph $\mat{T}_1$.}
+    \label{fig:sensor-example-sol1}
+\end{subfigure}%
+%
+\begin{subfigure}[t]{0.5\textwidth}
+    \centering
+    \sensorgraph{
+        \draw[] (s1) -- (t1) -- (s3);
+        \draw[] (s5) -- (t1);
+        \draw[] (s2) -- (t2) -- (s4);
+        \draw[] (s6) -- (t2);
+    }
+
+    \vspace{0.5cm}
+    
+    \sensormatrix{1 & 0 & 0 & 1 & 1 & 0 }%
+                 {0 & 1 & 1 & 0 & 0 & 1 }%
+
+    \caption{Solution tracking graph $\mat{T}_2$.}
+    \label{fig:sensor-example-sol2}
+\end{subfigure}%
+\caption[\cspdomain{Sensor Tracking} example]{\cspdomain{Sensor Tracking} example.}
+\label{fig:sensor-example}
+\end{figure}

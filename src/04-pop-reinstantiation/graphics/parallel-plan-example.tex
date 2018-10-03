@@ -1,0 +1,63 @@
+\newcommand{\pplanex}[1]{
+    \begin{tikzpicture}[
+        op/.style={draw,minimum height=0.4cm,font=\scriptsize,inner sep=2pt,text=black},
+        cond/.style={text=black,font=\bfseries,font=\scriptsize},
+        dummy/.style={}
+        ]
+                   
+        \node[op] (op1) []	{$A$};
+        \node[cond] (pre1) [left = -0.1cm of op1.west, anchor = east] {$p$};
+        \node[cond] (post1) [right = -0.1cm of op1.east, anchor = west] {$q$};
+    
+        \node[op] (op2) [below = 0.4cm of op1, anchor = center]	{$B$}; 
+        \node[cond] (pre2) [left = -0.1cm of op2.west, anchor = east] {$p$};
+        \node[cond] (post2) [right = -0.1cm of op2.east, anchor = west] {$r$};
+        
+        \node[op] (op3) [right = 1.5cm of op1, anchor = center]	{$C$};
+        \node[cond] (pre3) [left = -0.1cm of op3.west, anchor = east] {$q$};
+        \node[cond] (post3) [right = -0.1cm of op3.east, anchor = west] {$g_1$};
+    
+        \node[op] (op4) [below = 0.4cm of op3, anchor = center]	{$D$}; 
+        \node[cond] (pre4) [left = -0.1cm of op4.west, anchor = east] {$r$};
+        \node[cond] (post4) [right = -0.1cm of op4.east, anchor = west] {$g_2$};
+       
+        \node[dummy] (d1) [above left = 0.15cm and 0.2cm of op1] {};
+	    \node[dummy] (d2) [above right = 0.15cm and 0.3cm of op1] {};
+        \node[dummy] (d3) [below right = 0.15cm and 0.3cm of op2] {};
+        \node[dummy] (d4) [below left = 0.15cm and 0.2cm of op2] {};
+        
+        \node[dummy] (d5) [above left = 0.15cm and 0.2cm of op3] {};
+        \node[dummy] (d6) [above right = 0.15cm and 0.3cm of op3] {};
+        \node[dummy] (d7) [below right = 0.15cm and 0.3cm of op4] {};
+        \node[dummy] (d8) [below left = 0.15cm and 0.2cm of op4] {};
+
+        #1
+
+    \end{tikzpicture}
+}
+
+\begin{figure}
+    \begin{subfigure}[t]{0.45\textwidth}
+    \centering
+    \pplanex{
+        \draw[dashed] (d1.center) -- (d2.center) -- (d3.center) -- (d4.center) -- (d1.center);
+        \draw[dashed] (d5.center) -- (d6.center) -- (d7.center) -- (d8.center) -- (d5.center);
+    }
+    \caption{Parallel Plan $P_7$ with a makespan of two, and four (implicit) ordering constraints.}
+    \label{fig:pp-example-1}        
+    \end{subfigure}%
+    \qquad%
+    %
+    \begin{subfigure}[t]{0.45\textwidth}
+    \centering
+    \pplanex{
+        \draw[->] (post1.east) to[out=0, in=180] (pre3.west);
+        \draw[->] (post2.east) to[out=0, in=180] (pre4.west);
+    }
+    \caption{\POP $P_8$, a minimal deorder of $P_7$ with two ordering constraints.}
+    \label{fig:pp-example-2}        
+    \end{subfigure}
+
+    \caption{Parallel plan deordering example.}
+    \label{fig:parallel-plan-example} 
+\end{figure}

@@ -1,0 +1,48 @@
+# temp
+tmp
+tmp*
+
+# latex
+*.aux
+*.glo
+*.idx
+*.log
+*.toc
+*.ist
+*.acn
+*.acr
+*.alg
+*.bbl
+*.blg
+*.dvi
+*.glg
+*.gls
+*.ilg
+*.ind
+*.lof
+*.lot
+*.maf
+*.mtc
+*.mtc1
+*.out
+*.synctex.gz
+*.vrb
+*.nav
+*.snm
+*.tdo
+*.spl
+*.thm
+*.pdfsync
+*.dpth
+*.cb
+*.cb2
+*.soc
+*.fls
+*.fdb_latexmk
+
+# vs code prefs
+.vscode/
+.project
+
+# os files
+*.DS_Store

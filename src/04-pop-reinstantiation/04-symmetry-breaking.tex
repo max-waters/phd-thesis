@@ -1,0 +1,249 @@
+\section{Symmetry Breaking}\label{sec:reins-sb}
+%
+A search or optimisation problem displays \emph{symmetry} when subsets of its solutions are identical up to an irrelevant permutation of variables and/or constants.
+As a sound and complete search algorithm need only explore one element per set, exploiting symmetries can exponentially reduce the search times (Section~\ref{sec:symmetries}).
+Here, symmetries are defined \emph{syntactically}, that is, as automorphisms (Section~\ref{sec:automorphisms}) of a problem description that, when applied to a solution, preserves its validity and optimality, and are broken \emph{statically}, that is, by extending the problem description with constraints that rule out redundant areas of the search space.
+
+Reinstantiated de/reordering differs from standard de/reordering by allowing variable bindings to change.
+This raises the possibility of finding more flexible relaxations of a \POP, but also creates an exponentially larger search space.
+Thus, any technique for reducing search times is welcome.
+
+This section introduces extensions to \MR and \MRR that exploit three types of symmetry in \POP{}s: \MRRO breaks \emph{operator symmetries}, which occur when a \POP contains multiple operators of the same type, \MRO breaks \emph{action symmetries}, which occur when those operators also have the same parameters, and \MRRC breaks \emph{causal structure symmetries}, which are produced by equivalent combinations of (potential) causal links.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Breaking Operator and Action Symmetries}\label{sec:break-op-symms}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+The \MRRO encoding derives from the observation that swapping the ordering and binding constraints of operators of the same type will not affect the \POP{}'s validity or optimality.
+For example, consider two simple symmetrical plans from a path-finding domain, constructed from two instances of the $\move$ operator: $\tup{\move_1(1, 2), \move_2(2, 3)}$ and $\tup{\move_2(1, 2), \move_1(2, 3)}$.\footnote{Subscripts are used to better distinguish between different instances of actions or operators of the same type.}
+The plans are identical up to swapping the orderings and bindings of $\move_1$ and $\move_2$.
+
+Despite permuting both orderings and bindings, operator symmetries can, in many cases, be broken with ordering constraints alone.
+For example, the symmetry above can be broken by simply requiring that $\move_2 \not\prec \move_1$.
+The \MRRO encoding generalises this approach by selecting a linearisation of operators $\tup{\optr_1,\ldots,\optr_n}$ and requiring that for all $1 \leq i < j \leq n$ \ST $\name(\optr_i) = \name(\optr_j)$, $\optr_j \not\prec \optr_i$.
+
+This constraint is \emph{correct} (i.e., at least one element is left per symmetry class) as every \POP in which $\optr_j \prec \optr_i$ has a symmetric alternative in which the two operators' orderings and bindings have been swapped. 
+However, it is not \emph{complete} as it cannot rule out symmetrical bindings of unordered operators.
+For example, plans $P_4$ and $P_5$ in Figure~\ref{fig:synth-example} are identical up to a permutation of $A(x_1)$ and $A(x_2)$, but requiring that $A(x_1) \not\prec A(x_2)$ will rule out neither.
+
+As discussed in Section~\ref{sec:mrd-mrr-enc}, rather than breaking symmetries by adding negated unit clauses (e.g., $\neg \precp{\move_2}{\move_1}$) it is more efficient to remove those propositions from the encoding entirely, and update the ``allowable  orderings'' $\deoprec$.
+Thus, under \MRRO, $\deoprec$ does not contain any orderings between operators of the same type that contradict an arbitrarily chosen linearisation.
+Unlike standard approaches which break symmetries with additional constraints, this approach results in a \emph{smaller} encoding:
+%
+\begin{defn}\label{def:mrro}
+If $P = \tup{\opset, \sub, \precrel}$ is a \POP and $\prec'$ is an arbitrary linearisation of $P$, then \MRRO encodes $P$ into a partially-weighted \MAXSAT instance through Formulae~\ref{eq:mrr-asymm}--\ref{eq:mrr-soft-order}, with the allowable orderings $\deoprec = \opset^2 \setminus \set{(\optr_2, \optr_1) : \name(\optr_1) = \name(\optr_2), \optr_1 \prec' \optr_2})$.
+\end{defn}
+%
+\citet{Say2016:MathematicalPOP}'s work on plan de/reordering (Section~\ref{sec:milp-reorder}) addresses a similar form of symmetry that occurs when a plan contains multiple identical \emph{actions}.
+Operator and action symmetries are subtly different: the former occur when plan steps have the same type, the latter when they also have the same bindings.
+Nevertheless, the \MRO encoding breaks action symmetries in a similar way. 
+If $\prec'$ is an arbitrary linearisation of the \POP, then Formula~\ref{eq:mra-symm-break} defines hard clauses that break action symmetries:
+%
+\begin{align}
+& \bigwedge_{\clapstack{\actn_1(\vec{t}), \actn_2(\vec{u}): \\ \name(\actn_1) = \name(\actn_2), \\ \vec{t} = \vec{u}, \actn_1(\vec{t}) \prec' \actn_2(\vec{u})}} \neg \precp{\actn_2}{\actn_1}. \label{eq:mra-symm-break}
+\end{align}%
+%
+The \MRO encoding extends \MR by breaking action symmetries:
+%
+\begin{defn}\label{def:mra} \MRO encodes a \POP into a partial weighted \MAXSAT instance through Formulae~\ref{eq:mr-irr}--\ref{eq:mr-soft-order} and~\ref{eq:mra-symm-break}.
+\end{defn}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Breaking Causal Structure Symmetries}\label{sec:causal-struct-symms}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+A \POP{}'s \emph{causal structure} is an implicit set of \emph{unthreatened causal links} (Definition~\ref{def:pop-clinks}) that associate operator postconditions (i.e., producers) with causally dependent preconditions (i.e., consumers). 
+A causal structure can be represented as a matrix (Section~\ref{sec:notation}) of Boolean variables, $\mat{C}$, that associates producers and consumers with rows and columns, respectively, with $\mat{C}[i][j] = 1$ indicating that there is an unthreatened causal link between producer $i$ and consumer $j$.
+%Under \POCL validity, every consumer must be causally linked with (i.e., preceded by, a bound to the same value as) a producer, and this link must be unthreatened (i.e., )
+%A causal link exists between a precondition $q(\vec{t})$ of operator $\optr_c$ and postcondition $q(\vec{u})$ of operator $\optr_p$ \IFF $\optr_p$ is ordered before $\optr_c$ and $\vec{t}$ and $\vec{u}$ are bound to the same objects; the link is unthreatened \IFF any operator with $\neg q(\vec{s})$ as a postcondition is either not ordered between $\optr_p$ and $\optr_c$, or not bound to the same domain objects.
+
+A \emph{causal structure symmetry} occurs when a plan's operators contain combinations of pre/postconditions that are \emph{functionally equivalent} in that their causal links can be swapped without affecting the plan's validity or optimality.
+Such symmetries can be expressed as permutations of rows and/or columns of variables in $\mat{C}$, and efficiently broken with lexicographic constraints over the same.
+
+As discussed above, \MRRO breaks operator symmetries, which occur when a \POP contains multiple operators of the same type.
+However, a common form of symmetry not removed by \MRRO is object symmetry, which occurs when a \POP's variables' domains contain (combinations of) interchangeable values.
+The \MRRC encoding is motivated by the observation that \emph{breaking causal structure symmetries simultaneously breaks both operator and object symmetries}.
+
+For example, Figure~\ref{fig:synth-example} depicts two symmetrical plans from a synthetic domain, with causal structures represented by both arrows and matrices.
+The two instances of $A$ create an operator symmetry, meaning that swapping the bindings and orderings of $A(x_1)$ and $A(x_2)$ will produce an equally valid and optimal plan.
+This can be also described as a causal structure symmetry: modifying the plans so that any producer supporting $p(x_1)$ instead supports $p(x_1)$, and any consumer supported by $q(x_1)$ is instead supported by $q(x_2)$, and \emph{vice versa}, will not affect their validity or optimality.
+Plan $P_5$ is the result of applying the above symmetry to $P_4$.
+
+The plans also display an object symmetry that is expressible as a causal structure symmetry: as objects $1$ and $2$ are interchangeable, modifying the plans so that all consumers supported by $p(1)$ are instead supported by $p(2)$, and \emph{vice versa}, preserves validity and optimality.
+
+A key element of the causal structure symmetries described above is that they \emph{swap multiple producers and consumers simultaneously}, and are thus \emph{multi-row-column symmetries} (Definition~\ref{def:multi-row-col-symm}) over $\mat{C}$. 
+As such symmetries \emph{cannot} in general be broken with standard approaches such as \dblex~\cite{Flener2002:DoubleLex} or \snakelex~\cite{Grayland2009:SnakeLex} (Section~\ref{sec:symm-break-matrix}), the \multilex constraint introduced in Chapter~\ref{chap:symmetry-breaking} (Definition~\ref{def:multilex}) must be used instead.
+
+For the object symmetry, this resolves to a simple requirement that the rows in $\mat{C}$ associated with $p(1)$ and $p(2)$ are lexicographically ordered, which holds for $P_5$ but not $P_4$.
+As the operator symmetry permutes producers and consumers simultaneously, the resulting constraint is more complex, resolving to a lexicographic comparison of the shaded areas in Figure~\ref{fig:synth-example}.
+As the shaded area in $P_5$ lexicographically precedes that in $P_4$, the constraint once again holds for $P_5$ but not $P_4$.
+
+Causal structure symmetries can be detected using the standard technique introduced by \citet{Crawford1996:SymmetryPredicates} (Section~\ref{sec:symm-det-break}), in which a problem's symmetries are found by computing the automorphisms of a structurally equivalent coloured graph.
+This section defines symmetry \WRT \POP{}s, introduces the \emph{plan description graph}, and then defines \MRRC, an extension to \MRR that breaks causal structure symmetries with \multilex.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Symmetrical Partial-Order Plans}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+A symmetry is an automorphism of a problem description that preserves the problem's solutions.
+%When finding minimal reinstantiated reorderings, the input to the problem is a \POP, and the (candidate) solutions are \POP{}s with modified bindings and ordering constraints.
+As the definition of a minimum reinstantiated reordering (Definition~\ref{def:opt-reins-re-deorder}) makes no reference to the variable bindings or ordering constraints of the input \POP, in this case the problem description is simply the input \POP{}'s operators, $\opset$.
+A symmetry of a \POP is therefore a permutation of its variables and constants that leaves $\opset$ unchanged and preserves the validity and optimality of any reinstantiated reorderings:\footnote{The notation $\perm(\eta)$ is used to denote the result of simultaneously replacing every variable or constant $t$ in $\eta$ with $\perm(t)$, while preserving the structure (or type) of $\eta$.}
+
+\begin{defn}\label{def:pop-symm} Permutation $\perm$ is a \defterm{symmetry} of \POP $P\!=\!\tup{\opset, \sub, \precrel}$ \IFF:
+\begin{itemize}
+	\item $\domain(\perm) = \vars(\opset) \cup \consts(\opset)$,
+	\item $\perm(\opset) = \opset$, and
+	\item if $Q = \tup{\opset, \sub', \precrel'}$ is a reinstantiated reorder of $P$, then $Q$ is valid \IFF $\perm(Q)$ is valid and $\card{\precrel'} = \card{\perm(\precrel')}$.
+\end{itemize}
+\end{defn}
+%
+A \POP{}'s symmetries form a \emph{symmetry group} (Section~\ref{sec:permutations}) that partitions the space of reinstantiated reorderings into sets of symmetrically equivalent solutions.
+A \POP $P$ with symmetry group $\group$ is symmetrical to a \POP $Q$ \IFF there is some $\perm \in \group$ \ST $\perm(P) = Q$.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Detecting \POP Symmetries}\label{sec:symm-breaking-pdg}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+A \POP{}'s symmetries are detected by finding the automorphisms of its \emph{plan description graph} (\PDG), an undirected coloured graph that encodes the relevant aspects of its structure.
+This approach derives from the commonly used \emph{problem description graph} (Section~\ref{sec:struct-symm-planning}), which is used to find symmetries in planning instances in the context of heuristic state-space planning. 
+The \PDG is an adaptation of this for \POP optimisation problems:
+
+\begin{defn}\label{def:pdg} The \defterm{plan description graph} of a \POP $P = \tup{\opset, \sub, \precrel}$ is an undirected coloured graph $\pdg_P = \tup{\vertset, \edgeset, \colfunc}$ with vertices $\vertset$, edges $\edgeset$ and colour function $\colfunc$ defined as follows:
+\begin{itemize}
+	\item $\vertset$ is the smallest set \ST:
+	\begin{itemize}
+		\item if $t \in \vars(\opset) \cup \consts(\opset)$ then $\vvert{t} \in \vertset$,
+		\item if $\optr \in \opset$ then $\opvertpre{\optr}, \opvertpost{\optr} \in \vertset$, and
+		\item if $\optr \in \opset$, $q(\vec{t}) \in \post(\optr) \cup \pre(\optr)$ and $1 \leq n \leq \card{\vec{t}}$ then $\litvert{q(\vec{t})}{n} \in \vertset$.
+	\end{itemize}
+	\pagebreak
+	\item $\edgeset$ is the smallest relation \ST:
+	\begin{itemize}
+		\item if $\optr(\vec{x}) \in \opset$ then $\gedge{\opvertpre{\optr(\vec{x})}, \vvert{\vec{x}[1]}}, \gedge{\opvertpost{\optr(\vec{x})}, \vvert{\vec{x}[1]}} \in \edgeset$,
+		\item if $\optr(\vec{x}) \in \opset$ and $1 \leq i < \card{\vec{x}}$ then $\gedge{\vvert{\vec{x}[i]}, \vvert{\vec{x}[i+1]}} \in \edgeset$,
+		\item if $\optr \in \opset$ and $q(\vec{t}) \in \pre(\optr)$ then $\gedge{\opvertpre{\optr}, \litvert{q(\vec{t})}{1} } \in \edgeset$,
+		\item if $\optr \in \opset$ and $q(\vec{t}) \in \post(\optr)$, $\gedge{\opvertpost{\optr}, \litvert{q(\vec{t})}{1} } \in \edgeset$, and
+		\item if $\optr \in \opset$, $q(\vec{t}) \in \post(\optr) \, \cup \, \pre(\optr)$ and $1 \leq i < \card{\vec{t}} \\$ then $\gedge{\litvert{q(\vec{t})}{i}, \litvert{q(\vec{t})}{i+1}} \in \edgeset$.
+	\end{itemize}
+	\item For all $\gvert_1,\gvert_2 \in \vertset$, $\colfunc(\gvert_1) = \colfunc(\gvert_2)$ \IFF:
+	\begin{itemize}
+		\item there is a $t_1, t_2 \in \vars(\opset) \cup \consts(\opset)$ \ST $\type(t_1) = \type(t_2)$, $\gvert_1 = \vvert{t_1}$ and $\gvert_2 = \vvert{t_2}$,
+		\item there is an $\optr_1, \optr_2 \in \opset$ \ST $\name(\optr_1) = \name(\optr_2)$ and either $\gvert_1 = \opvertpre{\optr_1}$ and $\gvert_2 = \opvertpre{\optr_2}$, or $\gvert_1 = \opvertpost{\optr_1}$ and $\gvert_2 = \opvertpost{\optr_2}$, or
+		\item there is a $q(\vec{t}_1), q(\vec{t}_2), i, j$ \ST $\gvert_1 = \litvert{q(\vec{t}_1)}{i}$ and $\gvert_2 = \litvert{q(\vec{t}_2)}{j}$.
+	\end{itemize}
+\end{itemize}
+\end{defn}
+%
+% vertices and colours
+A vertex $\vvert{t}$ is introduced for each variable and constant, a pair of vertices $\opvertpre{\optr}$ and $\opvertpost{\optr}$ are introduced for each operator, representing its sets of preconditions and postconditions, respectively, and for every pre/postcondition of every operator the vertices $\litvert{q(\vec{t})}{1},\ldots,\litvert{q(\vec{t})}{n}$ are introduced, where $n$ is the arity of $q$. 
+A different colour is introduced for every type of variable, constant and predicate, and for each operator type two colours are introduced, for its pre/postconditions, respectively.
+All constant, variable and operator vertices are coloured by type, and all pre/postcondition vertices are coloured according to the type and polarity of the predicate symbol.
+
+% edges 
+Each operator's parameters are represented by a chain of vertices, with the first such parameter connected to the vertices representing the operator pre/postconditions.
+For example, if $\optr(\vec{x}) \in \opset$ and $\vec{x} = \tup{x_1,\ldots,x_n}$, then $\gedge{\opvertpre{\optr(\vec{x})}, \vvert{x_1}}$, $\gedge{\opvertpost{\optr(\vec{x})}, \vvert{x_1}}$, $\gedge{\vvert{x_1}, \vvert{x_2}}, \ldots, \gedge{\vvert{x_{n-1}}, \vvert{x_n}} \in \edgeset$.
+The vertices representing the pre/postconditions are also connected in a chain, with the first such vertex connected to that representing either the operator pre/postconditions as appropriate.
+For example, if $q(\vec{t}) \in \post(\optr(\vec{x}))$ and $\vec{t} = \tup{t_1,\ldots,t_n}$, then $\gedge{\opvertpost{\optr(\vec{x})}, \litvert{q(\vec{t})}{1}}, \gedge{\litvert{q(\vec{t})}{1}, \litvert{q(\vec{t})}{2}}, \ldots, \gedge{ \litvert{q(\vec{t})}{n-1}, \litvert{q(\vec{t})}{n} } \in \edgeset$.
+Additionally, to represent the specific terms found in each pre/postcondition, each vertex is connected to the term found in that position, that is, $\gedge{ \litvert{q(\vec{t})}{1}, \cvert{t_1} }$, $\ldots,$ $\gedge{ \litvert{q(\vec{t})}{n}, \cvert{t_n} } \in \edgeset$.
+
+\subimport*{graphics/}{pdg-example.tex}
+%
+For example, Figure~\ref{fig:pdg-example} depicts a \POP and its \PDG.
+The component on the left of the \PDG represents the initial state, goal and the constants ($1$,$2$ and $3$), and that on the right represents the operator $A(x,y)$. 
+Vertex borders indicate colours.
+
+The automorphisms of a \POP's \PDG correspond to symmetries of the \POP.
+If $\perm \in \auts(\pdg_P)$, then $\tperm$ represents its translation into a permutation over the terms (i.e., variables and constants) appearing in $P$:
+%
+\begin{defn}\label{def:aut-trans} If $P = \tup{\opset, \sub, \precrel}$ is a \POP and $\perm \in \auts(\pdg_P)$, then $\tperm$ is the permutation \ST $\tperm(t_1) = t_2$ \IFF $\perm(\vvert{t_1}) = \vvert{t_2}$ and $t_1, t_2 \in \vars(\opset) \cup \consts(\opset)$.
+\end{defn}
+%
+For example, in Figure~\ref{fig:pdg-example}, the objects $2$ and $3$ are interchangeable. 
+From Figure~\ref{fig:pdg-example-graph}, $P_6$'s \PDG has a single automorphism, $\perm$, that swaps $\cvert{2}$, $\litvert{p(1,2)}{1}$ and $\litvert{p(1,2)}{2}$ with $\cvert{3}$, $\litvert{p(1,3)}{1}$ and $\litvert{p(1,3)}{2}$, respectively.
+This translates into the \POP symmetry $\tperm = \cycle{2, 3}$, as expected.
+
+The theorem below demonstrates the correctness of this approach:
+%
+\begin{restatable}{theorem}{pdgthrm}\label{thrm:pdg}
+\csprob{Plan Description Graph}
+If $P$ is a \POP and $\perm \in \auts(\pdg_P)$ then $\tperm$ is a symmetry of $P$.
+\end{restatable}	
+%
+Of particular interest here are symmetries permute the \POP{}'s causal structure.
+A \emph{consumer symmetry} or \emph{producer symmetry} swaps the terms appearing in a pair of operator pre/postconditions, respectively, and a \emph{causal structure symmetry} is a generalisation that swaps multiple producers and consumers simultaneously:
+%
+\begin{defn}\label{def:cs-symm} Let $P = \tup{\opset, \sub, \precrel}$ be a \POP with symmetry $\tperm$, and $\tup{\vec{t}_1,\ldots,\vec{t}_n}$ and $\tup{\vec{u}_1,\ldots,\vec{u}_m}$ be the pre/postcondition parameters for all operators in $\opset$.
+Then:
+\begin{itemize}
+	\item $\tperm$ is \defterm{producer symmetry} \IFF there exists an $i,j$ \ST $\tperm$ swaps $\vec{u}_i$ and $\vec{u}_j$ and fixes all other terms,
+	\item $\tperm$ is \defterm{consumer symmetry} \IFF there exists an $i,j$ \ST $\tperm$ swaps $\vec{t}_i$ and $\vec{t}_j$ and fixes all other terms, and
+	\item $\tperm$ is \defterm{causal structure symmetry} \IFF it is expressible as $\tperm = \tperm_1 \permcomp \cdots \permcomp \tperm_k$ where each $\tperm_i$ is either a producer or consumer symmetry.
+\end{itemize}
+\end{defn}
+%
+For example, in Figure~\ref{fig:pdg-example}, $\tup{1,2}$ and $\tup{1,3}$ are the parameters for $\initoptr$'s postconditions.
+As $\tperm = \cycle{2, 3}$ is a symmetry of $P_6$, and $\tperm(\tup{1,2}) = \tup{1,3}$ and \emph{vice versa}, $\tperm$ is a causal structure symmetry. 
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Breaking Causal Structure Symmetries with \multilex}\label{sec:symm-breaking-ml}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+Causal structure symmetries can be broken by applying \multilex (as described in Section~\ref{sec:multi-lex} of Chapter~\ref{chap:symmetry-breaking}) to a matrix representation of a causal structure.
+In the \MRR and \MRD encodings above, the optimised \POP's causal structure is determined by the values of the variables in $\pclpset$ (Definition~\ref{def:maxsat-props-sets}), with each $\pclps{\vec{t}}{\vec{u}} \in \pclpset$ indicating that there is some $\optr_p, \optr_c$ and $q$ \ST causal link $\tup{\optr_p, q(\vec{t}), \optr_c, q(\vec{u})}$ is unthreatened in the output optimised \POP.
+These variables can be arranged into a matrix, $\mat{C}$, that associates producers and consumers with rows and columns, respectively, with $\mat{C}[i][j] = 1$ \IFF producer $i$ supports consumer $j$:
+%
+\begin{defn}\label{def:pop-matrices} Let $P = \tup{\opset, \sub, \precrel}$ be a \POP, and $\tup{\vec{t}_1,\ldots,\vec{t}_n}$ and $\tup{\vec{u}_1,\ldots,\vec{u}_m}$ be the pre/postcondition parameters for all operators in $\opset$.
+Then, $\mat{C}$ is an $n \times m$ matrix of variables from $\pclpset$ \ST $\mat{C}[i][j]$ contains variable $\pclps{\vec{t}_i}{\vec{u}_j}$.
+\end{defn}
+%
+Causal structure symmetries can be expressed as permutations of $\mat{C}$'s rows and/or columns.
+If $\tperm$ is a causal structure symmetry, then $\cperm$ denotes its transformation into a multi-row-column symmetry over $\mat{C}$:\footnote{From Definition~\ref{def:row-col-perm}, $\rowperm{i}{j}$ and $\colperm{i}{j}$ denote permutations that exchange the variables in rows $i$ and $j$, or columns $i$ and $j$, respectively, and fix all others.}
+%
+\begin{defn}\label{def:mrc-cs-symm} Let $P = \tup{\opset, \sub, \precrel}$ be a \POP with symmetry $\tperm$, and $\tup{\vec{t}_1,\ldots,\vec{t}_n}$ and $\tup{\vec{u}_1,\ldots,\vec{u}_m}$ be the pre/postcondition parameters for all operators in $\opset$ \ST $\mat{C}[i][j] = \pclps{\vec{u}_i}{\vec{t}_j}$. 
+Then:
+\begin{itemize}
+	\item if $\tperm$ is a producer symmetry that swaps $\vec{u}_i$ and $\vec{u}_j$, then $\cperm = \rowperm{i}{j}$,
+	\item if $\tperm$ is a consumer symmetry that swaps $\vec{t}_i$ and $\vec{t}_j$, then $\cperm = \colperm{i}{j}$, and
+	\item if $\tperm = \tperm_1 \permcomp \cdots \permcomp \tperm_k$ is a causal structure symmetry, then $\cperm = \cperm_1 \permcomp \cdots \permcomp \cperm_k$.
+\end{itemize}
+\end{defn}
+%
+A set of causal structure symmetries, that is, multi-row-column symmetries over $\mat{C}$, $\cgenerator$, can be broken by posting the lexicographic constraint $\MultiLex(\mat{C}, \cgenerator)$.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{The \MRRC Encoding}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\enlargethispage*{1\baselineskip}
+
+The \MRRC encoding is an extension of \MRR that partially breaks causal structure symmetries with a set of hard \MAXSAT clauses that encode the \multilex constraint.
+There are several steps to the construction of these clauses. 
+First, the \POP's \PDG $\pdg_P$ is constructed, and $\generator$, the generating set of $\auts(\pdg_P)$, is computed. 
+Then, $\generator$ is transformed into $\tgenerator$, a set of symmetries over $P$ \ST $\tperm \in \tgenerator$ \IFF $\perm \in \generator$ (Definition~\ref{def:aut-trans}). 
+Finally, $\cgenerator$ is constructed, a set of multi-row-column symmetries over $\mat{C}$ \ST $\cperm \in \cgenerator$ \IFF $\tperm \in \tgenerator$ and $\tperm$ is a causal structure symmetry (Definitions~\ref{def:cs-symm} and~\ref{def:mrc-cs-symm}).
+Formulae~\ref{eq:cs-aux-1}--\ref{eq:cs-lex-n} encode a set of hard \MAXSAT clauses propositionalise the \multilex constraint $\MultiLex(\mat{C}, \cgenerator)$:
+
+\begin{align}
+& \bigwedge_{\clapstack{ \cperm, \vec{\satprop}: \, \cperm \in \cgenerator, \\ \vec{\satprop} = \mat{C} \matfilter \tup{R_{\cperm}, C_{\cperm}}}} \quad \auxprop{\cperm}{1} \leftrightarrow (\vec{\satprop}[1] \leftrightarrow \cperm(\vec{\satprop}[1])). \label{eq:cs-aux-1} \\
+	%
+& \bigwedge_{\clapstack{ \cperm, \vec{\satprop}, i: \, \cperm \in \cgenerator, \\ \vec{\satprop} = \mat{C} \matfilter \tup{R_{\cperm}, C_{\cperm}}, \\ 2 \leq i < \card{\vec{\satprop}}}} \quad \auxprop{\cperm}{i} \leftrightarrow (\auxprop{\cperm}{i-1} \land \: (\vec{\satprop}[i] \leftrightarrow \cperm(\vec{\satprop}[i]))) . \label{eq:cs-aux-n} \\
+	%
+& \bigwedge_{\clapstack{ \cperm, \vec{\satprop}: \, \cperm \in \cgenerator, \\ \vec{\satprop} = \mat{C} \matfilter \tup{R_{\cperm}, C_{\cperm}}}} \quad \vec{\satprop}[1] \rightarrow \cperm(\vec{\satprop}[1]). \label{eq:cs-lex-1} \\
+	%
+& \bigwedge_{\clapstack{ \cperm, \vec{\satprop}, i: \, \cperm \in \cgenerator, \\ \vec{\satprop} = \mat{C} \matfilter \tup{R_{\cperm}, C_{\cperm}}, \\ 2 \leq i \leq \card{\vec{\satprop}}}} \quad \auxprop{\cperm}{i-1} \rightarrow \vec{\satprop}[i] \rightarrow \cperm(\vec{\satprop}[i]). \label{eq:cs-lex-n}
+\end{align}
+%
+For each formula above, $\cperm \in \cgenerator$ is a multi-row-column symmetry over $\mat{C}$, and $\vec{\satprop} = \mat{C} \matfilter \tup{R_{\cperm}, C_{\cperm}}$ is the list of Boolean variables found on the left-hand side of the \multilex constraint as in Definition~\ref{def:multilex}.
+Formulae~\ref{eq:cs-aux-1}--\ref{eq:cs-lex-n} encode a requirement that $\vec{\satprop} \lexleq \cperm(\vec{\satprop})$. 
+The \textsc{AND-CSE} propositionalisation technique of \citet{Elgabou2015:Thesis} is used, which reduces the sizes of the formulae by replacing common subexpressions with auxiliary variables.
+
+For each symmetry $\cperm$, the auxiliary variables $\auxprop{\cperm}{1},\ldots,\auxprop{\cperm}{n-1}$ are introduced, where $n = \card{\vec{\satprop}}$.
+Formulae~\ref{eq:cs-aux-1} and~\ref{eq:cs-aux-n} state that auxiliary variable $\auxprop{\cperm}{i}$ is \true \IFF the first $i$ elements of $\vec{\satprop}$ and $\cperm(\vec{\satprop})$ are equal, that is, all \true or all \false.
+Formulae~\ref{eq:cs-lex-1} and~\ref{eq:cs-lex-n} require that for all $\cperm$, if $i = 1$, or if all previous auxiliary propositions hold (i.e., all $\auxprop{\tperm}{j}$ such that $j < i$), then $\vec{\satprop}[i] \lexless \perm(\vec{\satprop}[i])$, that is, $\vec{\satprop}[i] \rightarrow \perm(\vec{\satprop}[i])$
+
+The \MRRC encoding is an extension of \MRR that breaks causal structure symmetries with the above technique:
+%
+\begin{defn}\label{def:mrrc}
+The \MRRC encoding transforms a \POP into a partially-weighted \MAXSAT instance through Formulae~\ref{eq:mrr-asymm}--\ref{eq:cs-lex-n} with the allowable orderings $\deoprec = \opset^2$.
+\end{defn}

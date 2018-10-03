@@ -1,0 +1,83 @@
+\pgfplotstableread[col sep=comma]{04-pop-reinstantiation/tables/coverage-optimal-by-domain.csv}\coverageoptdata
+
+\begin{table}[t]
+    \centering
+    \pgfplotstabletypeset[
+        %%
+        font=\scriptsize,
+        every even row/.style={
+            before row={\rowcolor[gray]{0.9}}
+            },
+        every last row/.style={
+            before row=\midrule, 
+            after row=\bottomrule,
+            font=\bfseries,
+            },
+        every head row/.style={%
+            before row=\toprule,
+            after row=\midrule
+        },
+        %%
+        columns/domain/.style={string type, column name={Domain}, column type={l}, column type/.add={>{\itshape}}{}},
+        %%
+        columns/nPlans/.style={numeric type, column name=$n$, column type=C{0.65cm}, 
+            /pgf/number format/precision=0, /pgf/number format/sci zerofill, /pgf/number format/fixed},
+        %%
+        columns/MR_NO_OPT-cov-opt/.style={numeric type, column name=$\MRN$, column type=C{0.65cm}, /pgf/number format/precision=1,multiply with=100,
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{##1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/MR-cov-opt/.style={numeric type, column name=$\MR$, column type=C{0.65cm}, /pgf/number format/precision=1,multiply with=100,
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{##1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/MR_OPSB-cov-opt/.style={numeric type, column name=$\MRO$, column type=C{0.65cm}, /pgf/number format/precision=1,multiply with=100,
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{##1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/MRD-cov-opt/.style={numeric type, column name=$\MRD$, column type=C{0.65cm}, /pgf/number format/precision=1,multiply with=100,
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{##1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/MRR_NO_OPT-cov-opt/.style={numeric type, column name=$\MRRN$, column type=C{0.65cm}, /pgf/number format/precision=1,multiply with=100,
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{##1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/MRR-cov-opt/.style={numeric type, column name=$\MRR$, column type=C{0.65cm}, /pgf/number format/precision=1,multiply with=100,
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{##1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/MRR_OPSB-cov-opt/.style={numeric type, column name=$\MRRO$, column type=C{0.65cm}, /pgf/number format/precision=1,multiply with=100,
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{##1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/MRR_CSSB-cov-opt/.style={numeric type, column name=$\MRRC$, column type=C{0.65cm}, /pgf/number format/precision=1,multiply with=100,
+        postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{##1}\relax \else $\%$ \fi},
+        }},
+        columns={domain,nPlans,
+                MR_NO_OPT-cov-opt,
+                MR-cov-opt,
+                MR_OPSB-cov-opt,
+                MRD-cov-opt,
+                MRR_NO_OPT-cov-opt,
+                MRR-cov-opt,
+                MRR_OPSB-cov-opt,
+                MRR_CSSB-cov-opt
+                },
+        ]
+        {\coverageoptdata}%
+   % \end{adjustbox}
+    %  
+    \caption[Optimal coverage of \EOG, \MR, \MRD and \MRR, by domain]{Optimal coverage.
+        For each domain and encoder, the percentage of the $n$ plans for which an optimal solution was found.}
+    \label{tab:coverage-opt}
+\end{table}
+    

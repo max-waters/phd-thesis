@@ -1,0 +1,70 @@
+** Spellings
+
+Least commitment 
+Over-committed
+Under-committed
+Partial-Order Plan
+Partial-Order Planning
+Partial Order (as in a poset)
+Plan deorder
+Plan reorder
+Plan de/reorder
+Codesignation
+Non-codesignation
+Reinstantiation
+Boolean (always capitalised)
+totally ordered
+partially-weighted \MAXSAT
+lex-leader
+multi-row and multi-column symmetry
+multi-row-column symmetry
+left-hand side, right-hand side
+graph with self-loop
+
+action orderings
+set of orderings
+
+** Captions
+
+Do not capitalise every word, not a heading.
+Short form in index: no full stop
+Long form in text: full stop.
+
+** Careful
+
+Symmetry group (any group of permutations) vs symmetric group (eg S_n)
+A problem is in \FPT but an algorithm runs in fpt-time
+
+** Defining new terms:
+In text, use \emph{term}.
+In a definition environment, use \defterm{term}
+
+
+For example, plan $P_1$ ("plan" is lower case)
+
+
+** Abbreviations
+
+In text, use "that is", and "for example". Only use abbreviations in parenthetical statements, (e.g., like this).
+Use abbreviation macros for \IFF, \WRT, \ST but not e.g., or i.e.,.
+Use "respectively" not "resp."
+
+"Vice versa" and other latin in italics
+
+** Dir structure
+
+To include a file into a parent file:
+	If file to be included is in the same directory, use input{filename.tex}
+	If it is in a subfolder, use import*{subdir/}{filename.tex}
+
+
+** Bullets vs numbers
+
+Use numbers if order is important, or need to refer to particular item
+Otherwise use bullets
+
+** PCT
+
+consumer: o_c q(s)
+producer: o_p q(u)
+threat: o_t q(v)

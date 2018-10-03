@@ -1,0 +1,124 @@
+\section{Implementation}
+
+The \MKTR algorithm has been implemented, and its ability to find flexible, tractable partial plans has been assessed over a suite of tests drawn from standard \IPC domains.
+However, preliminary testing showed that \MKTR, in the naive form presented in Figure~\ref{alg:MKTR}, suffers from a number of deficiencies.
+Firstly, \MKTR relaxes \CLP{}s, meaning that classical plans must be first transformed into a suitable format.
+Secondly, the $\ppenc$ encoding in Definition~\ref{def:pc-encoding} tends to transform \CLP{}s into partial plans with excessively high treewidths, meaning that very little relaxation is possible. 
+Thirdly, as causal links are selected and tested in an essentially random order, \MKTR frequently times out before finding a significantly more flexible relaxation.
+And finally, it was observed that (as in Chapter~\ref{chap:pop-maxsat}) the search space of possible causal structures is highly symmetrical.
+Thus, the implemented version of \MKTR\repofootnote optimises constraint formulae, uses a \emph{relaxation policy} that defines which causal link is tested at each iteration, and uses symmetry breaking techniques to reduce the search space.
+This section will discuss these optimisations in more detail.
+%
+\subsection{Relaxing Classical Plans}\label{sec:mktr-class}
+%
+A classical plan must be transformed into a \CLP before it can be relaxed with \MKTR, that is, an equivalent causal structure must be found.
+As there may be multiple such structures, the implemented \MKTR takes the same approach as the \EOG deordering algorithm, that is, it uses a \emph{validation structure} (Definition~\ref{def:eog-valid-struct}).
+If $\vec{\actn}$ is a classical plan, then validation structure $V_{\vec{\actn}}$ is a set of unthreatened causal links that associates each consumer in $\vec{\actn}$ with exactly one supporting producer.
+If a consumer has multiple possible producers, then the earliest is selected.
+
+The implemented \MKTR first converts classical plan $\vec{\actn} = \vec{\optr}\sub$ into a \CLP $P = \tup{\opset, \cstruct}$ \ST $\opset = \set{\optr : \optr \in \vec{\optr}}$ and $\cstruct = V_{\vec{\actn}}$.
+%
+\subsection{Optimisation}
+%
+Two optimisations have been introduced to reduce the treewidths of the formulae produced by the $\ppenc$ encoding (Definition~\ref{def:pc-encoding}).
+As a graph containing a clique of $n$ vertices will have a treewidth of at least $n-1$, and a formula's primal graph connects variables that appear in the same clause, a partial plan's treewidth has a lower bound of $n-1$, where $n$ is the most variables appearing in the same clause.
+Thus, the optimisations aim to reduce the number of variables appearing in the encoding.
+
+Firstly, all constraint formulae are simplified with a modified AC-$3$ algorithm that propagates domains to constraints and \emph{vice versa}, replaces variables with singleton domains with constants, and merges any variables that are necessarily codesignated into ``meta-variables''.
+
+Secondly, the $\ppenc$ encoding in Definition~\ref{def:pc-encoding}, which transforms a \CLP's disjunctive causal structure into a constraint formula, has been replaced with one that produces formulae that are simpler at the expense of having fewer models.
+The input (classical) plan to \MKTR, $\vec{\actn}$, is used as a heuristic to ensure satisfiability:
+
+\begin{defn}\label{def:restr-pc-encoding} Let $P = \tup{\opset, \cstruct}$ be a \CLP, $\vec{\actn} = \vec{\optr}\sub$ be an instantiation of $P$, and $\prec'$ be the total order over $\vec{\optr}$.
+Then, $\ppenci(P, \vec{\actn})$ encodes a constraint formula as follows:
+\begin{align*}
+& \ppenci(P, \vec{\actn}) \, \eqdef \, \bigwedge_{\clapstack{\optr_c, q(\vec{s}) : \consms(\optr_c, q(\vec{s}))}} \ppenci'(\optr_c, q(\vec{s})) \text{, where} \\
+& \ppenci'(\optr_c, q(\vec{s})) \, \eqdef \,
+    \bigvee_{\clapstack{\tup{\optr_p, q(\vec{u}), \optr_c, q(\vec{s})} \in \cstruct}} \vec{u} = \vec{s} \land \optr_p \prec \optr_c \, \land \\
+& \qquad \qquad \qquad \bigwedge_{\clapstack{\optr_t, \vec{v} : \\ \thrts(\optr_t, q(\vec{v}))}} \qquad \begin{cases} 
+    \vec{s} \neq \vec{v}    & \text{if } \sub(\vec{s}) \neq \sub(\vec{v}) \text{ or } \sub(\vec{u}) \neq \sub(\vec{v})\\
+    \optr_t \prec \optr_p   & \text{if } \sub(\vec{s}) = \sub(\vec{v}) \text{ and } \optr_t \prec' \optr_p \\
+    \optr_c \prec \optr_t   & \parbox{4cm}{if $\sub(\vec{s}) = \sub(\vec{v})$, $\optr_t \not\prec' \optr_p$ and $\optr_c \prec' \optr_t$} \\
+    \optr_t \prec \optr_p \lor \optr_c \prec \optr_t & \text{otherwise}
+\end{cases}
+\end{align*}
+\end{defn}
+%
+While $\ppenc$ and $\ppenci$ both encode the requirement that every consumer in the plan be supported by an unthreatened causal link, they differ in how causal links are protected from threats.
+The final line of $\ppenc$ allows four ways for a causal link to be protected from a threat: non-codesignation, ordering the threat before the producer, or after the consumer, or re-establishing the link with a ``white knight''.
+However, the final line of $\ppenci$ is stronger and simpler than this, it removes the `white knight'' option and requires that threat protection constraints must be, where possible, \emph{consistent with the original input plan}.
+Thus, if the threat was not codesignated with either the producer or consumer in $\vec{\actn}$, then it must remain so, otherwise the original ordering must be respected.
+This ensures that the partial plan produced by $\ppenci$ still has at least one instantiation -- $\vec{\actn}$ -- and is thus still valid.
+The final case occurs when $\optr_p \prec' \optr_t \prec' \optr_c$, and all were codesignated, meaning that the causal link could not have been in $\vec{\actn}$.
+Thus, $\ppenci$ arbitrarily requires the threat to be resolved through ordering constraints.
+
+A key property of this encoding is that if a classical plan $\vec{\actn}$ is transformed into a \CLP $P$ as in Section~\ref{sec:mktr-class}, \emph{then the partial plan produced by $\ppenci(P, \vec{\actn})$ is equivalent to the \POP produced by $\EOG(\vec{\actn})$}:
+%
+\begin{observation}\label{obs:pc-enc-eog} Let $\vec{\actn} = \vec{\optr}\sub$ be a classical plan with validation structure $V_{\vec{\actn}}$, $P = \tup{\opset, \cstruct}$ be a \CLP \ST $\opset = \set{\optr : \optr \in \vec{\optr}}$ and $\cstruct = V_{\vec{\actn}}$, and $Q = \tup{\opset, \ppenci(P, \vec{\actn})}$ be the encoding of $P$ into a partial plan.
+Then, classical plan $\vec{\actn}'$ is an instantiation of $Q$ \IFF it is a linearisation of $\EOG(\vec{\actn})$.
+\end{observation}
+%
+This observation follows directly from the definitions of \EOG and $\ppenci$.
+As $P$ and $Q$ were constructed from the same validation structure ($\cstruct = V_{\vec{\actn}}$) that links every consumer to exactly one producer, all instantiations of $P$ will have the same bindings as $\vec{\actn}$ and $\EOG(\vec{\actn})$.
+And, when all variables are ground, $\ppenci$ and \EOG are identical.
+If causal link $\tup{\optr_p, q(\vec{u}), \optr_c, q(\vec{s})} \in \cstruct$, then both \EOG and $\ppenci$ require that $\optr_p \prec \optr_c$.
+If postcondition $\neg q(\vec{v})$ of $\optr_t$ is a threat to this link and $\sub(\vec{v}) \neq \sub(\vec{s})$, then \EOG can ignore the threat, and $\ppenci$ will place the constraint $\vec{v} \neq \vec{s}$, which simplifies to \true.
+If $\sub(vec{v}) = \sub(\vec{s})$, then both \EOG and $\ppenci$ will resolve the threat by requiring that either $\optr_t \prec \optr_p$ or $\optr_c \prec \optr_t$, depending on the ordering in $\vec{\actn}$.
+
+As the implemented \MKTR transforms the input classical plan into a \CLP, it follows from this observation that \emph{the output of \MKTR can never be less flexible than the \POP found by \EOG}.
+%
+\subsection{Relaxation Policies} 
+
+Because the success of \MKTR will be influenced by which causal link is selected at each step, two selection policies have been tested.
+
+\subsubsection{Minimise Threats Policy}
+%
+The \emph{Minimise Threats} policy (\MT) is based on two observations. 
+It can be seen in Definition~\ref{def:restr-pc-encoding} that the more threats there are to a causal link, the larger the constraint formula must be that defines when the link is unthreatened, that is, the more likely it is that adding the link to the plan will increase its treewidth.
+Furthermore, the more threats there are to a link, the less likely it is that those threat protection constraints will be satisfiable, that is, the less likely it is that adding the causal link will result in an increase in possible instantiations.
+
+Therefore, at each step in the \MKTR loop, \MT selects the causal link with the fewest threats, that is, it selects the link $\tup{\optr_p, q(\vec{u}), \optr_c, q(\vec{s})}$ for which there are the fewest producers $\optr_t$ and $q(\vec{v})$ \ST $\thrts(\optr_t, q(\vec{v}))$.
+%
+\subsubsection{Relax Producers Policy}
+%
+Because relaxing a producer's variable bindings can in turn relax those of any dependent consumers, the \emph{Relax Producers} policy (\RP) \emph{relaxes the bindings of operators with the most causally dependent consumers}.
+The policy considers two ways to do this.
+The first way to increase the possible bindings for operator $\optr$ is to simply add more producer options for $\optr$'s preconditions.
+However, if $\optr$'s postconditions threaten other links in the plan, then the non-codesignation constraints required to protect such links from threats may rule out some bindings for $\optr$.
+In such cases, adding more producer options for $\optr$'s preconditions may have no effect.
+Thus, a second way is to add more producer options to preconditions of other operators that are threatened by $\optr$'s postconditions.
+
+This translates into two measures.
+If $\optr$ is an operator and $\vec{\actn}$ is the input plan, then $n_c(\optr, \vec{\actn})$ denotes the number of actions in $\vec{\actn}$ with preconditions that are causally dependent on a postcondition of $\optr$.
+And $n_t(\optr, \vec{\actn})$ is equal to the highest $n_c(\optr_t, \vec{\actn})$ for any $\optr_t$ that threatens any causal link to any precondition of $\optr$.
+\RP selects the causal link $\tup{\optr_p, q(\vec{u}), \optr_c, q(\vec{s})}$ that maximises $\max(n_c(\optr_c, \vec{\actn}), n_t(\optr_c, \vec{\actn}))$.
+%
+\subsection{Symmetry Breaking}\label{sec:pp-symm-breaking}
+%
+A search or optimisation problem is said to exhibit \emph{symmetry} (Section~\ref{sec:symmetries}) when states or branches in its search space are identical up to an irrelevant permutation of variables and/or constants.
+As these permutations preserve solution validity and optimality, symmetries can be exploited by limiting search to just one of each equivalent region.
+
+Chapter~\ref{chap:pop-maxsat} introduced the notion of \emph{causal structure symmetry} (Section~\ref{sec:causal-struct-symms}), which occurs when a plan's operators contain combinations of pre/postconditions that are \emph{functionally equivalent} in that any associated causal links can be swapped without affecting the plan's validity or optimality.
+The symmetry breaking technique presented here is motivated by the observation that \CLP{}s with symmetrical causal structures will have the same treewidth. 
+Thus, if \MKTR rejects a particular causal structure due to its treewidth exceeding the input parameter, any symmetrically equivalent causal structures can also be ruled out without the expensive optimisation and treewidth calculation processes.
+
+Symmetries are detected and represented with the techniques introduced in Chapter~\ref{chap:pop-maxsat}.
+A (disjunctive) causal structure $\cstruct$ can be equivalently represented as a Boolean (0/1) matrix $\mat{C}_\cstruct$ that associates producers and consumers with rows and columns, respectively, with $\mat{C}[i][j] = 1$ indicating that producer $i$ and consumer $j$ are causally linked (Definition~\ref{def:pop-matrices}).
+As a causal structure symmetry permutes producers and consumers, it can be represented as a permutation of entire rows and/or columns of variables in $\mat{C}_\cstruct$ (Definition~\ref{def:cs-symm}).
+Symmetries are detected from the input plan's \emph{plan description graph} (\PDG, Definition~\ref{def:pdg}), an undirected coloured graph with automorphisms corresponding to the plan's symmetries.
+The automorphisms' generating set, $\generator$, is computed, and from this, $\cgenerator$, a set of causal structure symmetries over $\mat{C}_\cstruct$, is constructed (Definitions~\ref{def:aut-trans} and~\ref{def:mrc-cs-symm}).
+
+Unlike previous chapters, in which symmetries are broken \emph{statically}, that is, by expanding the problem description with additional constraints that rule out non-canonical solutions, there are here broken \emph{dynamically}, that is, by directing \MKTR to \emph{explore no more than one causal structure from each symmetry class}.
+
+As symmetrical causal structures have identical \emph{canonical forms} (Definition~\ref{def:can-matrix}), this can be achieved by caching the canonical form of any causal structure found to have a treewidth exceeding $k$.
+At each iteration of the \MKTR loop, the current disjunctive causal structure's canonical form is found, and its treewidth is only computed if that form is not in the cache.
+
+\subimport*{graphics/}{mktr-apx-can.tex}
+%
+As finding a canonical form is \NP-hard~\cite{Luks1993:PermCompl}, an heuristic approach to canonicalisation is taken, similar to that of \citet{Pochter2011:SymmStatePlanners}, that trades efficiency for search space reduction. 
+The \APXCAN algorithm in Figure~\ref{alg:approx-can} uses the symmetry breaking constraint \multilex (as introduced in Definition~\ref{def:multilex} of Chapter~\ref{chap:symmetry-breaking}) to compute an approximate canonical form.
+It takes as input a causal structure in matrix form, $\mat{C}$, and a set of causal structure symmetries, $\cgenerator$.
+Elements of $\cgenerator$ are applied to $\mat{C}$ until a symmetric equivalent is found that satisfies \multilex.
+As \multilex is a partial symmetry breaking constraint, there is no guarantee that \APXCAN will find the lexicographic least element of the symmetry class, or that all symmetrical causal structures will be mapped to the same approximation. 
+Thus, not all symmetries will be broken. 
+However, the results in Chapter~\ref{chap:symmetry-breaking} show that \multilex, in practice, rules out practically all non-canonical solutions.

@@ -1,0 +1,80 @@
+\newcommand{\lincountexample}[4]{
+\begin{tikzpicture}[
+	op/.style={draw,minimum height=0.5cm,inner sep=1pt,text=black},
+	cond/.style={text=black,font=\bfseries,font=\scriptsize},
+	dummy/.style={}
+	]
+		
+	\node[op] (op1) []	{$\actn_1$};
+	\node[cond] (post11) [above right = 0.1cm and 0.15cm of op1.east, anchor = center] {$p$};
+	\node[cond] (post12) [below right = 0.1cm and 0.15cm of op1.east, anchor = center] {$q$};
+
+	\node[op] (op2) [#1]	{$\actn_3$};
+	\node[cond] (pre21) [above left = 0.1cm and 0.15cm of op2.west, anchor = center] {$p$};
+	\node[cond] (pre22) [below left = 0.1cm and 0.15cm of op2.west, anchor = center] {$r$};
+	
+	\node[op] (op3) [#2]	{$\actn_2$}; 
+	\node[cond] (post31) [above right = 0.1cm and 0.15cm of op3.east, anchor = center] {$r$};
+	\node[cond] (post32) [below right = 0.1cm and 0.15cm of op3.east, anchor = center] {$q$};
+	
+	\node[op] (op4) [#3]	{$\actn_4$}; 
+	\node[cond] (pre4) [left = 0.1cm of op4.west, anchor = center] {$q$};
+	\node[cond] (post41) [right = 0.1cm and 0.15cm of op4.east, anchor = center] {$r$};
+	
+	\node[dummy] (op1out) [right = 0.2cm of op1] {};
+	\node[dummy] (op4out) [right = 0.2cm of op4] {};
+	
+	\node[dummy] (op2in) [left = 0.2cm of op2] {};
+	\node[dummy] (op4in) [left = 0.2cm of op4] {};
+	
+	#4%
+\end{tikzpicture}%
+}
+
+\begin{figure}[t]
+% P1
+\begin{subfigure}[t]{\textwidth}
+\centering
+\lincountexample{below right = 0.5cm and 2.5cm of op1.center, anchor = center}{below = 1cm of op1.center, anchor = center}{below right = 0.5cm and 2.5cm of op3.center, anchor = center}{
+	\draw[->] (post11.east) to[out=0, in=180] (pre21.west);
+	\draw[->] (post31.east) to[out=0, in=180] (pre22.west);
+	\draw[->] (post32.east) to[out=0, in=180] (pre4.west);
+}%
+\quad%
+\begin{tabular}[b]{l}
+	$\tup{\actn_1, \actn_2, \actn_3, \actn_4}$ \\
+	$\tup{\actn_1, \actn_4, \actn_3, \actn_4}$ \\
+	$\tup{\actn_2, \actn_1, \actn_3, \actn_4}$ \\
+	$\tup{\actn_2, \actn_1, \actn_4, \actn_3}$ \\
+	$\tup{\actn_2, \actn_4, \actn_1, \actn_3}$ \\
+\end{tabular}
+\caption{A minimum reorder with five linearisations.}
+\label{fig:lin-count-example-1}
+\end{subfigure}%
+
+\vspace{1cm}
+
+% P2
+\begin{subfigure}[t]{\textwidth}
+\centering
+\lincountexample{right = 4cm of op1.center, anchor = center}{below right = 1cm and 2cm of op1.center, anchor = center}{right = 2cm of op1.center, anchor = center}{
+	\draw[->] (op1out.center) to[out=0, in=180] (op4in.center);
+	\draw[->] (post11.east) to[out=30, in=150] (pre21.west);
+	\draw[->] (op4out.center) to[out=0, in=180] (op2in.center);
+}%
+\quad%
+\begin{tabular}[b]{l}
+	$\tup{\actn_2,\actn_1,\actn_4,\actn_3}$ \\
+	$\tup{\actn_1,\actn_2,\actn_4,\actn_3}$ \\
+	$\tup{\actn_1,\actn_4,\actn_2,\actn_3}$ \\
+	$\tup{\actn_1,\actn_4,\actn_3,\actn_2}$ \\
+\end{tabular}
+\caption{A minimum reorder with four linearisations.}
+\label{fig:lin-count-example-2}
+\end{subfigure}
+
+\vspace{0.25cm}
+
+\caption[Minimally ordered \POP{}s with different linearisation counts]{Two minimum reorders of the plan $\tup{\actn_1,\actn_2,\actn_3,\actn_4}$ with different numbers of linearisations.}
+\label{fig:lin-count-example}
+\end{figure}

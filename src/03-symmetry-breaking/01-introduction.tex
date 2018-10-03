@@ -1,0 +1,44 @@
+\section{Introduction}\label{sec:symm-intro}
+\enlargethispage*{2\baselineskip}
+
+This thesis is primarily concerned with the post-processing of plans in order to optimise various flexibility criteria.
+However, as in many optimisation problems, the search for an optimally flexible plan can be hindered by an exponential number of symmetrical (non) solutions that, in this case, differ only by an irrelevant permutation of functionally equivalent domain objects and operators, and represent an equal number of different ways to achieve the goal.
+Thus, before addressing the plan optimisation problems directly, this chapter focuses on the important problem of identifying and removing symmetrical plans from the search space.
+
+The optimisation problems that will be addressed in Chapters~\ref{chap:pop-maxsat} and~\ref{chap:partial-plans} can be naturally expressed as hybrid \emph{matrix}/\emph{graph models} (Sections~\ref{sec:symm-break-matrix} and~\ref{sec:symm-break-graph}).
+Standard symmetry breaking techniques for such models, such as \dblex~\cite{Flener2002:DoubleLex} and \snakelex~\cite{Grayland2009:SnakeLex}, are only applicable to \emph{row symmetry} and \emph{column symmetry}, in which rows and columns are \emph{individually} interchangeable.
+However, plan optimisation problems frequently exhibit more complex symmetries in which \emph{combinations of rows and/or columns are interchangeable, but individual rows and columns are not}. 
+These more general symmetries, termed here \emph{multi-row-column symmetries}, cannot be broken with standard approaches.
+Thus, this chapter defines a taxonomy of generalised symmetries, and introduces \multilex, a novel, compact and effective extension of \dblex that can partially break such symmetries in matrix models and arbitrary graph models, including directed graphs with self-loops.
+Empirical evaluation reveals that the factorial number of symmetrical solutions introduced by generalised symmetries are nearly entirely removed by \multilex.
+
+As multi-row-column symmetries are not confined to plan optimisation problems, but occur in many \CSP\footnote{\url{http://www.csplib.org}}~\cite{csplib} benchmark domains, this chapter will discuss symmetry breaking in the broader context of matrix and graph models, rather than plan optimisation specifically.
+Chapters~\ref{chap:pop-maxsat} and~\ref{chap:partial-plans} will apply the findings to the problem of optimising plan flexibility.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Example}\label{sec:symm-intro-ex}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\subimport*{graphics/}{struct-symmetry-example.tex}
+%
+Much of the later work in this thesis is concerned with making plans more flexible by modifying their \emph{causal structure}.
+A plan's causal structure is an implicit set of unthreatened \emph{causal links}, that is, mappings from \emph{producers} (i.e., initial state facts and operator postconditions) to causally dependent \emph{consumers} (i.e., goals and operator preconditions), that determine the plan's validity (Definition~\ref{def:pocl-valid}). 
+Chapter~\ref{chap:pop-maxsat} studies the problem of finding a causal structure that minimises the number of ordering constraints, and in Chapter~\ref{chap:partial-plans}, plans are relaxed further by providing each consumer with a set of possible producers.
+While the details will be left for later chapters, the aspect common to both that is relevant here is that \emph{a plan's causal structure can be represented as a matrix over which symmetries frequently occur}.
+
+For example, Figure~\ref{fig:struct-symm-example} depicts two plans from a synthetic domain.
+The plans contain a single step, $A$, and the initial state and goal are represented by $\initoptr$ and $\goaloptr$, respectively.
+Causal structures are represented by both arrows and Boolean (0/1) matrices in which producers and consumers are associated with rows and columns, respectively.
+The causal structures have a symmetry deriving from an \emph{object symmetry} (Section~\ref{sec:symm-break-planning}): as objects $1$ and $2$ are interchangeable (swapping them leaves the initial state and goal unchanged), rows $p(1)$ and $q(1)$ and column $r(1)$ can be swapped with rows $p(2)$ and $q(2)$ and column $r(2)$, respectively.
+Plan $P_2$ is the result of permuting plan $P_1$ in this way.
+
+This symmetry permutes multiple rows and columns simultaneously, that is, it is a \emph{multi-row-column symmetry}, and \emph{cannot be broken with constraints between individual rows}.
+For example, requiring lexicographic ordering between rows $p(1)$ and $p(2)$, $q(1)$ and $q(2)$, and columns $r(1)$ and $r(2)$ would rule out both plans.
+
+Symmetries in casual structures can also derive from multiple instances of the same operator type.
+As the roles that such operators play in a plan's causal structure can be swapped, interchangeable operators with at least one precondition and postcondition create symmetries in which rows and columns are swapped simultaneously.
+
+\bigskip
+
+This chapter will continue as follows.
+Section~\ref{sec:multi-row-col-symm} defines a hierarchy of generalised symmetries, Section~\ref{sec:multi-lex} formally defines \multilex, and Section~\ref{sec:multi-lex-evaluation} examines the number of symmetrical solutions introduced by multi-row-column symmetries, and evaluates the ability of \multilex to remove them.

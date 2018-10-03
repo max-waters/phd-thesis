@@ -1,0 +1,89 @@
+\pgfplotstableread[col sep=comma]{04-pop-reinstantiation/tables/enc-size.csv}\encdata
+
+\begin{table}[t]
+\centering
+\renewcommand\tabcolsep{3pt}
+\begin{adjustbox}{max width=\columnwidth}
+\pgfplotstabletypeset[
+    col sep=comma,
+    /pgf/number format/fixed,
+    /pgf/number format/precision=2,
+    /pgf/number format/sci zerofill,
+    %%
+    font=\scriptsize,
+    % string type,
+    every even row/.style={
+        before row={\rowcolor[gray]{0.9}}
+        },
+    every head row/.style={%
+        before row={\toprule
+            &
+            \multicolumn{2}{c}{\MR} &
+            \multicolumn{2}{c}{\MRD} &
+            \multicolumn{2}{c}{\MRR} &
+            \multicolumn{2}{c}{\MRRO} &
+            \multicolumn{2}{c}{\MRRC} \\
+            \cmidrule(lr){2-3}
+            \cmidrule(lr){4-5}
+            \cmidrule(lr){6-7}
+            \cmidrule(lr){8-9}
+            \cmidrule(lr){10-11}
+        },
+        after row=\midrule
+    },
+    every last row/.style={
+        after row=\bottomrule,
+    },
+    columns/range/.style={string type, 
+                        column name={Encoding Size}, 
+                        column type={l}, 
+                        %column type/.add={>{\it}}{}
+                        },
+    %
+    columns/mr-n/.style={numeric type, column name={$n_P$}, column type={c},
+                        /pgf/number format/precision=0,
+                        /pgf/number format/sci zerofill},
+    columns/mr-c/.style={column name={$C$}, column type={c}, /pgf/number format/precision=0,multiply with=100,
+    postproc cell content/.append style={
+        /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{##1}\relax \else $\%$ \fi},
+    }},
+    %
+    columns/mrd-n/.style={numeric type, column name={$n_P$}, column type={c},
+        /pgf/number format/precision=0,
+        /pgf/number format/sci zerofill},
+    columns/mrd-c/.style={column name={$C$}, column type={c}, /pgf/number format/precision=0,multiply with=100,
+    postproc cell content/.append style={
+        /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{##1}\relax \else $\%$ \fi},
+    }},
+    %
+    columns/mrr-n/.style={numeric type, column name={$n_P$}, column type={c},
+        /pgf/number format/precision=0,
+        /pgf/number format/sci zerofill},
+    columns/mrr-c/.style={column name={$C$}, column type={c}, /pgf/number format/precision=0,multiply with=100,
+    postproc cell content/.append style={
+        /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{##1}\relax \else $\%$ \fi},
+    }},
+    %
+    columns/mrr-op-n/.style={numeric type, column name={$n_P$}, column type={c},
+        /pgf/number format/precision=0,
+        /pgf/number format/sci zerofill},
+    columns/mrr-op-c/.style={column name={$C$}, column type={c}, /pgf/number format/precision=0,multiply with=100,
+    postproc cell content/.append style={
+        /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{##1}\relax \else $\%$ \fi},
+    }},
+    %
+    columns/mrr-cs-n/.style={numeric type, column name={$n_P$}, column type={c},
+        /pgf/number format/precision=0,
+        /pgf/number format/sci zerofill},
+    columns/mrr-cs-c/.style={column name={$C$}, column type={c}, /pgf/number format/precision=0,multiply with=100,
+    postproc cell content/.append style={
+        /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{##1}\relax \else $\%$ \fi},
+    }},
+    %%
+    columns={range,mr-n,mr-c,mrd-n,mrd-c,mrr-n,mrr-c,mrr-op-n,mrr-op-c,mrr-cs-n,mrr-cs-c}
+]\encdata
+\end{adjustbox}
+\caption{Plan count ($n_P$) and coverage ($C$) by encoding size (in number of clauses) for \MR, \MRD and \MRR.
+Note that the encoding size is a log scale, each size range being twice that of the previous.}
+\label{tab:enc-size}
+\end{table}

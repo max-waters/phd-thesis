@@ -1,0 +1,196 @@
+\section{Experimental Evaluation}\label{sec:reins-eval}
+
+While a minimum reinstantiated de/reorder of a \POP can never be less flexible than a minimum de/reorder (Definitions~\ref{def:opt-de-reorder} and~\ref{def:opt-reins-re-deorder}), the question remains whether, in practice, reinstantiated de/reordering provides any significant increase in flexibility over standard de/reordering.
+The search for a minimum de/reorder often times out before an optimal (or indeed any) solution has been found~\cite{Muise2016-PopMaxSAT}, and allowing variable bindings creates a harder problem with an exponentially larger search space.
+This section will thus address the question of whether reinstantiated de/reordering can provide more flexibility than standard de/reordering under the same resource constraints, and will assess the ability of the symmetry breaking techniques introduced in Section~\ref{sec:reins-sb} to ameliorate this increase in search space.
+
+Results show that reinstantiation provides significantly more flexibility than standard approaches -- a $21.1\%$ \flex increase on average, and up to $89.3\%$ depending on domain. 
+However, this comes at a computational cost, with coverage dropping to $55.6\%$. 
+And while symmetry breaking produces little additional flexibility, it allows the optimality of solutions to be exhaustively proved.
+
+%Results show that in practice, domains do allow for reinstantiation, and that reinstantiation provides significantly more flexibility than standard de/reordering techniques, but at significant computational cost.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Experimental Setup}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The questions above are answered by comparing optimised plans produced by the \loandra \MAXSAT solver~\cite{Berg2019:Loandra} using the \MD, \MR, \MRO, \MRD, \MRR, \MRRO and \MRRC encodings.\repofootnote
+Additionally, to evaluate the optimisations described in Definitions~\ref{def:mrr-causal-rel} and~\ref{def:maxsat-props-sets}, unoptimised variants of \MR and \MRR, labelled \MRN and \MRRN, are also briefly examined.
+
+As a baseline, the \MAXSAT-based techniques will be compared with the \emph{explanation-based order generalisation} (\EOG) deordering technique of \citet{Kambhampati:2004:ExplBasedGeneralisation} (Section~\ref{sec:kk-ebg}).
+The \EOG algorithm relies on a \emph{validation structure}, that is, a set of causal links that ``explain'' the \POP{}'s validity:
+%
+\begin{restatable}{defn}{valstruct}\label{def:eog-valid-struct} Let $P = \tup{\opset, \sub, \precrel}$ be a \POP and $\prec'$ be an arbitrary linearisation of $\precrel$. 
+Then, a \defterm{validation structure} $V_P$ is a set of causal links \ST $\tup{\optr_p, q(\vec{u}), \optr_c, q(\vec{s})} \in V_P$ \IFF: 
+\begin{enumerate}
+    \item $\optr_p \prec \optr_c$,
+    \item $\sub(\vec{u}) = \sub(\vec{s})$, and
+    \item for all $\optr_t$, $\vec{v}$ \ST $\thrts(\optr_t, q(\vec{v}))$, either $\optr_t \prec \optr_p$, $\optr_c \prec \optr_t$ or $\sub(\vec{s}) \neq \sub(\vec{v})$, and
+    \item for all $\tup{\optr_p', q(\vec{u}'), \optr_c, q(\vec{s})}$ \ST $1$--$3$ above hold and $\optr_p \neq \optr_p'$, $\optr_p \prec \optr_p'$.
+\end{enumerate}  
+\end{restatable}
+
+\noindent
+Orderings not required to maintain validity under $V_P$ are removed:
+%
+\begin{restatable}{defn}{eog}\label{def:eog} 
+If $P = \tup{\opset, \sub, \precrel}$ is a \POP with validation structure $V_P$, then the \defterm{explanation-based order generalisation} of $P$ is the \POP $\EOG(P) = \tup{\opset, \sub, \transclos{\precrel'}}$ where $\optr_1 \precrel' \optr_2$ \IFF there exists a $q(\vec{u})$, $q(\vec{s})$ \ST either:
+\begin{itemize}
+    \item $\tup{\optr_1, q(\vec{u}), \optr_2, q(\vec{s})} \in V_P$,
+    \item there exists an $\optr_3$ and $q(\vec{v})$ \ST $\tup{\optr_2, q(\vec{s}), \optr_3, q(\vec{v})} \in V_P$, $\optr_1 \prec \optr_2$, $\thrts(\optr_1, q(\vec{u}))$, and $\sub(\vec{v}) = \sub(\vec{u)}$, or
+    \item there exists an $\optr_3$ and $q(\vec{v})$ \ST $\tup{\optr_3, q(\vec{v}), \optr_1, q(\vec{u})} \in V_P$, $\optr_1 \prec \optr_2$, $\thrts(\optr_2, q(\vec{s}))$ and $\sub(\vec{v}) = \sub(\vec{s)}$.
+\end{itemize}
+\end{restatable}
+%
+While \EOG cannot guarantee even a minimal deorder of its input~\cite{Backstrom-CompAspects}, it can be computed in polynomial time and in practice consistently finds minimum deorderings~\cite{Muise2016-PopMaxSAT}.
+It thus serves an effective baseline for evaluating the \MAXSAT-based optimisation techniques.
+
+\subimport*{graphics/}{opt-hierarchy.tex}
+
+Figure~\ref{fig:opt-hierarchy} depicts the hierarchy of (the problems solved by) these algorithms.
+\EOG is in \POLY, all others are \NP-hard to compute optimally.
+\MD (\emph{minimum deorder}) searches for a minimally ordered \POP but disallows reorderings and changes to variable bindings.
+This is relaxed by both \MR (\emph{minimum reorder}), which allows reorderings, and \MRD (\emph{minimum reinstantiated deorder}), which allows bindings to change.
+The most general is \MRR (\emph{minimum reinstantiated reorder}), which allows both reorderings and changes to bindings.
+\MRO, \MRRO and \MRRC are extended encodings that break action, operator and causal structure symmetries, respectively.
+
+Test cases (i.e., input plans) were generated by finding plans for all first-order \IPC \STRIPS planning instances.
+To ensure a variety of plans, three planners of distinct ``types'' were used: the novelty-driven best-first search planner \dbfws~\cite{Lipovetzky2017:BFWS}, the heuristic forward-search planner \lama~\cite{RichterW:LAMA} and the \SAT planner \madagascar~\cite{Rinatnnen2010:M}. 
+Each (unique) plan was encoded with each encoding, and the resulting \MAXSAT instances were preprocessed with \maxpre~\cite{Korhonen2017:MaxPre} and given to the \loandra \MAXSAT solver.
+For the \MRRC encoding, \PDG automorphisms were found with \NAUTY~\cite{McKay2104:PracGraphIso}.
+Plan generation and encoding/optimisation were both limited to $8$GB and $30\mins$ of CPU time at $3.2$GHz.
+
+Because the optimality criteria in Definitions~\ref{def:opt-de-reorder} and~\ref{def:opt-reins-re-deorder} cannot compare \POP{}s with different operators, \POP{} flexibility is here assessed with the commonly-used~\cite{NguyenKambham2001:RevivePOP,Muise2016-PopMaxSAT,SiddiquiHaslum2012-Block} \flex measure, which is computed from the proportion of operators that are not (transitively) ordered:
+%
+\begin{defn}\label{def:flex} The \flex of \POP $P = \tup{\opset, \sub, \precrel}$ is defined as follows:
+\begin{align*}
+    \flex(P) \eqdef 1 - \frac{\card{\precrel}}{\sum_{i=1}^{\card{\opset}-1} i}.
+\end{align*}
+\end{defn}
+%
+A \POP's \flex ranges from $0$ to $1$ (a totally ordered and unordered \POP, respectively) and is a strong indicator of the number of linearisations it represents~\cite{Muise2016-PopMaxSAT}.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Results}\label{sec:reins-results}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subimport*{tables/}{flex-by-domain.tex}
+\subimport*{tables/}{runtime-by-domain.tex}
+\subimport*{tables/}{coverage-sat-by-domain.tex}
+\subimport*{tables/}{coverage-optimal-by-domain.tex}
+
+Results are summarised in Tables~\ref{tab:flex-by-domain}--\ref{tab:flex-by-planner}.
+Table~\ref{tab:flex-by-domain} shows, for each domain, the average \flex found the \EOG baseline, and the percentage increase in flex provided by each encoding (e.g., for \ipcdomain{cybersec}, $f_\EOG = 0.04$ and $\MRRO = 98\%$ meaning that the average \flex found by \MRRO is $0.04 \times 1.98 = 0.0792$).
+Table~\ref{tab:flex-by-planner} shows the same for each planner.
+To allow a meaningful comparison, mean \flex differences are computed from plans for which a solution was found by all encoders.
+All stated \flex differences are statistically significant with $p < 0.01$ as calculated from a single-tailed, paired t-test.
+Table~\ref{tab:runtime} shows the average run time for each encoder and domain, excluding plans that one or more encoders failed to encode due to memory limitations.
+
+Table~\ref{tab:coverage-sat} indicates the \emph{coverage} for each domain and encoding, that is, the proportion for which a satisficing or optimal solution was found within the time limit (where optimal means either a minimum de/reorder, or minimum reinstantiated de/reorder, as appropriate to the encoding), and Table~\ref{tab:coverage-opt} indicates the \emph{optimal coverage} that is, the proportion of plans that were optimally relaxed.
+
+Domains where no plan was improved by any technique (\ipcdomain{agricola}, \ipcdomain{organic-synth-split}, \ipcdomain{pegsol}, \ipcdomain{snake}, \ipcdomain{sokoban}, \ipcdomain{termes}, \ipcdomain{visitall}) have been excluded from all tables, and domains where no technique produced a statistically significant improvement over \EOG (\ipcdomain{barman}, \ipcdomain{data-network}, \ipcdomain{floortile}, \ipcdomain{ged}, \ipcdomain{gripper}, \ipcdomain{logistics98}, \ipcdomain{organic-synthesis}, \ipcdomain{parcprinter}, \ipcdomain{parking}, \ipcdomain{tetris}, \ipcdomain{thoughful}) have been excluded from Table~\ref{tab:flex-by-domain}.
+
+\paragraph{Effectiveness of \EOG} 
+The results confirm~\citet{Muise2016-PopMaxSAT}'s observation that in all cases, \EOG finds a minimum deorder of the input plan, despite a lack of optimality guarantees.
+Additionally, \EOG takes $<3s$ in $88\%$ of test cases, with a coverage close to $100\%$.
+%, only exceeding the time limit with the $7$ plans that all encoders failed on due to the plan length.
+\MD is therefore excluded from the rest of the discussion.
+
+As well as consistently finding minimum deorders, \EOG found a minimum reorder in $65\%$ of plans solved optimally by \MR, a minimum reinstantiated deorder in $56.6\%$ of the plans solved optimally by \MRD, and a minimum reinstantiated reorder in $46\%$ of the plans solved optimally by \MRRO.
+This indicates that in nearly half of cases, a minimum reinstantiated reorder can be found without modifying variables.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{Benefit of Optimisation}
+The aim of the optimisations described in Definitions~\ref{def:mrr-causal-rel} and~\ref{def:maxsat-props-sets} is to reduce the likelihood of the encoding process exceeding the memory limits.
+These optimisations can be assessed by comparing the proportion of test cases that are succesfully encoded by \MR and \MRR with the proportion encoded by \MRN and \MRRN, respectively. 
+These unoptimised variants do not minimise the number of propositions appearing in the encoding, that is, when building constraints, the proposition sets $\precpset$ and $\eqpset$ contain a proposition for each pair of operators and variables, respectively, and $\pclpset$ contains a proposition for every possible causal link.
+
+Table~\ref{tab:coverage-sat} indicates that overall, \MRR encodes $52.1\%$ of test cases to \MRRN's $48\%$, indicating that the optimisations result in a $3.1\pp$\footnote{A percentage point $\pp$ measures the difference between two percentages, e.g., $50\%$ and $55\%$ differ by $10\%$ but $5\pp$.} coverage increase.
+More significant benefits are seen when the results are split by domain, for example in \ipcdomain{airport}, \ipcdomain{barman}, \ipcdomain{parcprinter} and \ipcdomain{woodworking}, the optimisations increase coverage by $7.8\pp$, $9.5\pp$, $40.9\pp$ and $26.7\pp$, respectively.
+However, the optimisations have little benefit on the \MR encoding, with Table~\ref{tab:coverage-sat} showing a $0.2\pp$ coverage increase overall. 
+This difference suggests that the real benefit of the optimisations is the reduction in the number of variable equality constraints (i.e., produced by Formulae~\ref{eq:mrr-eq-symm}--\ref{eq:mrr-eq-domain}) rather than ordering constraints (Formulae~\ref{eq:mrr-asymm}--\ref{eq:mrr-trans}).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{Benefit of reinstantiation}
+
+To assess the practical benefit of reinstantiation, the coverage, run time and final \flex of \MRD, \MRRO and \MRRC are compared with those of \MRO and \EOG. 
+
+Overall, \MRRO and \MRRC provide a $21.1\%$ and $19.5\%$ \flex increase, respectively, over \EOG.
+This contrasts with the $3.3\%$ \flex increase provided by \MRO, meaning that reinstantiation has yielded a massive further \flex increase of $17.8\%$.
+Furthermore, they consistently improve on \EOG and \MRO: \MRRO times out before finding as flexible a solution as \EOG in $<1\%$ of the plans solved by both, with similar results for \MRO. 
+\MRRC performs similarly.
+
+\MRRO and \MRRC improve on \EOG in $20$ and $19$ domains, respectively.
+The largest differences are in \ipcdomain{freecell}, \ipcdomain{mprime}, \ipcdomain{mystery} and \ipcdomain{pipesworld}, where \MRRO provides \flex increases of $89.3\%$, $60.9\%$, $62.1\%$ and $80.8\%$, respectively (and \MRRC is similar), while \MRO provides no significant benefit over \EOG.
+
+However, this additional flexibility comes at significant computational cost.
+\MRRO and \MRRC have a mean coverage of $55.6\%$ and $46.6\%$, respectively, and their mean run time increases by an order of magnitude, to $20.51\mins$ and $20.96\mins$, respectively. 
+Coverage drops significantly in \ipcdomain{floortile} ($6.2\%$ and $5\%$) and \ipcdomain{parking} ($5\%$ and $2\%$).
+
+\pagebreak 
+
+The less general \MRD approach provides less additional \flex at less computational cost. 
+With a mean coverage and run time of $75.6\%$ and $12.74\mins$, respectively, it provides an overall \flex increase of $12.1\%$ over \EOG and statistically significant increases in $15$ domains, \ipcdomain{pipesworld} being the highest ($62.9\%$).
+
+\cut{
+\subimport*{tables/}{enc-size.tex}/
+
+Interestingly, the decrease in coverage displayed by \MRR, \MRRO and \MRRC is not simply due to the larger \MAXSAT formulae they generate.
+Table~\ref{tab:enc-size} shows that, as expected, \MRD and \MRR generate the largest encodings, and coverage always decreases with encoding size. 
+However, within each size range, the encoders' coverages differ significantly (e.g., \MRD and \MR always have more coverage than \MRR), suggesting that the problem is the formulae's structure, not size.  
+A likely cause is so-called \emph{object symmetries}: combinations of differently labelled but functionally equivalent domain objects (e.g., rovers $\rover_1$ and $\rover_2$ in Figure~\ref{fig:rovers-plans}). 
+Their presence can result in a small increase in formula size but an exponential number of equivalent (non-) solutions.
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{Influence of planner}
+
+\subimport*{graphics/}{parallel-plan-example.tex}
+\subimport*{tables/}{flex-by-planner.tex}
+
+\enlargethispage*{1\baselineskip}
+
+The source of the input plan also influences plan flexibility.
+\madagascar produces \emph{parallel plans}: generalised plans where each step is a set of actions with non-contradictory postconditions:
+
+\begin{defn}\label{def:parallel-plan} A \defterm{parallel plan} $T = \tup{S_1,\ldots,S_n}$ is a sequence of sets of actions \ST for all $\actn_1$, $\actn_2$ and $1 \leq k \leq n$, if $\actn_1,\actn_2 \in S_k$ and $\prods(\actn_1, l)$ then $\neg \prods(\actn_2, \neg l)$.
+\end{defn}
+%
+Parallel plans are special cases of \POP{}s.
+A parallel plan $T = \tup{S_1,\ldots,S_n}$ is equivalent to the \POP $P = \tup{\acset, \precrel}$ where $\acset = S_1 \cup \cdots \cup S_n$ and $\actn_1 \precrel \actn_2$ \IFF $\actn_1 \in S_i$, $\actn_2 \in S_j$ and $i < j$.
+
+A parallel plan with a minimal makespan is not necessarily a minimum (or even minimal) deorder.
+For example, parallel plan $P_7$ in Figure~\ref{fig:pp-example-1} has four (implicit) ordering constraints: both $A$ and $B$ must precede $C$ and $D$.
+The division of $P_7$ into steps has thus resulted in two unnecessary ordering constraints that can be removed to produce plan $P_8$ in Figure~\ref{fig:pp-example-2}.
+
+On average, \EOG increases the initial mean \flex of the parallel plans produced by \madagascar from $0.07$ to $0.4$, and \MRRO further improves on this by $18.2\%$.
+Over the sequential (\flex = $0$) plans generated by \dbfws and \lama, \EOG produces \POP{}s with a mean \flex of $0.31$ and $0.29$, respectively, which is improved upon by \MRRO by $31.6\%$ and $14.2\%$, respectively
+Thus, while \dbfws benefits most from reinstantiation, optimised \madagascar plans are the most flexible.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{Benefit of symmetry breaking}
+%
+To assess the practical benefit of the symmetry breaking techniques presented in Section~\ref{sec:reins-sb}, the coverage, run time and final \flex of \MRO, \MRRO and \MRRC are compared with those of \MR and \MRR. 
+
+Overall, Tables~\ref{tab:runtime} and~\ref{tab:coverage-opt} show that symmetry breaking allows more plans to be optimally relaxed (i.e., more minimum de/reorders or minimum reinstantiated de/reorders are found), with a significantly reduced run time.
+But interestingly, Tables~\ref{tab:flex-by-domain} and~\ref{tab:coverage-sat} show that this results in little increase in coverage or \flex, that is, the benefit of symmetry breaking is not that it allows better solutions to be found, but rather, it \emph{allows the optimality of existing solutions to be proved}.
+Alternatively, this suggests that \MR and \MRR are capable of finding an optimal solution within the time limit, but cannot exhaustively prove this without the search space reduction provided by symmetry breaking.
+
+For example, while \MRO's coverage is just $0.4\pp$ greater than \MR's, and it provides a $3.3\%$ \flex increase over \EOG to \MR's $3.2\%$, its optimal coverage is $6.6\pp$ greater and its average run time $2.2\mins$ quicker.
+With the exception of \ipcdomain{nomystery}, this improvement is consistent across domains, with the biggest changes seen in \ipcdomain{barman} ($23\pp$ increase in optimal coverage and $11.3\mins$ run time reduction) and \ipcdomain{floortile} ($64.6\pp$ and $19.53\mins$).
+
+The addition of operator symmetry breaking improves \MRR in a similar way. 
+It provides little increase in \flex--\MRRO provides a $21.1\%$ \flex increase over \EOG to \MRR's $20.2\%$--and while its coverage improves on \MRR by $3.5\pp$, coverage drops in five domains, with \ipcdomain{satellite} the most significant ($24\pp$ coverage decrease).
+However, \MRRO sees an increase in optimal coverage of $8.3\pp$ and a run time reduction of $2.66\mins$. 
+Improvements are consistent across domains and largest in \ipcdomain{hiking} ($23.1\pp$ increase in optimal coverage and $5.82\mins$ run time reduction) and \ipcdomain{thoughful} ($25\pp$ and $7.48\mins$).
+This suggests that symmetry breaking has a ``polarising'' effect, resulting in more timeouts (i.e., reduced coverage) but also more optimal solutions.
+For example, in \ipcdomain{rovers}, \MRRO has a coverage decrease of $4.7\pp$, but an optimal coverage increase of $7.4\pp$.
+
+\MRRC also displays this polarisation.
+It performs, on average, slightly worse than \MRR: it has less coverage, most significantly in \ipcdomain{scanalyzer} (a decrease of $29.8\pp$) and a $5.5\pp$ decrease overall, and provides only $19.5\%$ \flex increase over \EOG to \MRR's $20.2\%$.
+Nevertheless, its optimal coverage and run time improves on \MRR by $6.5\pp$, and $2.21\mins$, respectively.
+The polarisation is most pronounced in \ipcdomain{woodworking}, where \MRRC has $20\pp$ less coverage than \MRR, but $18.4\pp$ more optimal coverage.
+
+\MRRC achieves better \flex and/or optimal coverage than \MRRO in $8$ domains, however, any common property causing this is not immediately clear.
+While it is tempting to attribute its success in \ipcdomain{satellite}, \ipcdomain{woodworking} and \ipcdomain{zenotravel} to the large number of object symmetries, \MRRC also outperforms \MRRO in \ipcdomain{parcprinter} and \ipcdomain{rovers}, which display no such symmetries, and performs poorly in the highly symmetrical \ipcdomain{scanalyzer}.

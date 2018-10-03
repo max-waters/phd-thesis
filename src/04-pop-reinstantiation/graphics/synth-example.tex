@@ -1,0 +1,93 @@
+\newcommand{\synthplancs}[1]{
+    \begin{tikzpicture}[
+        op/.style={draw,minimum height=0.4cm,font=\scriptsize,inner sep=2pt,text=black},
+        cond/.style={text=black,font=\bfseries,font=\scriptsize},
+        dummy/.style={}
+        ]
+        
+        \node[op] (op1) []	{$\initoptr$};
+        \node[cond] (post11) [above right = 0.13cm and -0.1cm of op1.east, anchor = west] {$p(1)$};
+        %\node[cond] (post12) [right = -0.1cm of op1.east, anchor = west] {$p(2)$};
+        \node[cond] (post12) [below right = 0.13cm and -0.1cm of op1.east, anchor = west] {$p(2)$};
+           
+        \node[op] (op2) [above right = 0.4cm and 2.6cm of op1, anchor = center]	{$A_1(x_1)$};
+        \node[cond] (pre2) [left = -0.1cm of op2.west, anchor = east] {$p(x_1)$};
+        \node[cond] (post2) [right = -0.1cm of op2.east, anchor = west] {$q(x_1)$};
+    
+        \node[op] (op3) [below right = 0.4cm and 2.6cm of op1, anchor = center]	{$A_2(x_2)$}; 
+        \node[cond] (pre3) [left = -0.1cm of op3.west, anchor = east] {$p(x_2)$};
+        \node[cond] (post3) [right = -0.1cm of op3.east, anchor = west] {$q(x_2)$};
+        
+        \node[op] (op4) [right = 6cm of op1, anchor = center]	{$B(x_3, x_4)$}; 
+        \node[cond] (pre41) [above left = 0.13cm and -0.1cm of op4.west, anchor = east] {$q(x_3)$};
+        \node[cond] (pre42) [below left = 0.13cm and -0.1cm of op4.west, anchor = east] {$q(x_4)$};
+        \node[cond] (post4) [right = -0.1cm of op4.east, anchor = west] {$g$};
+        
+        \node[op] (op5) [right = 1.3cm of op4, anchor = center]	{$\goaloptr$};
+        \node[cond] (pre5) [left = -0.1cm of op5.west, anchor = east] {$g$};
+    
+        #1 
+    
+        \draw[->] (post4.east) to[out=0, in=180] (pre5.west);
+    
+    \end{tikzpicture}%
+}
+
+\newcommand{\popcstable}[4]{
+    \small
+    \begin{tabular}{r c c c c c}
+            & $p(x_1)$ & $p(x_2)$ & $q(x_3)$ & $q(x_4)$ & $g$ \\
+       % \hline
+        $p(1)$ &    #1 & $0$ \\
+        $p(2)$ &     #2 & $0$ \\
+        \rowcolor{lightgray}\cellcolor{white} $q(x_1)$ & #3 & $0$ \\
+        \rowcolor{lightgray}\cellcolor{white} $q(x_2)$ & #4 & $0$ \\
+        $g$ &\cellcolor{lightgray}$0$ &\cellcolor{lightgray}$0$ & $0$ & $0$ & $1$ \\
+
+    \end{tabular}
+}
+
+\begin{figure}
+\begin{subfigure}[t]{\textwidth}
+\centering
+\synthplancs{
+    \draw[->] (post11.east) to[out=0, in=180] (pre2.west);
+    \draw[->] (post12.east) to[out=0, in=180] (pre3.west);
+    \draw[->] (post2.east) to[out=0, in=180] (pre41.west);
+    \draw[->] (post3.east) to[out=0, in=180] (pre42.west);
+}
+
+\vspace{0.5cm}
+
+\popcstable{ \cellcolor{lightgray}$1$ & \cellcolor{lightgray}$0$ & $0$ & $0$}
+            {\cellcolor{lightgray}$0$ & \cellcolor{lightgray}$1$ & $0$ & $0$}
+            {$0$ & $0$ & $1$ & $0$}
+            {$0$ & $0$ & $0$ & $1$}
+\caption{Plan $P_4$.}
+\label{fig:synth-example-1}        
+\end{subfigure}
+    
+\vspace{0.5cm}
+    
+\begin{subfigure}[t]{\textwidth}
+\centering
+\synthplancs{
+    \draw[->] (post11.east) to[out=0, in=180] (pre3.west);
+    \draw[->] (post12.east) to[out=0, in=180] (pre2.west);
+    \draw[->] (post2.east) to[out=0, in=180] (pre42.west);
+    \draw[->] (post3.east) to[out=0, in=180] (pre41.west);
+}
+
+\vspace{0.5cm}
+
+\popcstable{ \cellcolor{lightgray}$0$ & \cellcolor{lightgray}$1$ & $0$ & $0$}
+            {\cellcolor{lightgray}$1$ & \cellcolor{lightgray}$0$ & $0$ & $0$}
+            {$0$ & $0$ & $0$ & $1$}
+            {$0$ & $0$ & $1$ & $0$}
+\caption{Plan $P_5$.}
+\label{fig:synth-example-2}        
+\end{subfigure}
+%
+\caption[Causal structure symmetry example]{Two plans with symmetrical causal structures from a synthetic domain. Operator pre/postconditions are to the left and right respectively, and arrows indicate supporting relationships.}
+\label{fig:synth-example} 
+\end{figure}

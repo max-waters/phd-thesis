@@ -1,0 +1,25 @@
+\begin{figure}[t]
+    \centering
+    \begin{subfigure}{0.5\textwidth}
+    \centering
+    \begin{tabular}{c*{3}{p{0.1cm}} }
+        0 & 0 & 1 \\
+        0 & 1 & 0 \\
+        1 & 1 & 0 \\
+    \end{tabular}
+    \caption{Matrix $\mat{M}_1$}
+    \label{fig:double-lex-example-1}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+    \centering
+    \begin{tabular}{c*{3}{p{0.1cm}} }
+        0 & 0 & 1 \\
+        0 & 1 & 0 \\
+        1 & 0 & 1 \\
+    \end{tabular}
+    \caption{Matrix $\mat{M}_2$}
+    \label{fig:double-lex-example-2}
+    \end{subfigure} 
+    \caption[\dblex failure example]{\dblex failure example. $\mat{M}_2$ is the result of transposing rows $1$ and $2$, and columns $2$ and $3$, and both satisfy \dblex.}
+    \label{fig:double-lex-example}
+\end{figure}

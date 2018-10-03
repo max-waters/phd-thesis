@@ -1,0 +1,37 @@
+\section{Discussion}\label{sec:symm-breaking-discussion}
+%
+The main contributions of this chapter were as follows:
+%
+\begin{itemize}
+    \item This chapter formally defined a hierarchy of generalised symmetries in graph and matrix models.
+    While standard approaches to symmetry breaking in matrix models break \emph{row symmetries} and \emph{column symmetries}, in which rows and columns are individually interchangeable, this chapter identified \emph{multi-row symmetries} and \emph{multi-column symmetries}, in which combinations of rows and columns are interchangeable but individual rows and columns are not, and \emph{multi-row-column symmetries}, in which combinations of rows and columns are interchangeable.
+    \item Similarly generalised symmetries in graph models, termed \emph{multi-vertex symmetries}, were defined and shown to be special cases of multi-row-column symmetries.
+    \item A series of examples show that these symmetries can occur in many plan optimisation problems and \CSP benchmark domains~\cite{csplib}.
+    \item As these symmetries cannot be broken with standard techniques such as \dblex~\cite{Flener2002:DoubleLex} and \snakelex~\cite{Grayland2009:SnakeLex}, a novel symmetry breaking constraint was introduced, \multilex, that generalises \dblex and can break generalised symmetries in matrix and graph models, including directed graphs with self-loops.
+    \item An empirical evaluation was performed over a series of unconstrained matrix, simple graph and \DAG models of different sizes and with different symmetries. 
+    Results show that \myi, despite being weaker than row and column symmetries, multi-row-column symmetries still result in a factorial size increase in the search space, and \myii, \multilex is a compact and efficient symmetry breaking constraint that removes all but a constant factor of non-canonical solutions.
+\end{itemize}
+%
+Sections~\ref{sec:multi-lex}~and~\ref{sec:multi-lex-evaluation} establish that \multilex is capable of efficiently breaking a range of generalised symmetries in matrix and graph models of all kinds.
+While this allows for an exploitation of symmetries not possible by previous means, and with no additional constraint size cost, a drawback is that the detection of multi-row-column symmetries can be a complex task.
+
+While row and column symmetries are often obvious from the domain description, or can be found by a simple analysis of a problem instance, detecting multi-row-column symmetries can require specialised graph automorphism software such as \NAUTY~\cite{McKay2104:PracGraphIso}.
+For example, in the \cspdomain{Social Golfers} problem (\csplib problem~$10$), a weekly golf schedule must be generated where players play together no more than once. 
+It is clear from the domain definition that the times, groups and golfers are all interchangeable, and so any problem instance will have total row and column symmetry.
+Symmetries in the \cspdomain{Progressive Party} problem (\csplib problem~$13$), in which yacht parties must be scheduled such that crews meet no more than once and boat capacities are respected, are not immediate from the domain description. 
+However, detecting them in a problem instance is a simple matter of finding all boats with identical capacities and crew sizes.
+
+In contrast, the examples in Section~\ref{sec:multi-row-col-symm} show that finding multi-row-column symmetries requires finding equivalent \emph{combinations} of objects in the problem instance.
+The standard approach~\cite{Crawford1996:SymmetryPredicates} of reducing this complex task to the graph automorphism problem (Sections~\ref{sec:automorphisms}~and~\ref{sec:symm-det-break}) requires (possibly domain-specific) techniques for generating coloured graph representations of problem instances.
+This technique, while well established~\cite{Puget2005:AutoDetSymm,Mears2009:ImplSymmDetection,JoslinRoy97:ExploitingSymm,Pochter2011:SymmStatePlanners}, is not trivial.
+
+A notable exception to this is the \cspdomain{Vessel Loading} problem (Figure~\ref{fig:vessel-example}), in which vertical and horizontal reflection symmetries are immediate from the domain description, and, interestingly, can be expressed as multi-row and multi-column symmetries, respectively.
+An obvious further consideration, as to whether the rotational symmetries exhibited by domains such as \cspdomain{N-Queens} (\csplib problem~$54$) can also be handled by \multilex, reveals the limitations of the generalised symmetry definitions in Section~\ref{sec:multi-row-col-symm}.
+Multi-row-column symmetries swap rows with rows and columns with columns, however, a rotational symmetry swaps row with columns.
+Thus, further work could explore \multilex as a novel approach to statically breaking reflection symmetries, or extend it to break rotational symmetries.
+
+The results in Section~\ref{sec:multi-lex-evaluation}, in which the exponential expansion of the search space created by multi-row-column symmetries was nearly entirely removed by \multilex, suggest that the additional work required to detect generalised symmetries is worthwhile.
+However, further work is required to determine whether these results can be replicated under the more complex constraint structures of standard benchmark problems.
+
+Section~\ref{sec:symm-results-ml-eff} proposed an asymptotic limit on \multilex's efficiency. 
+While this was justified empirically, an analytical justification would shed light on \multilex's, and therefore \dblex's, behaviour, possibly leading to more efficient symmetry breaking techniques.

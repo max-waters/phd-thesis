@@ -1,0 +1,105 @@
+\newcommand{\pdgplanex}{
+\begin{tikzpicture}[
+    op/.style={draw,minimum height=0.5cm,font=\scriptsize,inner sep=1pt, text=black},
+    state/.style={text=black,font=\bfseries},
+	cond/.style={text=black,font=\bfseries,font=\scriptsize,inner sep=1pt},
+    dummy/.style={},
+    pclink/.style={draw=black},
+	]
+        
+    \node[op] (init) {$\initoptr$};
+    \node[cond] (post01) [above right = 0.15cm and 0.05cm of init.east, anchor=west] {$p(1,2)$};
+    \node[cond] (post02) [below right = 0.15cm and 0.05cm of init.east, anchor=west] {$p(1,3)$};
+    
+    \node[op] (op1) [right = 4cm of init.center, anchor=center]	{$A(x, y)$}; 
+	\node[cond] (pre11) [left = 0.05cm of op1.west, anchor=east] {$p(x,y)$};
+    \node[cond] (post11) [right = 0.05cm of op1.east, anchor=west] {$q(x)$};
+    
+    \node[op] (goal) [right = 3cm of op1.center, anchor=center] {$\goaloptr$};
+    \node[cond] (preg1) [left = 0.05cm of goal.west, anchor=east] {$q(1)$};
+
+    % FROM INIT
+    \draw[pclink,->] (post01.east) to[out=0, in=180] (pre11.west);
+
+    % FROM OP1
+    \draw[pclink,->] (post11.east) to[out=0, in=180] (preg1.west);
+
+\end{tikzpicture}%
+}
+
+\newcommand{\pdgex}{
+    \begin{tikzpicture}[
+        vert/.style={draw,circle,text=black,font=\tiny,inner sep=0pt,text width=9mm,align=center},
+        ]
+        
+        \node[vert, loosely dotted] (init) [] {$\opvertpost{\initoptr}$};
+        \node[vert, densely dotted] (initp11) [left = 1.25cm of init.center, anchor=center] {$\litvert{p(1,3)}{1}$};
+        \node[vert, densely dotted] (initp12) [left = 1.25cm of initp11.center, anchor=center] {$\litvert{p(1,3)}{2}$};
+        \node[vert, densely dotted] (initp21) [right = 1.25cm of init.center, anchor=center] {$\litvert{p(1,2)}{1}$};
+        \node[vert, densely dotted] (initp22) [right = 1.25cm of initp21.center, anchor=center] {$\litvert{p(1,2)}{2}$};
+
+        \node[vert,dashdotted] (c1) [below = 1.25cm of init.center, anchor=center] {$\cvert{1}$};
+        \node[vert,dashdotted] (c2) [below = 1.25cm of initp12.center, anchor=center] {$\cvert{3}$};
+        \node[vert,dashdotted] (c3) [below = 1.25cm of initp22.center, anchor=center] {$\cvert{2}$};
+
+        \node[vert, loosely dashed] (goalq1) [below = 1.25cm of c1.center, anchor=center] {$\litvert{q(1)}{1}$};
+        \node[vert, loosely dashdotted] (goal) [below = 1.25cm of goalq1.center, anchor=center] {$\opvertpre{\goaloptr}$};
+
+        \node[vert] (x1) [right = 5cm of c1]	{$\vvert{x}$};
+        \node[vert] (x2) [below = 1.25cm of x1.center, anchor=center]	{$\vvert{y}$};
+
+        \node[vert,dotted] (pre) [above left = 1.25cm and 0.625cm of x1.center, anchor=center] {$\opvertpre{A}$};
+        \node[vert,dashed] (post) [above right = 1.25cm and 0.625cm of x1.center, anchor=center] {$\opvertpost{A}$};
+    
+        \node[vert, densely dotted] (p1) [left = 1.25cm of x1.center, anchor=center] {$\litvert{p(x,y)}{1}$};
+        \node[vert, densely dotted] (p2) [left = 1.25cm of x2.center, anchor=center] {$\litvert{p(x,y)}{2}$};
+
+        \node[vert, loosely dashed] (q1) [right = 1.25cm of x1.center, anchor=center] {$\litvert{q(x)}{1}$};
+
+         
+        \draw[-] (x1) -- (x2);
+        \draw[-] (x1) -- (pre);
+        \draw[-] (x1) -- (post);
+        \draw[-] (post) -- (q1);
+        \draw[-] (pre) -- (p1);
+        \draw[-] (p1) -- (p2);
+
+        \draw[-] (p1) -- (x1);
+        \draw[-] (p2) -- (x2);
+        \draw[-] (q1) -- (x1);
+
+        \draw[-] (init) -- (initp11);
+        \draw[-] (initp11) -- (initp12);
+        \draw[-] (initp11) -- (c1);
+        \draw[-] (initp12) -- (c2);
+        \draw[-] (init) -- (initp21);
+        \draw[-] (initp21) -- (initp22);
+        \draw[-] (initp22) -- (c3);
+        \draw[-] (initp21) -- (c1);
+
+        \draw[-] (goalq1) -- (c1);
+        \draw[-] (goal) -- (goalq1);
+
+    \end{tikzpicture}%
+}
+
+\begin{figure}[t]
+    \begin{subfigure}[t]{\textwidth}
+        \centering
+        \pdgplanex
+        \caption{Plan $P_6$.}
+        \label{fig:pdg-example-plan}
+    \end{subfigure}     
+
+    \vspace{0.5cm}
+    
+    \begin{subfigure}[t]{\textwidth}
+        \centering
+        \pdgex
+        \caption{The plan description graph of $P_6$.}
+        \label{fig:pdg-example-graph}
+    \end{subfigure}
+
+    \caption[Plan description graph example]{Plan description graph example.}
+    \label{fig:pdg-example}
+\end{figure}

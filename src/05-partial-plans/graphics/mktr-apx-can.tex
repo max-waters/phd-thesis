@@ -1,0 +1,22 @@
+\begin{figure}[t]
+	\begin{algorithmic}[1]
+		\REQUIRE Causal structure $\mat{C}$, set of causal structure symmetries $\cgenerator$
+		\ENSURE A symmetrical form of $\mat{C}$ that satisfies \multilex.
+		\LOOP
+			\STATE $c \gets \true$
+			\FORALL{$\perm \in \cgenerator$}
+				\IF{$\neg \MultiLex(\mat{C}, \perm)$} 
+					\STATE $\mat{C} = \perm(\mat{C})$
+					\STATE $c \gets \false$
+				\ENDIF
+			\ENDFOR
+			\IF{$c$}
+				\RETURN $\mat{C}$
+			\ENDIF
+		\ENDLOOP	
+	\end{algorithmic}
+	\caption[\APXCAN algorithm]{\APXCAN: approximate canonicalisation with \multilex.}
+	\label{alg:approx-can}
+\end{figure}
+
+

@@ -1,0 +1,29 @@
+\newcommand{\satgraph}{
+
+\begin{tikzpicture}[
+    vert/.style={draw,circle,text=black,font=\small,inner sep=0pt,text width=7mm,align=center},
+    posprop/.style={vert,fill=gray!50},
+    negprop/.style={vert,fill=gray!25},
+    clause/.style={vert},
+]
+% 0.86
+    \node[posprop] (p1) []	{$v_{\propvar_1}$};
+    \node[posprop] (p2) [right = 1.5cm of p1.center, anchor=center]	{$v_{\propvar_2}$};
+    \node[negprop] (np1)  [right = 1.5cm of p2.center, anchor=center]	{$v_{\neg\propvar_1}$};
+    \node[negprop] (np2) [right = 1.5cm of np1.center, anchor=center]	{$v_{\neg\propvar_2}$};
+    \node[clause] (c1)  [below right = 1.3cm and 0.75cm of p1.center, anchor=center]	{$v_{c_1}$};
+    \node[clause] (c2)  [right = 3cm of c1.center, anchor=center]	{$v_{c_2}$};
+
+    \draw[] (p1) -- (c1) -- (p2);
+    \draw[] (np1) -- (c2) -- (np2);
+
+\end{tikzpicture}%
+}
+
+
+\begin{figure}[t]
+    \centering
+    \satgraph
+    \caption[Coloured graph representation of a \SAT formula]{A coloured graph representation of the \SAT formula $(\satprop_1 \lor \satprop_2) \land (\neg\satprop_1 \lor \neg\satprop_2)$. }
+    \label{fig:col-graph-example}
+\end{figure}

@@ -1,0 +1,104 @@
+\section{Optimality Criteria for Partial Plans}\label{sec:pp-optiality-criteria}
+%
+Since the purpose of partial plans is to increase execution-time flexibility, this section will discuss two ways to measure the amount of flexibility provided by a partial plan.
+%Since the purpose of partial plans is to provide additional flexibility and robustness at execution time, this section will discuss two criteria to measure the degree to which a given partial plan provides such properties.
+A partial plan is a compact representation of a set of classical plans, each representing a different sequence of actions for realising the goal. 
+The simplest flexibility measure is thus the size of this set, that is, \emph{the number of instantiations the plan admits}. %\footnote{The study of the more sophisticated concept of the \emph{diversity} of a partial plan, i.e., the portion of the possible solution space it covers, is left for further work.} 
+
+However, an equally important consideration is the computational cost of instantiating the partial plan: a plan cannot, in practice, provide any flexibility if the executing agent cannot determine in a reasonable amount of time which actions are compatible with it.
+The second flexibility measure is thus the partial plan's tractability, that is, \emph{the complexity of the problem of finding an instantiation of the plan}.
+While Theorem~\ref{thrm:pp-sat} above shows that instantiating a partial plan is, in general, intractable, Theorem~\ref{thrm:pp-sat-ftp} demonstrated that there are nevertheless islands of tractability within the space of partial plans. 
+This section will show that partial plans can be classified by their instantiation cost.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Minimally Constrained Partial Plans}\label{sec:pp-min-cons-pps}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+The relative ``constrained-ness'' of two partial plans can be determined by comparing the relative strengths of their constraint formulae.
+If $P = \tup{\opset, \cform}$ and $Q = \tup{\opset, \cform'}$ are two valid partial plans, then $Q$ is a \emph{relaxation} of $P$ \IFF every model of $\cform$ is also a model of $\cform'$, and $Q$ is a \emph{minimum relaxation} of $P$ \IFF it has the most models while remaining valid:
+%
+\begin{defn}\label{def:pp-lcr} Let $P = \tup{\opset, \cform}$ and $Q = \tup{\opset, \cform'}$ be partial plans. Then: 
+\begin{itemize}
+  \item $Q$ is a \defterm{relaxation} of $P$ \IFF they are both valid and $\cform \models \cform'$,
+  \item $Q$ is a \defterm{proper relaxation} of $P$ \IFF it is a relaxation of $P$ \\ and $\cform' \not\models \cform$, and
+  \item $Q$ is a \defterm{minimum relaxation} of $P$ \IFF it is a relaxation of $P$ \\ and there are no proper relaxations of $Q$.
+\end{itemize}
+\end{defn}
+%
+There are two key differences between the optimality criteria above and those found in the field of \POP optimisation (e.g., Definitions~\ref{def:opt-de-reorder} and~\ref{def:opt-reins-re-deorder}).
+Firtly, while there is a clear difference between the idea of a \emph{minimal} and \emph{minimum} relaxation of a \POP, there is no such distinction in the context of partial plans.
+Secondly, while the problems of finding a minimal or minimum relaxation of a \POP are polynomial and \NP-complete, respectively, a minimum relaxation of a partial plan can, interestingly, be found in polynomial time.
+These differences both derive from the fact that a minimum relaxation of any valid partial plan can be directly defined with reference to the Modal Truth Criterion~\cite{Chapman-ConjGoals} (\MTC). 
+
+Typically, the \MTC determines the validity of a classical plan or \POP in the context of partial-order planning (Section~\ref{sec:po-planners}) by requiring that it be \emph{necessarily} true that the preconditions of all actions in the plan hold at the point when that action is executed.
+%A precondition will necessarily hold if there is some previous action with an effect that produces the required condition, and no intermediate action with an effect that undoes it.
+%Classical plan is valid \IFF the \MTC holds (Theorem $7.3$ in \cite{Backstrom-CompAspects}).
+This can be generalised to cover partial plans---a partial plan meets the \MTC \IFF all of its instantiations meet the \MTC---and expressed as a constraint formula as follows:
+%
+\begin{defn}\label{def:pp-mtc} The \defterm{modal truth criterion} for a partial plan $P = \tup{\opset, \cform}$ requires that $\cform \models \MTCFUNC(\opset)$, where:
+%
+\begin{align*}
+& \MTCFUNC(\opset) \eqdef \bigwedge_{\clapstack{\optr_c, q(\vec{s}) : \consms(\optr_c, q(\vec{s}))}} \MTCFUNC'(\optr_c, q(\vec{s})), \text{ where} \\
+%
+& \MTCFUNC'(\optr_c, q(\vec{s})) \eqdef \bigvee_{\clapstack{\optr_p, \vec{u} : \prods(\optr_p, q(\vec{u}))}} \vec{s} = \vec{u} \land \optr_p \prec \optr_c \land \\
+& \qquad \qquad \qquad \qquad \qquad \quad \bigwedge_{\clapstack{\optr_t, \vec{v} : \thrts(\optr_t, q(\vec{v}))}} \big( \vec{s} \neq \vec{v} \lor \optr_t \prec \optr_p \lor \optr_c \preceq \optr_t \lor \\
+& \qquad \qquad \qquad \qquad \qquad \qquad \quad \big[ \bigvee_{\clapstack{\optr_w, \vec{r} : \prods(\optr_w, q(\vec{r}))}} \vec{r} = \vec{s} \land \optr_t \prec \optr_w \prec \optr_c \big] \big).
+\end{align*}
+\end{defn}
+%
+The definition $\MTCFUNC'$ applies the \MTC to a single consumer, that is, a single precondition $q(\vec{s})$ of an operator $\optr_c$.
+The first line requires that there be some producer, that is, a postcondition $q(\vec{u})$ of an operator $\optr_p$, such that $\vec{s}$ and $\vec{u}$ are codesignated and $\optr_p \prec \optr_c$.
+The second and third lines require that for all threats to this link, that is, any postcondition $\neg q(\vec{v})$ of an operator $\optr_t$, either $\optr_t$ is not ordered between $\optr_p$ and $\optr_c$, $\vec{v}$ and $\vec{s}$ are not codesignated, or that there is a ``white knight'' $\optr_w$ ordered after $\optr_t$ that re-establishes the causal link.
+The definition $\MTCFUNC$ applies this to every consumer in the plan.
+
+An alternative definition of partial plan soundness follows from the above.
+A partial plan is sound \IFF its constraint formula implies the \MTC:
+%
+\begin{restatable}{theorem}{ppsndmtc}
+\label{thrm:pp-snd-mtc}
+\csprob{Partial Plan MTC Soundness}.
+A partial plan $P = \tup{\opset, \cform}$ is sound \IFF $\cform \models \MTCFUNC(\opset)$.
+\end{restatable}
+%
+If $P = \tup{\opset, \cform}$ is a valid partial plan, then \emph{the valid partial plan $Q = \tup{\opset, \MTCFUNC(\opset)}$ is a minimum relaxation of $P$}, and can be constructed in polynomial time:
+
+\begin{restatable}{theorem}{pplcrmtc}
+\label{thrm:pp-lcr-mtc}
+\csprob{Minimum Relaxation}.
+A minimum relaxation of a valid partial plan can be found in polynomial time.
+\end{restatable}
+%
+It follows from Theorem~\ref{thrm:pp-snd-mtc} that there is no concept of a ``minimal'' partial plan.
+In the context of \POP{}s, a \emph{minimal relaxation} of a \POP cannot be further relaxed while remaining valid, and a \emph{mimimum relaxation} has the fewest ordering constraints of all relaxations.
+This distinction does not apply to partial plans.
+Let $P = \tup{\opset, \cform}$ be a valid partial plan.
+From Definitions~\ref{def:pp-val} and~\ref{def:pp-lcr}, any relaxation of $P$ must be valid, and therefore sound, and so must be of the form $Q = \tup{\opset, \cform'}$ where $\cform \models \cform' \models \MTCFUNC(\opset)$.
+From Theorem~\ref{thrm:pp-snd-mtc}, the partial plan $R = \tup{\opset, \MTCFUNC(\opset)}$ is a minimum relaxation of $P$, and as $\cform' \models \MTCFUNC(\opset)$, it is also a (minimum) relxation of $Q$.
+Thus, the notion of a ``minimal'' partial plan does not apply, as any non-minimum relaxation can always be further relaxed.
+Alternatively, any ``minimal'' partial plan, that is, one that cannot be relaxed any further, must also be a minimum.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Tractable Partial Plans}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+As flexibility cannot, in practice, be provided by an intractable partial plan, optimality criteria should ideally compare both the strength and treewidth of the plan's constraint formulae.
+Thus, the notion of a \emph{$k$-treewidth relaxation} is introduced.
+If partial plan $Q$ is a relaxation of partial plan $P$, then $Q$ is a \emph{minimal $k$-treewidth relaxation} of $P$ if it cannot be relaxed any further without its treewidth exceeding $k$, and is a \emph{minimum $k$-treewidth relaxation} of $P$ if, amongst all possible relaxations of $P$, it admits the most models while keeping its treewidth bounded by $k$:
+%
+\begin{defn}\label{def:pp-ktr}
+Let $P$ and $Q$ be partial plans, let integer $k > 0$ and let $\#P$ denote the number of instantiations of partial plan $P$. 
+Then:
+\begin{itemize}
+  \item $Q$ is a \defterm{$\mathbf{k}$-treewidth relaxation} of $P$ \IFF $Q$ is a relaxation of $P$ and $\treewidth(Q) \leq k$,
+  \item $Q$ is a \defterm{proper $\mathbf{k}$-treewidth relaxation} of $P$ \IFF $Q$ is a proper relaxation of $P$ and $\treewidth(Q) \leq k$,
+  \item $Q$ is a \defterm{minimal $\mathbf{k}$-treewidth relaxation} of $P$ \IFF it is a $k$-treewidth relaxation of $P$ and there is no $R$ \ST $R$ is a proper $k$-treewidth relaxation of $Q$, and
+  \item $Q$ is a \defterm{minimum $\mathbf{k}$-treewidth relaxation} of $P$ \IFF it is a $k$-treewidth relaxation of $P$ and there is no $R$ such that $R$ is a $k$-treewidth relaxation of $P$ and $\#P < \#R$.
+\end{itemize}
+\end{defn}
+%
+While the complexity of finding minimum and minimal $k$-treewidth relaxations remains open, deciding whether a partial plan has a proper $k$-treewidth relaxation is $\W{1}$-hard:
+%
+\begin{restatable}{theorem}{ppmktr}\label{thrm:pp-mktr} 
+\csprob{Proper k-Treewidth Relaxation}.
+For any partial plan $P$ and integer $k > 0$, deciding the existence of a proper $k$-treewidth relaxation of $P$ is $\W{1}$-hard when parameterised with $k$.
+\end{restatable}

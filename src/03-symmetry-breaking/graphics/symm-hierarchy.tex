@@ -1,0 +1,39 @@
+\begin{figure}
+    \centering
+    \begin{tikzpicture}[
+        op/.style={draw,minimum height=0.4cm,font=\scriptsize,inner sep=2pt,text=black},
+        label/.style={minimum height=0.4cm,font=\scriptsize,inner sep=2pt,text=black},
+        ]
+        
+        \node[op] (row) [fill=gray!50]	                                                {\textsc{Row}};
+        \node[op] (col) [below = 1.6cm of row.center, anchor = center, fill=gray!50]	{\textsc{Column}}; 
+        \node[op] (vertex) [below = 0.8cm of col.center, anchor = center, fill=gray!50]	{\textsc{Vertex}}; 
+
+        \node[op] (multirow) [right = 2.6cm of row.center, anchor = center]	        {\textsc{Multi-Row}}; 
+        \node[op] (rowandcol) [below = 0.8cm of multirow.center, anchor = center, fill=gray!50]   {\textsc{Row And Column}};     
+        \node[op] (multicol) [below = 0.8cm of rowandcol.center, anchor = center]   {\textsc{Multi-Column}}; 
+        \node[op] (multivert) [below = 0.8cm of multicol.center, anchor = center]  {\textsc{Multi-Vertex}}; 
+
+        \node[op] (multirowandcol) [right = 3.4cm of rowandcol.center, anchor = center, align=center]	    {\textsc{Multi-Row And} \\ \textsc{Multi-Column}}; 
+
+        \node[op] (multirowcol) [above right = 0.4cm and 6.8cm of multicol.center, anchor = center]	{\textsc{Multi-Row-Column}}; 
+    
+        \draw[->, dotted] (row.east) to[out=0, in=180] (multirow.west);
+        \draw[->, dotted] (col.east) to[out=0, in=180] (multicol.west);
+        \draw[->] (row.east) to[out=0, in=180] (rowandcol.west);
+        \draw[->] (col.east) to[out=0, in=180] (rowandcol.west);
+        \draw[->, dotted] (vertex.east) to[out=0, in=180] (multivert.west);
+
+        \draw[->] (multirow.east) to[out=0, in=180] (multirowandcol.west);
+        \draw[->] (multicol.east) to[out=0, in=180] (multirowandcol.west);
+        \draw[->, dotted] (rowandcol.east) to[out=0, in=180] (multirowandcol.west);
+        
+        \draw[->] (multirowandcol.east) to[out=0, in=180] (multirowcol.west);
+        \draw[->] (multivert.east) to[out=0, in=180] (multirowcol.west);
+
+    \end{tikzpicture}%
+    \caption[Hierarchy of generalised symmetry groups]{Hierarchy of generalised symmetry groups.
+    Arrows lead from less to more general symmetries, with dotted lines indicating a generalisation from single to multiple interchangeable rows and/or columns.
+    }
+    \label{fig:symm-hierarchy} 
+\end{figure}

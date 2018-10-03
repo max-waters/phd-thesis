@@ -1,0 +1,221 @@
+\newcommand{\covtimetable}[3]{   
+    \pgfplotstableread[col sep=comma]{05-partial-plans/tables/coverage-time-by-domain.csv}\covtimedata 
+    \centering
+    \setlength{\tabcolsep}{4pt}
+    \pgfplotstabletypeset[
+        %%
+        font=\scriptsize,
+        every even row/.style={
+            before row={\rowcolor[gray]{0.9}}
+            },
+        every head row/.style={%
+            before row={\toprule
+                & & & \multicolumn{4}{c}{$C_M$} & \multicolumn{4}{c}{$T$} \\
+                \cmidrule(lr){4-7} \cmidrule(lr){8-11}
+            },
+            after row=\midrule
+        },
+        every last row/.style={
+            before row=\midrule, 
+            after row=\bottomrule,
+            font=\bfseries,
+            },
+        #3,%
+        %%
+        columns/domain/.style={string type, column name={Domain}, column type={l}, column type/.add={>{\itshape}}{}},
+        %%
+        columns/n-plans/.style={numeric type, column name={$n$}, column type={c}, 
+            /pgf/number format/precision=0, /pgf/number format/sci zerofill, /pgf/number format/fixed,},
+        %%
+        columns/eog-cov/.style={numeric type, column name={$C$}, column type={c}, /pgf/number format/precision=1,multiply with=100,, postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        %% TW2
+        %% min coverage
+        columns/tw2-mt-min/.style={column name=$\MT$, numeric type, column type={c}, /pgf/number format/precision=1,multiply with=100, postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/tw2-mtml-min/.style={column name=$\MTSB$, numeric type, column type={c}, /pgf/number format/precision=1,multiply with=100, postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/tw2-rp-min/.style={column name=$\RP$, numeric type, column type={c}, /pgf/number format/precision=1,multiply with=100, postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/tw2-rpml-min/.style={column name=$\RPSB$, numeric type, column type={c}, /pgf/number format/precision=1,multiply with=100, postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        %% time
+        columns/tw2-mt-time/.style={column name=$\MT$, numeric type, column type={c}, postproc cell content/.append},
+        %%
+        columns/tw2-mtml-time/.style={column name=$\MTSB$, numeric type, column type={c}},
+        %%
+        columns/tw2-rp-time/.style={column name=$\RP$, numeric type, column type={c}},
+        %%
+        columns/tw2-rpml-time/.style={column name=$\RPSB$, numeric type, column type={c}},
+        %%
+        %% TW5
+        %% min coverage
+        columns/tw5-mt-min/.style={column name=$\MT$, numeric type, column type={c}, /pgf/number format/precision=1,multiply with=100, postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/tw5-mtml-min/.style={column name=$\MTSB$, numeric type, column type={c}, /pgf/number format/precision=1,multiply with=100, postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/tw5-rp-min/.style={column name=$\RP$, numeric type, column type={c}, /pgf/number format/precision=1,multiply with=100, postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        columns/tw5-rpml-min/.style={column name=$\RPSB$, numeric type, column type={c}, /pgf/number format/precision=1,multiply with=100, postproc cell content/.append style={
+            /pgfplots/table/@cell content/.add={}{\if\relax\detokenize{####1}\relax \else $\%$ \fi},
+        }},
+        %%
+        %% time
+        columns/tw5-mt-time/.style={column name=$\MT$, numeric type, column type={c}},
+        %%
+        columns/tw5-mtml-time/.style={column name=$\MTSB$, numeric type, column type={c}},
+        %%
+        columns/tw5-rp-time/.style={column name=$\RP$, numeric type, column type={c}},
+        %%
+        columns/tw5-rpml-time/.style={column name=$\RPSB$, numeric type, column type={c}},
+        %%
+        #1,
+        ]
+        {\covtimedata}%
+        \caption[Coverage and run time for \MKTR with treewidth #2]{
+        Coverage rates and execution times for \MKTR with treewidth #2.
+        For each domain and planner, $C$ indicates the proportion of plans for which \EOG, and thus \MKTR, found a solution. 
+        For each policy, $C_M$ indicates the proportion of plans for which \MKTR found a minimal $k$-treewidth CS relaxation, and $T$ indicates the execution time in minutes.
+        }
+}
+
+
+\begin{table}[t]
+    \covtimetable{columns={domain,n-plans,eog-cov,
+        tw2-mt-min,tw2-mtml-min,tw2-rp-min,tw2-rpml-min,
+        tw2-mt-time,tw2-mtml-time,tw2-rp-time,tw2-rpml-time}}{two}{%
+        every row 4 column 8/.style={
+                postproc cell content/.style={
+                @cell content/.add={}{$\bm{\dagger}$}
+                }
+            },
+        every row 4 column 10/.style={
+                postproc cell content/.style={
+                @cell content/.add={}{$\bm{\dagger}$}
+                }
+            },
+            every row 8 column 8/.style={
+                postproc cell content/.style={
+                @cell content/.add={}{$\bm{\dagger}$}
+                }
+            },
+            every row 10 column 8/.style={
+                postproc cell content/.style={
+                @cell content/.add={}{$\bm{\dagger}$}
+                }
+            },
+            every row 15 column 10/.style={
+                postproc cell content/.style={
+                @cell content/.add={}{$\bm{\dagger}$}
+                }
+            },
+            every row 29 column 8/.style={
+                postproc cell content/.style={
+                @cell content/.add={}{$\bm{\dagger}$}
+                }
+            },
+            every row 29 column 10/.style={
+                postproc cell content/.style={
+                @cell content/.add={}{$\bm{\dagger}$}
+                }
+            },
+            every row 30 column 10/.style={
+                postproc cell content/.style={
+                @cell content/.add={}{$\bm{\dagger}$}
+                }
+            },
+            every row 32 column 8/.style={
+                postproc cell content/.style={
+                @cell content/.add={}{$\bm{\dagger}$}
+                }
+            },
+            every row 33 column 10/.style={
+                postproc cell content/.style={
+                @cell content/.add={}{$\bm{\dagger}$}
+                }
+            },
+            every row 34 column 8/.style={
+                postproc cell content/.style={
+                @cell content/.add={}{$\bm{\dagger}$}
+                }
+            },
+            every row 34 column 10/.style={
+                postproc cell content/.style={
+                @cell content/.add={}{$\bm{\dagger}$}
+                }
+            },
+        }
+    \label{tab:pp-cov-time-domain-tw2}
+\end{table}
+
+\begin{table}[t]
+    \covtimetable{columns={domain,n-plans,eog-cov,
+        tw5-mt-min,tw5-mtml-min,tw5-rp-min,tw5-rpml-min,
+        tw5-mt-time,tw5-mtml-time,tw5-rp-time,tw5-rpml-time}}{five}{%
+            every row 3 column 8/.style={
+                postproc cell content/.style={
+                @cell content/.add={}{$\bm{\dagger}$}
+                }
+            },
+            every row 7 column 8/.style={
+                postproc cell content/.style={
+                @cell content/.add={}{$\bm{\dagger}$}
+                }
+            },
+            every row 8 column 8/.style={
+                postproc cell content/.style={
+                @cell content/.add={}{$\bm{\dagger}$}
+                }
+            },
+            every row 10 column 8/.style={
+                postproc cell content/.style={
+                @cell content/.add={}{$\bm{\dagger}$}
+                }
+            },
+            every row 12 column 10/.style={
+                postproc cell content/.style={
+                @cell content/.add={}{$\bm{\dagger}$}
+                }
+            },
+            every row 20 column 8/.style={
+                postproc cell content/.style={
+                @cell content/.add={}{$\bm{\dagger}$}
+                }
+            },
+            every row 23 column 8/.style={
+                postproc cell content/.style={
+                @cell content/.add={}{$\bm{\dagger}$}
+                }
+            },
+            every row 24 column 8/.style={
+                postproc cell content/.style={
+                @cell content/.add={}{$\bm{\dagger}$}
+                }
+            },
+            every row 25 column 8/.style={
+                postproc cell content/.style={
+                @cell content/.add={}{$\bm{\dagger}$}
+                }
+            },
+        }
+    \label{tab:pp-cov-time-domain-tw5}
+\end{table}
+
+
+    
