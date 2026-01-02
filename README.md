@@ -1,4 +1,4 @@
-* Improving Plan Flexibility By Reasoning About Action Orderings and Instantiations
+# Improving Plan Flexibility By Reasoning About Action Orderings and Instantiations
 
 To achieve its goals, an agent typically has a plan. However, in realworld domains, the environment can be dynamic, partially observable or contain other agents, and actions can fail or have unexpected side effects.
 Thus, this thesis introduces, theoretically analyses and empirically evaluates novel techniques for representing and generating flexible plans that allow the agent to modify its behaviour in response to unexpected events.
